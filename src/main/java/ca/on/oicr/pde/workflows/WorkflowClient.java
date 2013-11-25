@@ -56,7 +56,7 @@ public class WorkflowClient extends OicrWorkflow {
         memory = getProperty("memory");
         doOlb = getProperty("do_olb");
         calledBases = getProperty("called_bases");
-        queue = getProperty("queue");
+        queue = getOptionalProperty("queue", "");
         manualOutput = Boolean.valueOf(getOptionalProperty("manual_output", "false"));    
         ignoreMissingBcl = Boolean.valueOf(getOptionalProperty("ignore_missing_bcl", "false"));
         ignoreMissingStats = Boolean.valueOf(getOptionalProperty("ignore_missing_stats", "false"));
