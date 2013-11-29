@@ -27,6 +27,8 @@
         <seqwareDir>/u/sqwci/_seqware</seqwareDir>
         <webserviceUrl>https://host_url/seqware-webservice-seqware_version</webserviceUrl>
         <schedulingSystem>pegasus</schedulingSystem>
+        <schedulingHost>sqwuser.hpc.oicr.on.ca</schedulingHost>
+        <seqwareDistribution>${bundleDirectory}/lib/seqware-distribution-${seqware-version}-full.jar</seqwareDistribution>
     </properties>
 
     <dependencies>
@@ -338,14 +340,16 @@
                     <skip>${skipITs}</skip>
                     <systemPropertyVariables>                   
                         <bundledJava>${bundleDirectory}/bin/jre1.6.0_29/bin/java</bundledJava>
-                        <bundledSeqware>${bundleDirectory}/lib/seqware-distribution-${seqware-version}-full.jar</bundledSeqware>
-                        <bundledWorkflow>${project.build.directory}/Workflow_Bundle_${workflow-name}_${project.version}_SeqWare_${seqware-version}</bundledWorkflow>
+                        <!--Rename bundledSeqware to seqwareDistribution once refactored in workflow run test-->
+                        <bundledSeqware>${seqwareDistribution}</bundledSeqware>
+                        <bundledWorkflow>${project.build.directory}/Workflow_Bundle_${workflow-directory-name}_${project.version}_SeqWare_${seqware-version}/</bundledWorkflow>
                         <workflowName>${workflow-directory-name}</workflowName>
                         <workflowVersion>${project.version}</workflowVersion>
                         <workingDirectory>${workingDir}</workingDirectory>
                         <seqwareDirectory>${seqwareDir}</seqwareDirectory>
                         <webserviceUrl>${webserviceUrl}</webserviceUrl>
                         <schedulingSystem>${schedulingSystem}</schedulingSystem>
+                        <schedulingHost>${schedulingHost}</schedulingHost>
                     </systemPropertyVariables>
                     <suiteXmlFiles>
                         <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>

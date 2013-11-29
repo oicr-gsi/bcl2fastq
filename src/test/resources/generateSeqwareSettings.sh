@@ -8,7 +8,7 @@ die () {
     exit 1
 }
 
-[[ "$#" == 3 ]] || die "3 arguments required, $# provided"
+[[ "$#" == 4 ]] || die "4 arguments required, $# provided"
 
 UNIQUE_ID=$(date +"%y%m%d_%H%M")_$(( uuidgen 2>/dev/null || uuidcdef -u 2>/dev/null ) | cut -d'-' -f1)
 
@@ -19,7 +19,7 @@ SW_REST_URL=$2
 
 SCHEDULING_SYSTEM=$3
 
-SW_CLUSTER=sqwuser.hpc.oicr.on.ca
+SW_CLUSTER=$4
 SW_DAX_DIR="${BASE_DIR}"/dax
 
 SW_BUNDLE_DIR="${BASE_DIR}"/provisionedBundles
