@@ -109,25 +109,12 @@ if ($result != 0) { print "Errors! exit code: $result\n"; exit(1); }
 open OUT, ">$output_dir/Unaligned_${flowcell}_${lane}/metadata_${flowcell}_${lane}.csv" or die "Can't open file $output_dir/Unaligned_${flowcell}_${lane}/metadata_${flowcell}_${lane}.csv";
 print OUT "FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject\n";
 my @barcode_arr = split /\+/, $barcodes;
-#add by zheng, temporary fix
-#add check for one barcode perl lane, this is a lims bug.
-if ( scalar @barcode_arr == 1 ) {
-    my $barcode_record = $barcode_arr[0];
-    my @barcode_record_arr = split /,/, $barcode_record;
-    #barcode will NOT be used
-    my $barcode = $barcode_record_arr[0];
-    my $ius_accession = $barcode_record_arr[1];
-    my $ius_ass_sample_str = $barcode_record_arr[2];
-    print OUT "$flowcell,$lane,SWID_$ius_accession\_$ius_ass_sample_str\_$flowcell,na,,na,N,na,na,na\n";
-}
-else {
 foreach my $barcode_record (@barcode_arr) {
   my @barcode_record_arr = split /,/, $barcode_record;
   my $barcode = $barcode_record_arr[0];
   my $ius_accession = $barcode_record_arr[1];
   my $ius_ass_sample_str = $barcode_record_arr[2];
   print OUT "$flowcell,$lane,SWID_$ius_accession\_$ius_ass_sample_str\_$flowcell,na,$barcode,na,N,na,na,na\n";
-}
 }
 close OUT;
 
