@@ -32,7 +32,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>net.sourceforge.seqware</groupId>
+            <groupId>io.seqware</groupId>
             <artifactId>seqware-bin-linux-x86-64-jre-7.0.51</artifactId>
             <version>1.0.0</version>
         </dependency>
