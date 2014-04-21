@@ -11,6 +11,7 @@ import java.util.TreeSet;
  * @author mlaszloffy
  */
 public class ProcessEvent {
+
     private final String laneNumber;
     private final String laneSwAccession;
     private final String barcode;
@@ -94,5 +95,29 @@ public class ProcessEvent {
         sb.deleteCharAt(sb.length() - 1);
         return sb.toString();
     }
-    
+
+    public static String getLaneSwid(List<ProcessEvent> ps, String laneNumber) {
+
+        for (ProcessEvent p : ps) {
+            if (p.getLaneNumber().equals(laneNumber)) {
+                return p.laneSwAccession;
+            }
+        }
+
+        return null;
+
+    }
+
+    public static boolean containsBarcode(List<ProcessEvent> ps, String barcode) {
+
+        for (ProcessEvent p : ps) {
+            if (p.getBarcode().equals(barcode)) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }
+
 }

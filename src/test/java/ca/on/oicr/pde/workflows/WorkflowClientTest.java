@@ -11,12 +11,13 @@ import org.testng.annotations.Test;
  */
 public class WorkflowClientTest {
 
-    /**
-     * Test of buildWorkflow method, of class WorkflowClient.
-     */
+    private final String defaultInput = "1,100:NoIndex,101,Sample_Name|"
+            + "3,107:AAAGTG,108,Sample_Name+AAAGTC,109,Sample_Name+AAAGTC,110,Sample_Name|"
+            + "2,103:TTTGTG,104,Sample_Name+ATTGTC,105,Sample_Name+AATGTG,106,Sample_Name";
+
     @Test
     public void parseLanesString() {
-        
+
         String lanes = "6,631732:NoIndex,631733,PCSI_0046_Pa_P_PE_693_WG|"
                 + "3,631709:NoIndex,631710,PCSI_0019_Pa_P_PE_562_WG|"
                 + "7,631725:NoIndex,631726,PCSI_0072_Pa_P_PE_668_WG|"
@@ -32,7 +33,7 @@ public class WorkflowClientTest {
 
     @Test
     public void getLaneNumbers() {
-        
+
         String input = "1,100:NoIndex,101,Sample_Name+AAAGTC,102,Sample_Name|"
                 + "3,107:NoIndex,108,Sample_Name+AAAGTC,109,Sample_Name+NoIndex,110,Sample_Name|"
                 + "3,107:NoIndex,111,Sample_Name+AAAGTC,112,Sample_Name+NoIndex,113,Sample_Name|"
@@ -45,43 +46,65 @@ public class WorkflowClientTest {
 
     @Test
     public void getLaneListFromLaneNumber() {
-        
+
         String input = "1,100:NoIndex,101,Sample_Name+AAAGTC,102,Sample_Name|"
                 + "2,103:NoIndex,104,Sample_Name+AAAGTC,105,Sample_Name+NoIndex,106,Sample_Name|"
                 + "1,100:NoIndex,107,Sample_Name+AAAGTC,108,Sample_Name";
         Assert.assertTrue(ProcessEvent.getProcessEventListFromLaneNumber(ProcessEvent.parseLanesString(input), "1").size() == 4);
         Assert.assertTrue(ProcessEvent.getProcessEventListFromLaneNumber(ProcessEvent.parseLanesString(input), "2").size() == 3);
         Assert.assertTrue(ProcessEvent.getProcessEventListFromLaneNumber(ProcessEvent.parseLanesString(input), "3").isEmpty());
-        
+
     }
 
     @Test
     public void getBarcodeStringFromLaneList() {
-        
+
         String input = "1,100:NoIndex,101,Sample_Name+AAAGTC,102,Sample_Name|"
                 + "2,103:NoIndex,104,Sample_Name+AAAGTC,105,Sample_Name+NoIndex,106,Sample_Name|"
                 + "1,100:NoIndex,107,Sample_Name+AAAGTC,108,Sample_Name";
         String expected = "NoIndex,101,Sample_Name+AAAGTC,102,Sample_Name+NoIndex,107,Sample_Name+AAAGTC,108,Sample_Name";
         String actual = ProcessEvent.getBarcodesStringFromProcessEventList(ProcessEvent.getProcessEventListFromLaneNumber(ProcessEvent.parseLanesString(input), "1"));
         Assert.assertEquals(actual, expected);
-        
+
     }
-    
+
     @Test
     public void outputString() {
-        
-        String expected = "/tmp/Unaligned_110916_SN804_0064_AD04TBACXX_1/Project_na/"+
-                "Sample_SWID_9858_PCSI_0106_Ly_R_PE_190_WG_110916_SN804_0064_AD04TBACXX/" + 
-                "SWID_9858_PCSI_0106_Ly_R_PE_190_WG_110916_SN804_0064_AD04TBACXX_NoIndex_L001_R1_001.fastq.gz";
+
+        String expected = "/tmp/Unaligned_110916_SN804_0064_AD04TBACXX_1/Project_na/"
+                + "Sample_SWID_9858_PCSI_0106_Ly_R_PE_190_WG_110916_SN804_0064_AD04TBACXX/"
+                + "SWID_9858_PCSI_0106_Ly_R_PE_190_WG_110916_SN804_0064_AD04TBACXX_NoIndex_L001_R1_001.fastq.gz";
         String dataDir = "/tmp/";
         String flowcell = "110916_SN804_0064_AD04TBACXX";
         String laneNum = "1";
         String iusSwAccession = "9858";
         String sampleName = "PCSI_0106_Ly_R_PE_190_WG";
         String barcode = "NoIndex";
-        String read  = "1";
+        String read = "1";
         String actual = WorkflowClient.generateOutputPath(dataDir, flowcell, laneNum, iusSwAccession, sampleName, barcode, read);
         Assert.assertEquals(actual, expected);
-        
+
+    }
+
+    @Test
+    public void testFindBarcode() {
+
+        List<ProcessEvent> ps = ProcessEvent.parseLanesString(defaultInput);
+
+        Assert.assertTrue(ProcessEvent.containsBarcode(ps, "TTTGTG"));
+        Assert.assertFalse(ProcessEvent.containsBarcode(ps, "ZZZZZZ"));
+
+    }
+
+    @Test
+    public void getLaneAccession() {
+
+        List<ProcessEvent> ps = ProcessEvent.parseLanesString(defaultInput);
+
+        Assert.assertEquals(ProcessEvent.getLaneSwid(ps, "1"), "100");
+        Assert.assertEquals(ProcessEvent.getLaneSwid(ps, "2"), "103");
+        Assert.assertEquals(ProcessEvent.getLaneSwid(ps, "3"), "107");
+        Assert.assertEquals(ProcessEvent.getLaneSwid(ps, "100"), null);
+
     }
 }

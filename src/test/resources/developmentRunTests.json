@@ -9,6 +9,9 @@
     "tests": [
         {
             "input_config": "workflow.ini"
+        },
+        {
+            "input_config": "workflow_TS+WG.ini"
         }
     ]
 }
