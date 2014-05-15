@@ -134,6 +134,9 @@ public class WorkflowClient extends OicrWorkflow {
             c.addArgument("--other-bustard-options " + otherBustardOptions);
         }
 
+        //Temporary workaround until https://jira.oicr.on.ca/browse/SEQWARE-1895 is fixed
+        c.addArgument("2>lane_" + laneNum + "_stderr.log");
+
         for (ProcessEvent p : ps) {
             SqwFile f = createOutputFile(generateOutputPath(dataDir, flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(), "1"),
                     "chemical/seq-na-fastq-gzip", manualOutput);
@@ -147,7 +150,7 @@ public class WorkflowClient extends OicrWorkflow {
                 job.addFile(f);
             }
         }
-
+        
         return job;
 
     }
