@@ -7,10 +7,9 @@
         <groupId>ca.on.oicr.pde.workflows</groupId>
         <artifactId>workflows</artifactId>
         <version>2014.1.0</version>
-        <relativePath>../workflow-parent-pom.xml</relativePath>
     </parent>
 
-    <artifactId>workflow-casava</artifactId>
+    <artifactId>CASAVA</artifactId>
     <version>2.3</version>
     <packaging>jar</packaging>
 
