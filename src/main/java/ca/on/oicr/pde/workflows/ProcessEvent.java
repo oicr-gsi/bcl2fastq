@@ -70,7 +70,7 @@ public class ProcessEvent {
                 String barcode = barcodeAttrs[0];
                 String iusSwAccession = barcodeAttrs[1];
                 String sampleName = barcodeAttrs[2];
-		String groupId = "nogroup";
+		String groupId = "NoGroup";
 		if (barcodeAttrs.length>3)
 		    groupId = barcodeAttrs[3];
                 result.add(new ProcessEvent(laneNumber, laneSwAccession, barcode, iusSwAccession, sampleName,groupId));
