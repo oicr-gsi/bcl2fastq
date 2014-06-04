@@ -5,25 +5,37 @@ use Getopt::Long;
 ##########
 #
 # Script:  sw_module_call_bustard.pl
-# Date:    20110901
-# Author:  Brian O'Connor <briandoconnor@gmail.com>
+# Organization: Ontario Institute for Cancer Research (http://oicr.on.ca/)
 #
-# Purpose: this just calls the bustard tools to do base calling for a particular lane
-#          It assumes something like /oicr/local/analysis/illumina/OLB-1.9.3/bin/bustard.py /.mounts/sata/bas013/archive/h239/110525_h239_0118_AC00ULACXX/Data/Intensities --CIF --make has already been called on this intensity dir
-#          
-# Input:   an intensity folder. The barcode param is special, it's a semicolon seperated list of barcode and parent accessions which are seperated by comma.  For example: AATC,121212+AATG,1238291,sample_name
-#
-# Output:  a bustard directory
-#
-# FIXME: core problem with this is I don't know how many IUS fastqs I will get and I don't know there file name.
-# The solution is to reimplement this script as a Java module so I can figure out the output files and correctly save them to the DB.
-# The decider will probably have to save the IUS sw_accession for each barcode so the output file can be linked back correctly
-#
-# FIXME: how do we deal with cleanup? This is going to leave a lot of junk in the run folder.
-#
-# FIXME: to prevent a huge acount of file redundancy this command will need to run on a per lane basis, should split the barcodes and ius by ","
+# Purpose: calls the Illumina tools for converting BCL files to FASTQ for one lane of sequencing. Also supports creating BCLs from Intensities if do_olb is enabled.
 # 
-# FIXME: need to remove tile limit for production
+#	* Means an argument is required
+# Input:	BASE CALLING
+#		--bcl-to-fastq		: *the path to bcl2fastq.pl
+#	   	--intensity-folder 	: *an intensity folder from a sequencing run
+#		--called-bases-folder	: *the folder containing the BCL files in the sequencing run
+#		--flowcell		: *the name of the flowcell (sequencer run)
+#		--lane			: *the lane number to perform bcl2fastq on
+#		--tile			: the sequencing tile. Primarily for testing.
+#		--barcodes		: *A "+" separated list of barcodes, accessions, sample names which are separated by comma.
+#					  Used in the Sample sheet and in the final file name 
+#					  For example: AATC,121212,sample1+AATG,1238291,sample2
+#		--output-dir		: *the location where the final files should be placed
+#		--mismatches		: number of mismatches to allow in the barcode (default: 1)
+#		--ignore-missing-bcl	: flag passed to bcl2fastq, allows missing bcl files
+#		--ignore-missing-stats	: flag passed to bcl2fastq, allows missing stat files
+#		--use-bases-mask	: specify the bases mask for bcl2fastq
+#		--threads 		: *the number of threads to use when running bcl2fastq
+#		--other-bcltofastq-options : any other options that will be passed directly to bcl2fastq
+#		
+#		BUSTARD/OLB
+#		--do-olb		: flag to perform Bustard (create BCLs from Intensity files)
+#		--cleanup		: flag to clean up Bustard results after run
+#		--other-bustard-options	: any other options that will be passed directly to bustard
+#		--bustard		: the path to the bustard.py script if --do-olb is enabled
+#		--help			: flag to print usage
+#
+# Output:  	a directory with the results from bcl2fastq
 #
 ##########
 
@@ -33,8 +45,8 @@ $cleanup = 0;
 $do_olb = 0;
 my $argSize = scalar(@ARGV);
 my $getOptResult = GetOptions('intensity-folder=s' => \$intensity_folder, 'threads=i' => \$bustard_threads, 'bustard=s' => \$bustard, 'bcl-to-fastq=s' => \$bclToFastq, 'flowcell=s' => \$flowcell, 'lane=i' => \$lane, 'tile=i' => \$tile, 'barcodes=s' => \$barcodes, 'output-dir=s' => \$output_dir, 'cleanup' => \$cleanup, 'do-olb=i' => \$do_olb, 'called-bases-folder=s' => \$called_bases_folder, 'help' => \$help, 'mismatches=s' => \$mismatches, 'ignore-missing-bcl' => \$ignore_missing_bcl, 'ignore-missing-stats' => \$ignore_missing_stats, 'use-bases-mask=s' => \$mask, 'other-bcltofastq-options=s' => \$other_bcltofastq_options, 'other-bustard-options=s' => \$other_bustard_options);
-usage() if ( $argSize < 18 || !$getOptResult || $help);
-
+usage() if (!$getOptResult || $help);
+usage() if (not defined $bclToFastq || not defined $intensity_folder || not defined $bustard_threads || not defined $flowcell || not defined $lane || not defined $barcodes ||  not defined $output_dir || not defined $called_bases_folder);
 ###########################################################################################################################
 
 # original dir
@@ -118,9 +130,7 @@ foreach my $barcode_record (@barcode_arr) {
 }
 close OUT;
 
-# now run the next step
-# FIXME: should param this fastq cluster count, using 1000x the max recommended by docs, I just want one file per lane!! (16000000)
-# BUG: this is going to cause problems when the density per lane exceeds this, we won't records more than one fastq/fastq pair per IUS!
+# now run bcl2fastq
 if (! defined $mismatches) {$mismatches = '1';}
 my $cmd = "$bclToFastq --force --fastq-cluster-count 1600000000 --input-dir $bustard_dir --output-dir $output_dir/Unaligned_${flowcell}_${lane} --intensities-dir $intensity_folder --sample-sheet $output_dir/Unaligned_${flowcell}_${lane}/metadata_${flowcell}_${lane}.csv --mismatches $mismatches";
 if (defined($tile) && $tile ne "") {
@@ -161,7 +171,7 @@ exit(0);
 
 sub usage {
   print "Unknown option: @_\n" if ( @_ );
-  print "usage: program [--intensity-folder IlluminaIntensityFolder] [--threads int] [--bustard path_to_bustard.py] [--bcl-to-fastq path_to_configureBclToFastq.pl] [--flowcell flowcell_name] [--lane int] [--barcodes AATC,121212;AATG,1238291] [--output-dir output_dir_path] [[--cleanup]] [[--ignore-missing-bcl]] [[--ignore-missing-stats]] [[--use-bases-mask *mask*]] [[--mismatches *num_of_mismatches per barcode component*]] [[--help|-?]\n";
+  print "usage: sw_module_call_bustard.pl --intensity-folder IlluminaIntensityFolder --threads int --bcl-to-fastq path_to_configureBclToFastq.pl --flowcell flowcell_name --lane int --barcodes AATC,121212;AATG,1238291 --output-dir output_dir_path [[--cleanup]] [[--ignore-missing-bcl]] [[--ignore-missing-stats]] [[--use-bases-mask *mask*]] [[--mismatches *num_of_mismatches per barcode component*]] [[--do-olb]] [[--bustard path_to_bustard.py]] [[--other-bcltofastq-options \"other opts\"]] [[--other-bustard-options \"other opts\"]] [[--help|-?]\n";
   exit(1);
 }
 
