@@ -145,13 +145,13 @@ public class WorkflowClient extends OicrWorkflow {
 
         //for each sample sheet entry, provision out the associated fastq(s).
         for (ProcessEvent p : ps) {
-            SqwFile r1 = createOutputFile(generateOutputPath(dataDir, flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(), "1"),
+            SqwFile r1 = createOutputFile(generateOutputPath(dataDir, flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(), "1", p.getGroupId()),
                     "chemical/seq-na-fastq-gzip", manualOutput);
             r1.setParentAccessions(Arrays.asList(p.getLaneSwAccession(), p.getIusSwAccession()));
             job.addFile(r1);
 
             if (readEnds > 1) {
-                SqwFile r2 = createOutputFile(generateOutputPath(dataDir, flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(), "2"),
+                SqwFile r2 = createOutputFile(generateOutputPath(dataDir, flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(), "2",p.getGroupId()),
                         "chemical/seq-na-fastq-gzip", manualOutput);
                 r2.setParentAccessions(Arrays.asList(p.getLaneSwAccession(), p.getIusSwAccession()));
                 job.addFile(r2);
@@ -196,12 +196,12 @@ public class WorkflowClient extends OicrWorkflow {
 
     }
 
-    public static String generateOutputPath(String dataDir, String flowcell, String laneNum, String iusSwAccession, String sampleName, String barcode, String read) {
+    public static String generateOutputPath(String dataDir, String flowcell, String laneNum, String iusSwAccession, String sampleName, String barcode, String read, String groupId) {
 
         StringBuilder o = new StringBuilder();
         o.append(getLanePath(dataDir, flowcell, laneNum));
-        o.append("/Project_na/Sample_SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(flowcell);
-        o.append("/SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(flowcell).append("_").append(barcode).append("_");
+        o.append("/Project_na/Sample_SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_").append(flowcell);
+        o.append("/SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_").append(flowcell).append("_").append(barcode).append("_");
         o.append("L00").append(laneNum).append("_R").append(read).append("_001.fastq.gz");
 
         return o.toString();

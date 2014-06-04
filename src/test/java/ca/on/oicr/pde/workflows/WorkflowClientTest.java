@@ -62,18 +62,43 @@ public class WorkflowClientTest {
         String input = "1,100:NoIndex,101,Sample_Name+AAAGTC,102,Sample_Name|"
                 + "2,103:NoIndex,104,Sample_Name+AAAGTC,105,Sample_Name+NoIndex,106,Sample_Name|"
                 + "1,100:NoIndex,107,Sample_Name+AAAGTC,108,Sample_Name";
-        String expected = "NoIndex,101,Sample_Name+AAAGTC,102,Sample_Name+NoIndex,107,Sample_Name+AAAGTC,108,Sample_Name";
+        String expected = "NoIndex,101,Sample_Name_nogroup+AAAGTC,102,Sample_Name_nogroup+NoIndex,107,Sample_Name_nogroup+AAAGTC,108,Sample_Name_nogroup";
         String actual = ProcessEvent.getBarcodesStringFromProcessEventList(ProcessEvent.getProcessEventListFromLaneNumber(ProcessEvent.parseLanesString(input), "1"));
         Assert.assertEquals(actual, expected);
 
     }
 
     @Test
+    public void parseGroupIdFromString() {
+	String[] barcodes =	{"AAAA", "AAAT", "AATT", "ATTT", "TTTT"};
+	String[] ius = 		{"1111", "1110", "1100", "1000", "0000"};
+	String[] groupId =	{"15", "14", "12", "8", "0"};
+	String sampleName = "SampleName";
+
+        String input = 	"1,100:";
+	for (int i =0; i< barcodes.length; i++) {
+	    input += barcodes[i] +","+ ius[i] +","+ sampleName+","+groupId[i];
+	    if (i!=barcodes.length-1)
+		input += "+";
+	}
+        List<ProcessEvent> pes =  ProcessEvent.parseLanesString(input);
+
+	for (int i =0; i< barcodes.length; i++) {
+	    String expected = "[1, 100, " + barcodes[i] +", "+ ius[i] +", "+ sampleName+", "+groupId[i]+"]";
+	    String actual = pes.get(i).toString();
+	    Assert.assertEquals(actual, expected);
+	}	
+       
+
+    }
+
+
+    @Test
     public void outputString() {
 
         String expected = "/tmp/Unaligned_110916_SN804_0064_AD04TBACXX_1/Project_na/"
-                + "Sample_SWID_9858_PCSI_0106_Ly_R_PE_190_WG_110916_SN804_0064_AD04TBACXX/"
-                + "SWID_9858_PCSI_0106_Ly_R_PE_190_WG_110916_SN804_0064_AD04TBACXX_NoIndex_L001_R1_001.fastq.gz";
+                + "Sample_SWID_9858_PCSI_0106_Ly_R_PE_190_WG_nogroup_110916_SN804_0064_AD04TBACXX/"
+                + "SWID_9858_PCSI_0106_Ly_R_PE_190_WG_nogroup_110916_SN804_0064_AD04TBACXX_NoIndex_L001_R1_001.fastq.gz";
         String dataDir = "/tmp/";
         String flowcell = "110916_SN804_0064_AD04TBACXX";
         String laneNum = "1";
@@ -81,7 +106,8 @@ public class WorkflowClientTest {
         String sampleName = "PCSI_0106_Ly_R_PE_190_WG";
         String barcode = "NoIndex";
         String read = "1";
-        String actual = WorkflowClient.generateOutputPath(dataDir, flowcell, laneNum, iusSwAccession, sampleName, barcode, read);
+	String groupId = "nogroup";
+        String actual = WorkflowClient.generateOutputPath(dataDir, flowcell, laneNum, iusSwAccession, sampleName, barcode, read, groupId);
         Assert.assertEquals(actual, expected);
 
     }

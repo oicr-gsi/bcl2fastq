@@ -17,14 +17,18 @@ public class ProcessEvent {
     private final String barcode;
     private final String iusSwAccession;
     private final String sampleName;
+    private final String groupId;
 
-    public ProcessEvent(String laneNumber, String laneSwAccession, String barcode, String iusSwAccession, String sampleName) {
+
+    public ProcessEvent(String laneNumber, String laneSwAccession, String barcode, String iusSwAccession, String sampleName, String groupId) {
         this.laneNumber = laneNumber;
         this.laneSwAccession = laneSwAccession;
         this.barcode = barcode;
         this.iusSwAccession = iusSwAccession;
         this.sampleName = sampleName;
+	this.groupId = groupId;
     }
+
 
     public String getLaneNumber() {
         return laneNumber;
@@ -46,9 +50,13 @@ public class ProcessEvent {
         return sampleName;
     }
 
+    public String getGroupId() {
+	return groupId;
+    }
+
     @Override
     public String toString() {
-        return String.format("[%s, %s, %s, %s, %s]", laneNumber, laneSwAccession, barcode, iusSwAccession, sampleName);
+        return String.format("[%s, %s, %s, %s, %s, %s]", laneNumber, laneSwAccession, barcode, iusSwAccession, sampleName, groupId);
     }
 
     public static List<ProcessEvent> parseLanesString(String lanes) {
@@ -62,7 +70,10 @@ public class ProcessEvent {
                 String barcode = barcodeAttrs[0];
                 String iusSwAccession = barcodeAttrs[1];
                 String sampleName = barcodeAttrs[2];
-                result.add(new ProcessEvent(laneNumber, laneSwAccession, barcode, iusSwAccession, sampleName));
+		String groupId = "nogroup";
+		if (barcodeAttrs.length>3)
+		    groupId = barcodeAttrs[3];
+                result.add(new ProcessEvent(laneNumber, laneSwAccession, barcode, iusSwAccession, sampleName,groupId));
             }
         }
         return result;
@@ -89,7 +100,7 @@ public class ProcessEvent {
     public static String getBarcodesStringFromProcessEventList(List<ProcessEvent> ps) {
         StringBuilder sb = new StringBuilder();
         for (ProcessEvent p : ps) {
-            sb.append(p.getBarcode()).append(",").append(p.getIusSwAccession()).append(",").append(p.getSampleName());
+            sb.append(p.getBarcode()).append(",").append(p.getIusSwAccession()).append(",").append(p.getSampleName()).append("_").append(p.getGroupId());
             sb.append("+");
         }
         sb.deleteCharAt(sb.length() - 1);
