@@ -16,6 +16,7 @@
     <name>workflow-casava</name>
 
     <properties>
+	<bcl2fastq-version>1.8.4</bcl2fastq-version>
     </properties>
     
     <build>
@@ -27,16 +28,16 @@
                 <configuration>
                     <links>
                         <link>
-                            <dst>${bundleDirectory}/bin/CASAVA-1.8.4/bin/</dst>
-                            <src>${basedir}/links/CASAVA-1.8.4-bin</src>
+                            <dst>${bundleDirectory}/bin/bcl2fastq-${bcl2fastq-version}/bin/</dst>
+                            <src>${basedir}/links/bcl2fastq-${bcl2fastq-version}/bin</src>
                         </link>
                         <link>
                             <dst>${bundleDirectory}/bin/OLB-1.9.3</dst>
                             <src>${basedir}/links/OLB-1.9.3</src>
                         </link>
                         <link>
-                            <dst>${bundleDirectory}/data/OICR</dst>
-                            <src>${basedir}/links/OICR</src>
+                            <dst>${bundleDirectory}/data/bcl2fastq-${bcl2fastq-version}</dst>
+                            <src>${basedir}/links/bcl2fastq-${bcl2fastq-version}/share/bcl2fastq-${bcl2fastq-version}</src>
                         </link>
                     </links>
                 </configuration>
