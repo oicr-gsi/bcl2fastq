@@ -7,6 +7,7 @@
         <groupId>ca.on.oicr.pde.workflows</groupId>
         <artifactId>workflows</artifactId>
         <version>2014.1.0</version>
+        <relativePath>../workflow-parent-pom.xml</relativePath>
     </parent>
 
     <artifactId>CASAVA</artifactId>
@@ -16,7 +17,7 @@
     <name>workflow-casava</name>
 
     <properties>
-	<bcl2fastq-version>1.8.4</bcl2fastq-version>
+        <bcl2fastq-version>1.8.4</bcl2fastq-version>
     </properties>
     
     <build>
