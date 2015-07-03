@@ -1,3 +1,30 @@
+/**
+ *  Copyright (C) 2014  Ontario Institute of Cancer Research
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Contact us:
+ * 
+ *  Ontario Institute for Cancer Research  
+ *  MaRS Centre, West Tower
+ *  661 University Avenue, Suite 510
+ *  Toronto, Ontario, Canada M5G 0A3
+ *  Phone: 416-977-7599
+ *  Toll-free: 1-866-678-6427
+ *  www.oicr.on.ca
+**/
+
 package ca.on.oicr.pde.workflows;
 
 import java.util.ArrayList;
@@ -7,7 +34,9 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- *
+ * Holds all of the information for a particular IUS, including the lane number and accession, 
+ * IUS barcode and accession, sample name and group id, if it exists. Also provides several
+ * static utility methods to process and calculate over lists of ProcessEvents.
  * @author mlaszloffy
  */
 public class ProcessEvent {
@@ -79,6 +108,10 @@ public class ProcessEvent {
         return result;
     }
 
+    /**
+     * Uniquifies and sorts the lane numbers in a list of ProcessEvents.
+     * @return an ordered array of unique lane numbers.
+     **/
     public static List<String> getUniqueSetOfLaneNumbers(List<ProcessEvent> ps) {
         Set<String> laneNumbers = new TreeSet<String>(); //treeset = sorted + distinct elements
         for (ProcessEvent p : ps) {
@@ -87,6 +120,9 @@ public class ProcessEvent {
         return new ArrayList<String>(laneNumbers);
     }
 
+    /**
+     * Returns all of the ProcessEvents for a single lane number.
+     */
     public static List<ProcessEvent> getProcessEventListFromLaneNumber(List<ProcessEvent> ps, String laneNumber) {
         List<ProcessEvent> result = new ArrayList<ProcessEvent>();
         for (ProcessEvent p : ps) {
