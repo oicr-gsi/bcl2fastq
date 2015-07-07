@@ -11,7 +11,7 @@
 
     <groupId>ca.on.oicr.pde.workflows</groupId>
     <artifactId>CASAVA</artifactId>
-    <version>2.7</version>
+    <version>2.7.1</version>
     <packaging>jar</packaging>
 
     <name>${display-name}</name>
@@ -19,6 +19,7 @@
     <properties>
         <workflow-name>CASAVA</workflow-name>
         <bcl2fastq-version>1.8.4</bcl2fastq-version>
+        <bcl2fastq-root>/.mounts/labs/PDE/public/resources/bcl2fastq_v${bcl2fastq-version}-build</bcl2fastq-root>
     </properties>
     
     <dependencies>
@@ -37,16 +38,12 @@
                 <configuration>
                     <links>
                         <link>
+                            <src>${bcl2fastq-root}/bin</src>
                             <dst>${bundleDirectory}/bin/bcl2fastq-${bcl2fastq-version}/bin/</dst>
-                            <src>${basedir}/links/bcl2fastq-${bcl2fastq-version}/bin</src>
                         </link>
                         <link>
-                            <dst>${bundleDirectory}/bin/OLB-1.9.3</dst>
-                            <src>${basedir}/links/OLB-1.9.3</src>
-                        </link>
-                        <link>
+                            <src>${bcl2fastq-root}/share/bcl2fastq-${bcl2fastq-version}/examples/Validation</src>:x
                             <dst>${bundleDirectory}/data/bcl2fastq-${bcl2fastq-version}</dst>
-                            <src>${basedir}/links/bcl2fastq-${bcl2fastq-version}/share/bcl2fastq-${bcl2fastq-version}</src>
                         </link>
                     </links>
                 </configuration>
