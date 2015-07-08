@@ -1,0 +1,32 @@
+{
+    "defaults": {
+        "description": "CASAVA workflow test",
+        "metrics_calculate": "calculate.sh",
+        "metrics_compare": "compare.sh",
+        "input_config_dir": "/.mounts/labs/PDE/data/RegressionTests/CASAVA/workflow/input_config/",
+        "output_metrics_dir": "/.mounts/labs/PDE/data/RegressionTests/CASAVA/workflow/output_expectation/"
+    },
+    "tests": [
+        {
+	    "description": "Tests a single tile out of an OICR dataset.",
+            "input_config": "workflow.ini"
+        },
+	{
+	    "description": "Tests whether including a group_id in the INI file works. PDE-187",
+	    "input_config": "workflow_groupid.ini"
+	},
+        {
+	    "description": "Tests a full OICR sequencer run with a lot of provision out jobs",
+            "input_config": "workflow_TS+WG.ini"
+        },
+	{
+	    "description": "Validation data bundled with bcl2fastq 1.8.4. Also the new default test set in the workflow.",
+	    "input_config": "100723_EAS346_0188_FC626BWAAXX.ini"
+	},
+	{
+	    "description": "Validation data bundled with bcl2fastq 1.8.4. Tests --ignore-missing-bcl (since it fails if you don't pass that!). Because of this, results aren't identical to the Validation data.",
+	    "input_config": "110120_P20_0993_A805CKABXX.ini"
+	}
+
+    ]
+}
