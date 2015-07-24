@@ -1,0 +1,20 @@
+{
+	"defaultDescription": "Bcl2fastq decider test",
+	"defaultMetricsDirectory": "/.mounts/labs/PDE/data/RegressionTests/Bcl2fastq/decider/development",
+	"defaultParameters": {
+        "--output-path": "./",
+        "--verbose": ""
+    },
+	"defaultIniExclusions": ["parent-accessions", "workflow_run_accession", "workflow-run-accession",
+        "unique_string", "parent_accessions", "parent_accession", "input_file", "input_files", "workflow_bundle_dir",
+        "output_prefix"],
+	"tests": [
+		{
+            "id": "AshPC study test",
+            "studies": ["AshPC"],
+            "parameters": {
+                "--before-date": "2013-11-19"
+            }
+        }
+	]
+}

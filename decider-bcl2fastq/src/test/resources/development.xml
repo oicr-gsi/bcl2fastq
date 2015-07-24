@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="Bcl2fastq Decider Test Suite" parallel="methods" thread-count="20">
+    <test name="Run Tests">
+        <classes>
+            <parameter name="testDefinition" value="/tests.json"/>
+            <class name="ca.on.oicr.pde.testing.DeciderRunTestFactory"/>
+        </classes>
+    </test>
+</suite>
