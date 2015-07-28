@@ -4,8 +4,25 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeMap;
 
+import net.sourceforge.seqware.common.model.Lane;
+import net.sourceforge.seqware.common.model.Sample;
+import net.sourceforge.seqware.common.model.SequencerRun;
+import net.sourceforge.seqware.common.model.WorkflowParam;
+import net.sourceforge.seqware.common.module.ReturnValue;
+import net.sourceforge.seqware.common.util.Log;
+import net.sourceforge.seqware.common.util.filetools.FileTools;
+import net.sourceforge.seqware.common.util.filetools.FileTools.LocalhostPair;
+import net.sourceforge.seqware.pipeline.plugin.Plugin;
+import net.sourceforge.seqware.pipeline.runner.PluginRunner;
 import ca.on.oicr.pinery.client.HttpResponseException;
 import ca.on.oicr.pinery.client.PineryClient;
 import ca.on.oicr.ws.dto.AttributeDto;
@@ -13,18 +30,13 @@ import ca.on.oicr.ws.dto.RunDto;
 import ca.on.oicr.ws.dto.RunDtoPosition;
 import ca.on.oicr.ws.dto.RunDtoSample;
 import ca.on.oicr.ws.dto.SampleDto;
-import net.sourceforge.seqware.common.model.WorkflowParam;
-import net.sourceforge.seqware.common.module.ReturnValue;
-import net.sourceforge.seqware.common.util.Log;
-import net.sourceforge.seqware.common.util.filetools.FileTools;
-import net.sourceforge.seqware.common.util.filetools.FileTools.LocalhostPair;
-import net.sourceforge.seqware.pipeline.plugin.Plugin;
 
 public class Bcl2fastqDecider extends Plugin {
 	
 	private static final String ARG_HELP = "help";
 	private static final String ARG_VERBOSE = "verbose";
 	private static final String ARG_TEST_MODE = "test";
+	private static final String ARG_PINERY_URL = "pinery-url";
 	private static final String ARG_NO_META = "no-metadata";
 	private static final String ARG_RUN_NAME = "run-name";
 	private static final String ARG_RUN_DIR = "run-dir";
@@ -36,6 +48,7 @@ public class Bcl2fastqDecider extends Plugin {
 	private static final String ARG_MISSING_BCL = "ignore-missing-bcl";
 	private static final String ARG_MISSING_STATS = "ignore-missing-stats";
 	
+	private String pineryUrl = null;
 	
 	private String workflowAccession = null;
 	private String runName = null;
@@ -52,7 +65,7 @@ public class Bcl2fastqDecider extends Plugin {
 	private boolean ignoreMissingStats = false;
 	
 	private String lanesString = null;
-	// TODO: read_ends param
+	private final int readEnds = 2; // TODO: Get actual read ends from Pinery order
 	
 	private boolean testing = false;
 	
@@ -64,6 +77,8 @@ public class Bcl2fastqDecider extends Plugin {
 		
 		parser.accepts(ARG_TEST_MODE, "Optional: Testing mode. Prints the INI files to standard out and does not submit the workflow.");
 		
+		parser.accepts(ARG_PINERY_URL, "Required: Pinery webservice URL.").withRequiredArg();
+		
 		parser.accepts(ARG_WORKFLOW_ACCESSION, "Required: The workflow accession of the workflow").withRequiredArg();
 		parser.accepts(ARG_RUN_NAME, "Required: The sequencer run to process").withRequiredArg();
 		parser.accepts(ARG_RUN_DIR, "Required: The sequencer run directory").withRequiredArg();
@@ -73,8 +88,8 @@ public class Bcl2fastqDecider extends Plugin {
                 + "passed to the called workflow which can use it to determine if "
                 + "they should write metadata at runtime on the cluster.");
 		
-		parser.accepts(ARG_OUT_PATH, "Optional: The absolute path of the directory to put the final file(s) (workflow output-prefix option).");
-		parser.accepts(ARG_OUT_FOLDER, "Optional: The relative path to put the final result(s) (workflow output-dir option).");
+		parser.accepts(ARG_OUT_PATH, "Optional: The absolute path of the directory to put the final file(s) (workflow output-prefix option).").withRequiredArg();
+		parser.accepts(ARG_OUT_FOLDER, "Optional: The relative path to put the final result(s) (workflow output-dir option).").withRequiredArg();
 		parser.accepts(ARG_MANUAL_OUT, "Optional: Set output path manually.");
 		
 		parser.accepts(ARG_OFFLINE_BCL, "Optional: Perform offline base calling.");
@@ -103,7 +118,11 @@ public class Bcl2fastqDecider extends Plugin {
 		else if (!this.options.has(ARG_RUN_DIR)) {
 			return missingParameter(ARG_RUN_DIR);
 		}
+		else if (!this.options.has(ARG_PINERY_URL)) {
+			return missingParameter(ARG_PINERY_URL);
+		}
 		else {
+			this.pineryUrl = this.options.valueOf(ARG_PINERY_URL).toString(); // TODO: this.options.valueOf(ARG_PINERY_URL) = null?
             this.workflowAccession = options.valueOf(ARG_WORKFLOW_ACCESSION).toString();
             this.runName = this.options.valueOf(ARG_RUN_NAME).toString();
             this.runDir = this.options.valueOf(ARG_RUN_DIR).toString();
@@ -117,7 +136,7 @@ public class Bcl2fastqDecider extends Plugin {
 			this.outPath = this.options.valueOf(ARG_OUT_PATH).toString();
 			if (!this.outPath.endsWith("/")) outPath += "/";
 		}
-		if (this.options.has(ARG_OUT_FOLDER)) this.outPath = this.options.valueOf(ARG_OUT_FOLDER).toString();
+		if (this.options.has(ARG_OUT_FOLDER)) this.outFolder = this.options.valueOf(ARG_OUT_FOLDER).toString();
 		if (this.options.has(ARG_MANUAL_OUT)) this.manualOutput = true;
 		
 		if (this.options.has(ARG_OFFLINE_BCL)) this.offlineBcl = true;
@@ -158,13 +177,11 @@ public class Bcl2fastqDecider extends Plugin {
 	 * +<parent-barcode>,<parent-swid>,<parent-name>+...|<lane>...}
 	 */
 	private boolean getLaneInfo() { // Note: test with 120914_M00753_0025_A000000000-A1M5Y
-		final String noIndex = "NoIndex";
-		final String barcodeAttribute = "Barcode";
 		StringBuilder sb = new StringBuilder();
 		
-		// TODO: don't hardcode Pinery url
+		// Get sequencer run from Pinery
 		// TODO: secure https if/when possible
-		try (PineryClient pinery = new PineryClient("http://localhost:8888/pinery-ws/", true)) {
+		try (PineryClient pinery = new PineryClient(this.pineryUrl, true)) {
 			RunDto run = null;
 			try {
 				Log.debug("Getting all sequencer runs from Pinery");
@@ -184,37 +201,43 @@ public class Bcl2fastqDecider extends Plugin {
 				return false;
 			}
 			
-			SampleDto sample = null;
+			// Get run and lanes from SeqWare
+			SequencerRun swRun = metadata.getSequencerRunByName(this.runName);
+			List<Lane> swLanes = metadata.getLanesFrom(swRun.getSwAccession());
+			
 			for (RunDtoPosition lane : run.getPositions()) {
 				Log.debug("Adding lane "+lane.getPosition());
+				Integer laneSwid = getLaneSwid(lane, swLanes);
+				if (laneSwid == null) {
+					Log.fatal("Could not find lane SWID in SeqWare");
+					return false;
+				}
+				
 				Set<RunDtoSample> samples = lane.getSamples();
 				for (RunDtoSample runSample : samples) {
 					Log.debug("Adding run sample "+runSample.getId());
 					sb.append(lane.getPosition())
 							.append(",")
-							.append("LaneSWID") // TODO: replace lane swid placeholder
+							.append(laneSwid)
 							.append(":");
 					int sampleId = runSample.getId();
 					try {
 						while (sampleId > 0) {
+							// Get sample from Pinery
 							// TODO: consider getting entire sample list instead of making several calls for single samples
-							sample = pinery.getSample().byId(sampleId);
+							SampleDto sample = pinery.getSample().byId(sampleId);
+							String barcode = getBarcode(sample);
 							
-							String barcode = null;
-							Set<AttributeDto> attributes = sample.getAttributes();
-							if (attributes != null) {
-								for (AttributeDto a : attributes) {
-									if (barcodeAttribute.equals(a.getName())) {
-										barcode = a.getValue();
-										break;
-									}
-								}
+							// Get sample swid from SeqWare
+							Integer sampleSwid = getSampleSwid(sample);
+							if (sampleSwid == null) {
+								Log.fatal("Could not find sample SWID in SeqWare");
+								return false;
 							}
-							if (barcode == null) barcode = noIndex;
 							
 							sb.append(barcode)
 									.append(",")
-									.append("SampleSWID") // TODO: replace sample swid placeholder
+									.append(sampleSwid)
 									.append(",")
 									.append(sample.getName())
 									.append("+");
@@ -243,10 +266,46 @@ public class Bcl2fastqDecider extends Plugin {
 				}
 			}
 			sb.deleteCharAt(sb.length()-1);
+			this.lanesString = sb.toString();
+		}
+		return true;
+	}
+	
+	private static Integer getLaneSwid(RunDtoPosition lane, List<Lane> swLanes) {
+		for (Lane l : swLanes) {
+			// Lane index in SeqWare is 0-based, while position in LIMS is 1-based
+			if (l.getLaneIndex()+1 == lane.getPosition().intValue()) {
+				return l.getSwAccession();
+			}
+		}
+		return null;
+	}
+	
+	private Integer getSampleSwid(SampleDto sample) {
+		List<Sample> swSamples = metadata.getSampleByName(sample.getName());
+		if (swSamples == null || swSamples.isEmpty()) {
+			Log.error("Sample not found in SeqWare");
+			return null;
 		}
 		
-		this.lanesString = sb.toString();
-		return true;
+		return swSamples.get(0).getSwAccession();
+	}
+	
+	private static String getBarcode(SampleDto sample) {
+		final String noIndex = "NoIndex";
+		final String barcodeAttribute = "Barcode";
+		String barcode = null;
+		
+		Set<AttributeDto> attributes = sample.getAttributes();
+		if (attributes != null) {
+			for (AttributeDto a : attributes) {
+				if (barcodeAttribute.equals(a.getName())) {
+					barcode = a.getValue();
+					break;
+				}
+			}
+		}
+		return barcode == null ? noIndex : barcode;
 	}
 	
 	private String createIniFile(Map<String, String> iniParameters) {
@@ -318,6 +377,7 @@ public class Bcl2fastqDecider extends Plugin {
 		run.setManualOutput(this.manualOutput);
 		
 		run.addProperty("lanes", this.lanesString);
+		run.addProperty("read_ends", String.valueOf(this.readEnds));
 		
 		return run.getIniFile();
 	}
@@ -341,7 +401,7 @@ public class Bcl2fastqDecider extends Plugin {
         String localhost = localhostPair.hostname;
         if (localhostPair.returnValue.getExitStatus() != ReturnValue.SUCCESS && localhost == null) {
             Log.error("Could not determine localhost: Return value " + localhostPair.returnValue.getExitStatus());
-            Log.error("Please supply it on the command line with --host");
+//            Log.error("Please supply it on the command line with --host");
             return new ReturnValue(ReturnValue.INVALIDPARAMETERS);
         }
 		runArgs.add("--host");
@@ -364,6 +424,9 @@ public class Bcl2fastqDecider extends Plugin {
 //			runArgs.add(s);
 //		}
 		
+		Log.stdout("Scheduling workflow run.");
+        PluginRunner.main(runArgs.toArray(new String[runArgs.size()]));
+        
 		return new ReturnValue(ReturnValue.SUCCESS);
 	}
 

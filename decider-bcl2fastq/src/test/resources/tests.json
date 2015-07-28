@@ -1,19 +1,21 @@
 {
 	"defaultDescription": "Bcl2fastq decider test",
-	"defaultMetricsDirectory": "/.mounts/labs/PDE/data/RegressionTests/Bcl2fastq/decider/development",
+	"defaultMetricsResources": "/expected_output/development/",
 	"defaultParameters": {
         "--output-path": "./",
-        "--verbose": ""
+        "--verbose": "",
+        "--test": "",
+        "--pinery-url": "http://localhost:8888/pinery-ws/"
     },
 	"defaultIniExclusions": ["parent-accessions", "workflow_run_accession", "workflow-run-accession",
         "unique_string", "parent_accessions", "parent_accession", "input_file", "input_files", "workflow_bundle_dir",
         "output_prefix"],
 	"tests": [
 		{
-            "id": "AshPC study test",
-            "studies": ["AshPC"],
+            "id": "Run test one",
             "parameters": {
-                "--before-date": "2013-11-19"
+                "--run-name": "140815_M00753_0006_000000000-A55NH",
+                "--run-dir": "/.mounts/labs/prod/archive/m753/140815_M00753_0006_000000000-A55NH/"
             }
         }
 	]
