@@ -19,7 +19,7 @@
 	<properties>
 		<main-class>ca.on.oicr.pde.deciders.Bcl2fastqDecider</main-class>
 		<workflow-version>2.7</workflow-version>
-		<pinery-version>0.0.1-SNAPSHOT</pinery-version>
+		<pinery-version>2.0-SNAPSHOT</pinery-version>
 	</properties>
 
 	<dependencies>

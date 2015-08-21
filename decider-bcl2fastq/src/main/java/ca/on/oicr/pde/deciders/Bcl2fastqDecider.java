@@ -180,24 +180,14 @@ public class Bcl2fastqDecider extends Plugin {
 		StringBuilder sb = new StringBuilder();
 		
 		// Get sequencer run from Pinery
-		// TODO: secure https if/when possible
+		// TODO: secure https (add certificate to jvm)
 		try (PineryClient pinery = new PineryClient(this.pineryUrl, true)) {
 			RunDto run = null;
 			try {
 				Log.debug("Getting all sequencer runs from Pinery");
-				List<RunDto> allRuns = pinery.getSequencerRun().all(); // TODO: get individual run by name if/when possible
-				for (RunDto r : allRuns) {
-					if (this.runName.equals(r.getName())) {
-						run = r;
-						break;
-					}
-				}
-				if (run == null) {
-					Log.fatal("Sequencer run not found in Pinery.");
-					return false;
-				}
+				run = pinery.getSequencerRun().byName(this.runName);
 			} catch (HttpResponseException ex) {
-				Log.fatal("Retrieval of sequencer runs from Pinery failed.", ex);
+				Log.fatal("Retrieval of sequencer run from Pinery failed.", ex);
 				return false;
 			}
 			
