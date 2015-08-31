@@ -184,7 +184,7 @@ public class Bcl2fastqDecider extends Plugin {
 		try (PineryClient pinery = new PineryClient(this.pineryUrl, true)) {
 			RunDto run = null;
 			try {
-				Log.debug("Getting all sequencer runs from Pinery");
+				Log.debug("Getting sequencer run from Pinery");
 				run = pinery.getSequencerRun().byName(this.runName);
 			} catch (HttpResponseException ex) {
 				Log.fatal("Retrieval of sequencer run from Pinery failed.", ex);
@@ -211,11 +211,22 @@ public class Bcl2fastqDecider extends Plugin {
 							.append(laneSwid)
 							.append(":");
 					int sampleId = runSample.getId();
+					boolean first = true;
 					try {
 						while (sampleId > 0) {
 							// Get sample from Pinery
 							// TODO: consider getting entire sample list instead of making several calls for single samples
 							SampleDto sample = pinery.getSample().byId(sampleId);
+							if (first) {
+								if (sample.getSampleType() == null || !sample.getSampleType().matches("^Illumina .+ Library Seq$")) {
+									Log.fatal("Invalid sample type. Sample type must be 'Illumina * Library Seq' but sample " +
+											sample.getName() + " has sample type " +
+											(sample.getSampleType() == null ? "null" : sample.getSampleType()));
+									return false;
+								}
+								first = false;
+							}
+							
 							String barcode = getBarcode(sample);
 							
 							// Get sample swid from SeqWare
