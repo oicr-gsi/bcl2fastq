@@ -47,6 +47,7 @@ public class Bcl2fastqDecider extends Plugin {
 	private static final String ARG_OFFLINE_BCL = "do-olb";
 	private static final String ARG_MISSING_BCL = "ignore-missing-bcl";
 	private static final String ARG_MISSING_STATS = "ignore-missing-stats";
+	private static final String ARG_INSECURE_PINERY = "insecure-pinery";
 	
 	private String pineryUrl = null;
 	
@@ -67,6 +68,7 @@ public class Bcl2fastqDecider extends Plugin {
 	private String lanesString = null;
 	private final int readEnds = 2; // TODO: Get actual read ends from Pinery order
 	
+	private boolean insecurePinery = false;
 	private boolean testing = false;
 	
 	
@@ -95,6 +97,7 @@ public class Bcl2fastqDecider extends Plugin {
 		parser.accepts(ARG_OFFLINE_BCL, "Optional: Perform offline base calling.");
 		parser.accepts(ARG_MISSING_BCL, "Optional: Passed on to Bustard.");
 		parser.accepts(ARG_MISSING_STATS, "Optional: Passed on to Bustard.");
+		parser.accepts(ARG_INSECURE_PINERY, "Optional: Ignore certificate and hostname errors from Pinery.");
 	}
 	
 	@Override
@@ -147,6 +150,7 @@ public class Bcl2fastqDecider extends Plugin {
 		if (this.options.has(ARG_MISSING_BCL)) this.ignoreMissingBcl = true;
 		if (this.options.has(ARG_MISSING_STATS)) this.ignoreMissingStats = true;
 		
+		if (this.options.has(ARG_INSECURE_PINERY)) this.insecurePinery = true;
 		if (this.options.has(ARG_TEST_MODE)) this.testing = true;
 		
 		return new ReturnValue(ReturnValue.SUCCESS);
@@ -184,8 +188,7 @@ public class Bcl2fastqDecider extends Plugin {
 		StringBuilder sb = new StringBuilder();
 		
 		// Get sequencer run from Pinery
-		// TODO: secure https (add certificate to jvm)
-		try (PineryClient pinery = new PineryClient(this.pineryUrl, true)) {
+		try (PineryClient pinery = new PineryClient(this.pineryUrl, insecurePinery)) {
 			RunDto run = null;
 			try {
 				Log.debug("Getting sequencer run from Pinery");
