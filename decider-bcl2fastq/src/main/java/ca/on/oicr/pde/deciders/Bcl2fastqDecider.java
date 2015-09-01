@@ -69,7 +69,7 @@ public class Bcl2fastqDecider extends Plugin {
 	private boolean ignoreMissingStats = false;
 	
 	private String lanesString = null;
-	private final Set<Integer> laneAccessions = new HashSet<>();
+	private final Set<Integer> laneAccessions = new HashSet<>(); // TODO: IUS Accessions needed too?
 	private int readEnds = 2; // TODO: Get from Pinery/SeqWare instead of requiring default/parameter
 	
 	private boolean insecurePinery = false;
@@ -211,6 +211,7 @@ public class Bcl2fastqDecider extends Plugin {
 			List<Lane> swLanes = metadata.getLanesFrom(swRun.getSwAccession());
 			
 			for (RunDtoPosition lane : run.getPositions()) {
+				if (lane.getSamples() == null || lane.getSamples().isEmpty()) continue;
 				Log.debug("Adding lane "+lane.getPosition());
 				Integer laneSwid = getLaneSwid(lane, swLanes);
 				if (laneSwid == null) {
@@ -224,7 +225,7 @@ public class Bcl2fastqDecider extends Plugin {
 					Log.debug("Adding run sample "+runSample.getId());
 					sb.append(lane.getPosition())
 							.append(",")
-							.append(laneSwid)
+							.append(laneSwid) // TODO: should this actually be IUS SWID?
 							.append(":");
 					int sampleId = runSample.getId();
 					boolean first = true;
@@ -280,6 +281,10 @@ public class Bcl2fastqDecider extends Plugin {
 					}
 					sb.append("|");
 				}
+			}
+			if (sb.length() == 0) {
+				Log.error("No samples found in Pinery for this run.");
+				return false;
 			}
 			sb.deleteCharAt(sb.length()-1);
 			this.lanesString = sb.toString();
