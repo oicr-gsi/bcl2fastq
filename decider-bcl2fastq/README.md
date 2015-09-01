@@ -22,7 +22,7 @@ mvn clean install
 
 ###Usage
 
-java -jar Decider.jar --wf-accession \<bcl2fastq-Workflow-accession\> --run-name \<run-name\> --run-dir \<run-dir\> --pinery-url \<pinery-url\>
+java -jar Decider.jar --wf-accession \<bcl2fastq-workflow-accession\> --run-name \<run-name\> --run-dir \<run-dir\> --pinery-url \<pinery-url\>
 
 ###Options
 
