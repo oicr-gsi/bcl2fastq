@@ -42,6 +42,7 @@ public class Bcl2fastqDecider extends Plugin {
 	private static final String ARG_NO_META = "no-metadata";
 	private static final String ARG_RUN_NAME = "run-name";
 	private static final String ARG_RUN_DIR = "run-dir";
+	private static final String ARG_READ_ENDS = "read-ends";
 	private static final String ARG_WORKFLOW_ACCESSION = "wf-accession";
 	private static final String ARG_OUT_PATH = "output-path";
 	private static final String ARG_OUT_FOLDER = "output-folder";
@@ -69,7 +70,7 @@ public class Bcl2fastqDecider extends Plugin {
 	
 	private String lanesString = null;
 	private final Set<Integer> laneAccessions = new HashSet<>();
-	private final int readEnds = 2; // TODO: Get actual read ends from Pinery order
+	private int readEnds = 2; // TODO: Get from Pinery/SeqWare instead of requiring default/parameter
 	
 	private boolean insecurePinery = false;
 	private boolean testing = false;
@@ -87,6 +88,7 @@ public class Bcl2fastqDecider extends Plugin {
 		parser.accepts(ARG_WORKFLOW_ACCESSION, "Required: The workflow accession of the workflow").withRequiredArg();
 		parser.accepts(ARG_RUN_NAME, "Required: The sequencer run to process").withRequiredArg();
 		parser.accepts(ARG_RUN_DIR, "Required: The sequencer run directory").withRequiredArg();
+		parser.accepts(ARG_READ_ENDS, "Optional: Must specify 1 if single end. Defaults to 2 (paired end)").withRequiredArg();
 		
 		parser.accepts(ARG_NO_META, "Optional: a flag that prevents metadata writeback (which is done "
                 + "by default) by the Decider and that is subsequently "
@@ -140,6 +142,16 @@ public class Bcl2fastqDecider extends Plugin {
         }
 		
 		// Optional args
+		if (this.options.has(ARG_READ_ENDS)) {
+			String ends = this.options.valueOf(ARG_READ_ENDS).toString().trim();
+			if ("1".equals(ends)) this.readEnds = 1;
+			else if ("2".equals(ends)) this.readEnds = 2;
+			else {
+				Log.error("Invalid argument. Value of read-ends must be 1 or 2.");
+				return new ReturnValue(ReturnValue.INVALIDARGUMENT);
+			}
+		}
+		
 		if (this.options.has(ARG_NO_META)) this.metadataWriteback = false;
 		
 		if (this.options.has(ARG_OUT_PATH)) {
@@ -160,7 +172,7 @@ public class Bcl2fastqDecider extends Plugin {
 	}
 	
 	private ReturnValue missingParameter(String parameter) {
-		System.err.println("Required parameter missing: "+parameter);
+		Log.error("Required parameter missing: "+parameter);
 		return new ReturnValue(ReturnValue.INVALIDARGUMENT);
 	}
 	
