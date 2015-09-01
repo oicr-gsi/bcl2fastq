@@ -222,7 +222,6 @@ public class Bcl2fastqDecider extends Plugin {
 					try {
 						while (sampleId > 0) {
 							// Get sample from Pinery
-							// TODO: consider getting entire sample list instead of making several calls for single samples
 							SampleDto sample = pinery.getSample().byId(sampleId);
 							if (first) {
 								if (sample.getSampleType() == null || !sample.getSampleType().matches("^Illumina .+ Library Seq$")) {
@@ -415,22 +414,11 @@ public class Bcl2fastqDecider extends Plugin {
 		runArgs.add("--host");
 		runArgs.add(localhost);
 		
-		// TODO: ensure the below parameters are not required
-//		Collection<String> fileSWIDs = new ArrayList<>();
-//		runArgs.add("--" + WorkflowScheduler.INPUT_FILES);
-//		for (Integer fileSWID : fileSWIDsToRun) {
-//			fileSWIDs.add(String.valueOf(fileSWID));
-//		}
-//		runArgs.add(commaSeparateMy(fileSWIDs));
-		
-//		runArgs.add("--parent-accessions");
-//		runArgs.add(commaSeparateMy(parentAccessionsToRun));
+		// TODO: figure out what these are
 //		runArgs.add("--link-workflow-run-to-parents");
-//		runArgs.add(commaSeparateMy(workflowParentAccessionsToRun));
-//		runArgs.add("--");
-//		for (String s : options.valuesOf(nonOptionSpec)) {
-//			runArgs.add(s);
-//		}
+//		runArgs.add(commaSeparateMy(parent_lane_accessions));
+//		runArgs.add("--link-workflow-run-to-parents");
+//		runArgs.add(commaSeparateMy(parent_ius_str));
 		
 		Log.stdout("Scheduling workflow run.");
         PluginRunner.main(runArgs.toArray(new String[runArgs.size()]));
