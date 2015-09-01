@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -66,6 +68,7 @@ public class Bcl2fastqDecider extends Plugin {
 	private boolean ignoreMissingStats = false;
 	
 	private String lanesString = null;
+	private final Set<Integer> laneAccessions = new HashSet<>();
 	private final int readEnds = 2; // TODO: Get actual read ends from Pinery order
 	
 	private boolean insecurePinery = false;
@@ -168,16 +171,7 @@ public class Bcl2fastqDecider extends Plugin {
 		String ini = createIniFile(getIniParameters());
 		if (ini == null) return new ReturnValue(ReturnValue.PROGRAMFAILED);
 		
-		ReturnValue ret = null;
-		if (this.testing) {
-			Log.debug("Test mode: not launching workflow");
-			ret = new ReturnValue(ReturnValue.SUCCESS);
-		}
-		else {
-			ret = launchWorkflow(ini);
-		}
-		
-		return ret;
+		return launchWorkflow(ini);
 	}
 	
 	/**
@@ -209,6 +203,7 @@ public class Bcl2fastqDecider extends Plugin {
 					Log.fatal("Could not find lane SWID in SeqWare");
 					return false;
 				}
+				laneAccessions.add(laneSwid);
 				
 				Set<RunDtoSample> samples = lane.getSamples();
 				for (RunDtoSample runSample : samples) {
@@ -408,22 +403,39 @@ public class Bcl2fastqDecider extends Plugin {
         String localhost = localhostPair.hostname;
         if (localhostPair.returnValue.getExitStatus() != ReturnValue.SUCCESS && localhost == null) {
             Log.error("Could not determine localhost: Return value " + localhostPair.returnValue.getExitStatus());
-//            Log.error("Please supply it on the command line with --host");
             return new ReturnValue(ReturnValue.INVALIDPARAMETERS);
         }
 		runArgs.add("--host");
 		runArgs.add(localhost);
 		
-		// TODO: figure out what these are
-//		runArgs.add("--link-workflow-run-to-parents");
-//		runArgs.add(commaSeparateMy(parent_lane_accessions));
-//		runArgs.add("--link-workflow-run-to-parents");
-//		runArgs.add(commaSeparateMy(parent_ius_str));
+		runArgs.add("--link-workflow-run-to-parents");
+		runArgs.add(commaSeparate(laneAccessions));
 		
-		Log.stdout("Scheduling workflow run.");
-        PluginRunner.main(runArgs.toArray(new String[runArgs.size()]));
+		StringBuilder sb = new StringBuilder();
+		for (String a : runArgs) {
+			sb.append(a).append(" ");
+		}
+		Log.debug("PluginRunner params: " + sb.toString());
+		
+		if (testing) {
+			Log.stdout("Test mode: not launching workflow");
+		}
+		else {
+			Log.stdout("Scheduling workflow run.");
+	        PluginRunner.main(runArgs.toArray(new String[runArgs.size()]));
+		}
         
 		return new ReturnValue(ReturnValue.SUCCESS);
+	}
+	
+	private String commaSeparate(Collection<Integer> things) {
+		if (things == null || things.isEmpty()) return "";
+		StringBuilder sb = new StringBuilder();
+		for (Integer i : things) {
+			sb.append(i).append(",");
+		}
+		sb.deleteCharAt(sb.length()-1);
+		return sb.toString();
 	}
 
 	public static void main(String args[]){
