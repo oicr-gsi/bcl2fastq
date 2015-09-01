@@ -109,20 +109,24 @@ public class Bcl2fastqDecider extends Plugin {
 		Log.debug("INIT");
 		
 		// Required args
-		if (!this.options.has(ARG_WORKFLOW_ACCESSION)) {
+		if (!this.options.has(ARG_WORKFLOW_ACCESSION) || this.options.valueOf(ARG_WORKFLOW_ACCESSION) == null || 
+				this.options.valueOf(ARG_WORKFLOW_ACCESSION).toString().isEmpty()) {
 			return missingParameter(ARG_WORKFLOW_ACCESSION);
 		}
-		else if (!this.options.has(ARG_RUN_NAME)) {
+		else if (!this.options.has(ARG_RUN_NAME) || this.options.valueOf(ARG_RUN_NAME) == null || 
+				this.options.valueOf(ARG_RUN_NAME).toString().isEmpty()) {
 			return missingParameter(ARG_RUN_NAME);
 		}
-		else if (!this.options.has(ARG_RUN_DIR)) {
+		else if (!this.options.has(ARG_RUN_DIR) || this.options.valueOf(ARG_RUN_DIR) == null || 
+				this.options.valueOf(ARG_RUN_DIR).toString().isEmpty()) {
 			return missingParameter(ARG_RUN_DIR);
 		}
-		else if (!this.options.has(ARG_PINERY_URL)) {
+		else if (!this.options.has(ARG_PINERY_URL) || this.options.valueOf(ARG_PINERY_URL) == null || 
+				this.options.valueOf(ARG_PINERY_URL).toString().isEmpty()) {
 			return missingParameter(ARG_PINERY_URL);
 		}
 		else {
-			this.pineryUrl = this.options.valueOf(ARG_PINERY_URL).toString(); // TODO: this.options.valueOf(ARG_PINERY_URL) = null?
+			this.pineryUrl = this.options.valueOf(ARG_PINERY_URL).toString();
             this.workflowAccession = options.valueOf(ARG_WORKFLOW_ACCESSION).toString();
             this.runName = this.options.valueOf(ARG_RUN_NAME).toString();
             this.runDir = this.options.valueOf(ARG_RUN_DIR).toString();
