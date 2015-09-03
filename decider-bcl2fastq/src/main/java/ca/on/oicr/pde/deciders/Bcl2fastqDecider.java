@@ -15,8 +15,8 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 
+import net.sourceforge.seqware.common.model.IUS;
 import net.sourceforge.seqware.common.model.Lane;
-import net.sourceforge.seqware.common.model.Sample;
 import net.sourceforge.seqware.common.model.SequencerRun;
 import net.sourceforge.seqware.common.model.WorkflowParam;
 import net.sourceforge.seqware.common.module.ReturnValue;
@@ -25,9 +25,11 @@ import net.sourceforge.seqware.common.util.filetools.FileTools;
 import net.sourceforge.seqware.common.util.filetools.FileTools.LocalhostPair;
 import net.sourceforge.seqware.pipeline.plugin.Plugin;
 import net.sourceforge.seqware.pipeline.runner.PluginRunner;
+import ca.on.oicr.pde.deciders.model.IusData;
+import ca.on.oicr.pde.deciders.model.RunData;
+import ca.on.oicr.pde.deciders.model.RunPositionData;
 import ca.on.oicr.pinery.client.HttpResponseException;
 import ca.on.oicr.pinery.client.PineryClient;
-import ca.on.oicr.ws.dto.AttributeDto;
 import ca.on.oicr.ws.dto.RunDto;
 import ca.on.oicr.ws.dto.RunDtoPosition;
 import ca.on.oicr.ws.dto.RunDtoSample;
@@ -69,8 +71,10 @@ public class Bcl2fastqDecider extends Plugin {
 	private boolean ignoreMissingStats = false;
 	
 	private String lanesString = null;
-	private final Set<Integer> laneAccessions = new HashSet<>(); // TODO: IUS Accessions needed too?
+	private Set<Integer> iusAccessions;
+	private Set<Integer> laneAccessions;
 	private int readEnds = 2; // TODO: Get from Pinery/SeqWare instead of requiring default/parameter
+	private final String useBasesMask = "";
 	
 	private boolean insecurePinery = false;
 	private boolean testing = false;
@@ -178,7 +182,15 @@ public class Bcl2fastqDecider extends Plugin {
 	
 	@Override
 	public ReturnValue do_run() {
-		if (!getLaneInfo()) return new ReturnValue(ReturnValue.PROGRAMFAILED);
+		try {
+			RunData runData = buildDataStructure();
+			buildLanesString(runData);
+			findAllIus(runData);
+			// TODO: determine use_bases_mask
+		} catch (HttpResponseException e) {
+			Log.error("Error retrieving data from Pinery", e);
+			return new ReturnValue(ReturnValue.PROGRAMFAILED);
+		}
 		
 		String ini = createIniFile(getIniParameters());
 		if (ini == null) return new ReturnValue(ReturnValue.PROGRAMFAILED);
@@ -187,158 +199,114 @@ public class Bcl2fastqDecider extends Plugin {
 	}
 	
 	/**
-	 * Builds the ini lanes String. Format: {@code <lane>,<lane-swid>:<barcode>,<sample-swid><sample-name>
-	 * +<parent-barcode>,<parent-swid>,<parent-name>+...|<lane>...}
+	 * Builds the ini lanes String. Format: {@code <lane#>,<lane-swid>:<barcode>,<ius-swid>,<sample-name>
+	 * +<more-barcodes>...|<more-lanes>...}
 	 * 
-	 * @return true if successful; false otherwise. If the method fails, a message stating the cause will be logged
+	 * @param runData data structure containing all run data from LIMS and SeqWare including run, lanes, ius, and samples
 	 */
-	private boolean getLaneInfo() {
+	private void buildLanesString(RunData runData) {
 		StringBuilder sb = new StringBuilder();
-		
-		// Get sequencer run from Pinery
-		try (PineryClient pinery = new PineryClient(this.pineryUrl, insecurePinery)) {
-			RunDto run = null;
-			try {
-				Log.debug("Getting sequencer run from Pinery");
-				run = pinery.getSequencerRun().byName(this.runName);
-			} catch (HttpResponseException ex) {
-				Log.fatal("Retrieval of sequencer run from Pinery failed.", ex);
-				return false;
-			}
-			
-			// Get run and lanes from SeqWare
-			SequencerRun swRun = metadata.getSequencerRunByName(this.runName);
-			List<Lane> swLanes = metadata.getLanesFrom(swRun.getSwAccession());
-			
-			for (RunDtoPosition lane : run.getPositions()) {
-				if (lane.getSamples() == null || lane.getSamples().isEmpty()) continue;
-				Log.debug("Adding lane "+lane.getPosition());
-				Integer laneSwid = getLaneSwid(lane, swLanes);
-				if (laneSwid == null) {
-					Log.fatal("Could not find lane SWID in SeqWare");
-					return false;
-				}
-				laneAccessions.add(laneSwid);
-				
-				Set<RunDtoSample> samples = lane.getSamples();
-				for (RunDtoSample runSample : samples) {
-					Log.debug("Adding run sample "+runSample.getId());
-					sb.append(lane.getPosition())
-							.append(",")
-							.append(laneSwid) // TODO: should this actually be IUS SWID?
-							.append(":");
-					int sampleId = runSample.getId();
-					boolean first = true;
-					try {
-						while (sampleId > 0) {
-							// Get sample from Pinery
-							SampleDto sample = pinery.getSample().byId(sampleId);
-							if (first) {
-								if (sample.getSampleType() == null || !sample.getSampleType().matches("^Illumina .+ Library Seq$")) {
-									Log.fatal("Invalid sample type. Sample type must be 'Illumina * Library Seq' but sample " +
-											sample.getName() + " has sample type " +
-											(sample.getSampleType() == null ? "null" : sample.getSampleType()));
-									return false;
-								}
-								first = false;
-							}
-							
-							String barcode = getBarcode(sample);
-							
-							// Get sample swid from SeqWare
-							Integer sampleSwid = getSampleSwid(sample);
-							if (sampleSwid == null) {
-								Log.fatal("Could not find sample SWID in SeqWare");
-								return false;
-							}
-							
-							sb.append(barcode)
-									.append(",")
-									.append(sampleSwid)
-									.append(",")
-									.append(sample.getName())
-									.append("+");
-							Set<String> parents = sample.getParents();
-							if (parents == null || parents.isEmpty()) {
-								// Root sample found
-								sampleId = -1;
-							}
-							else if (parents.size() == 1) {
-								for (String url : parents) {
-									sampleId = Integer.valueOf(url.substring(url.lastIndexOf("/")+1));
-									Log.debug("Adding parent sample "+sampleId);
-								}
-							}
-							else {
-								Log.fatal("Sample with id "+sampleId+" should have 1 or 0 parents (found "+parents.size()+").");
-								return false;
-							}
-						}
-						sb.deleteCharAt(sb.length()-1);
-					} catch (HttpResponseException ex) {
-						Log.fatal("Retrieval of sample from Pinery failed. Sample id:"+runSample.getId(), ex);
-						return false;
-					}
-					sb.append("|");
-				}
-			}
-			if (sb.length() == 0) {
-				Log.error("No samples found in Pinery for this run.");
-				return false;
+		for (RunPositionData lane : runData.getPositions()) {
+			sb.append(lane.getPositionNumber())
+			.append(",")
+			.append(lane.getSwLane().getSwAccession())
+			.append(":");
+			for (IusData ius : lane.getIus()) {
+				sb.append(ius.getSwIus().getTag())
+					.append(",")
+					.append(ius.getSwIus().getSwAccession())
+					.append(",")
+					.append(ius.getLimsSample().getName())
+					.append("+");
 			}
 			sb.deleteCharAt(sb.length()-1);
-			this.lanesString = sb.toString();
+			sb.append("|");
 		}
-		return true;
+		sb.deleteCharAt(sb.length()-1);
+		lanesString = sb.toString();
 	}
 	
-	/**
-	 * Given a lane from Pinery and a list of lanes from SeqWare, finds the SWID matching the lane from Pinery
-	 * 
-	 * @param lane lane from Pinery
-	 * @param swLanes list of SeqWare lanes (one of which corresponds to the Pinery lane)
-	 * @return the SWID, or null if it can't be found
-	 */
-	private static Integer getLaneSwid(RunDtoPosition lane, List<Lane> swLanes) {
-		for (Lane l : swLanes) {
-			// Lane index in SeqWare is 0-based, while position in LIMS is 1-based
-			if (l.getLaneIndex()+1 == lane.getPosition().intValue()) {
-				return l.getSwAccession();
+	private void findAllIus(RunData runData) {
+		iusAccessions = new HashSet<>();
+		laneAccessions = new HashSet<>();
+		for (RunPositionData posData : runData.getPositions()) {
+			laneAccessions.add(posData.getSwLane().getSwAccession());
+			for (IusData iusData : posData.getIus()) {
+				iusAccessions.add(iusData.getSwIus().getSwAccession());
 			}
 		}
-		return null;
 	}
 	
-	/**
-	 * Looks up a sample in SeqWare to find its SWID
-	 * 
-	 * @param sample Sample from Pinery
-	 * @return the sample SWID, or null if the sample isn't found
-	 */
-	private Integer getSampleSwid(SampleDto sample) {
-		List<Sample> swSamples = metadata.getSampleByName(sample.getName());
-		if (swSamples == null || swSamples.isEmpty()) {
-			return null;
+	private RunData buildDataStructure() throws HttpResponseException { // TODO: handle exceptions
+		try (PineryClient pinery = new PineryClient(this.pineryUrl, insecurePinery)) {
+			Log.debug("Getting sequencer run " + runName + " from LIMS");
+			RunDto limsRun = pinery.getSequencerRun().byName(runName);
+			Log.debug("Getting sequencer run " + runName + " from SeqWare");
+			SequencerRun swRun = metadata.getSequencerRunByName(runName);
+			
+			Log.debug("Getting lanes for sequencer run " + runName + " from SeqWare");
+			Collection<Lane> swLanes = metadata.getLanesFrom(swRun.getSwAccession());
+			Collection<RunPositionData> positions = new ArrayList<>();
+			for (RunDtoPosition pos : limsRun.getPositions()) {
+				int posNum = pos.getPosition();
+				Lane swLane = null;
+				for (Lane lane : swLanes) {
+					if (lane.getLaneIndex().intValue()+1 == posNum) {
+						swLane = lane;
+						break;
+					}
+				}
+				if (swLane == null) throw new RuntimeException(); // TODO
+				Collection<IusData> iusDataList = buildIusData(swLane, pos, pinery);
+				positions.add(new RunPositionData(posNum, swLane, iusDataList));
+			}
+			if (positions.isEmpty()) throw new RuntimeException(); // TODO
+			return new RunData(limsRun, swRun, positions);
 		}
-		
-		return swSamples.get(0).getSwAccession();
 	}
 	
-	private static String getBarcode(SampleDto sample) {
-		final String noIndex = "NoIndex";
-		final String barcodeAttribute = "Barcode";
-		String barcode = null;
+	private Collection<IusData> buildIusData(Lane swLane, RunDtoPosition pos, PineryClient pinery) throws HttpResponseException {
+		Collection<IusData> iusDataList = new ArrayList<>();
+		Log.debug("Getting all IUS for lane " + pos.getPosition() + " with SWID " + swLane.getSwAccession() + " from SeqWare");
+		List<IUS> swLaneIuss = metadata.getIUSFrom(swLane.getSwAccession());;
 		
-		Set<AttributeDto> attributes = sample.getAttributes();
-		if (attributes != null) {
-			for (AttributeDto a : attributes) {
-				if (barcodeAttribute.equals(a.getName())) {
-					barcode = a.getValue();
-					break;
+		for (RunDtoSample laneSample : pos.getSamples()) {
+			Log.debug("Getting sample id " + laneSample.getId() + " from lane " + pos.getPosition() + " from LIMS");
+			SampleDto limsSample = pinery.getSample().byId(laneSample.getId());
+			IUS swIus = null;
+			
+			String limsBarcode = laneSample.getBarcode();
+			if (limsBarcode == null || limsBarcode.isEmpty()) {
+				if (pos.getSamples().size() == 1 && swLaneIuss.size() == 1) {
+					swIus = swLaneIuss.get(0);
+					swIus.setTag("NoIndex");
+				}
+				else {
+					Log.error("No barcode found for sample in multiplexed lane");
+					throw new RuntimeException(); // TODO
+				}
+				
+			}
+			else {
+				for (IUS swLaneIus : swLaneIuss) {
+					if (limsBarcode.equals(swLaneIus.getTag())) {
+						swIus = swLaneIus;
+						break;
+					}
+				}
+				
+				if (swIus == null) {
+					Log.error("Could not find IUS in SeqWare with barcode " + limsBarcode + " to match LIMS sample " + limsSample.getName() + 
+							" in lane " + pos.getPosition());
+					Log.debug("LIMS barcodeTwo = " + laneSample.getBarcodeTwo());
+					throw new RuntimeException(); // TODO
 				}
 			}
+			
+			iusDataList.add(new IusData(swIus, limsSample));
 		}
-		return barcode == null ? noIndex : barcode;
+		
+		return iusDataList;
 	}
 	
 	/**
@@ -415,6 +383,7 @@ public class Bcl2fastqDecider extends Plugin {
 		run.addProperty("do_olb", this.offlineBcl ? "1" : "0");
 		run.addProperty("ignore_missing_bcl", String.valueOf(this.ignoreMissingBcl));
 		run.addProperty("ignore_missing_stats", String.valueOf(this.ignoreMissingStats));
+		run.addProperty("use_bases_mask", this.useBasesMask);
 		
 		run.addProperty("output_prefix", this.outPath, "./");
 		run.addProperty("output_dir", this.outFolder, "seqware-results");
@@ -459,6 +428,9 @@ public class Bcl2fastqDecider extends Plugin {
 		
 		runArgs.add("--link-workflow-run-to-parents");
 		runArgs.add(commaSeparate(laneAccessions));
+		
+		runArgs.add("--link-workflow-run-to-parents");
+		runArgs.add(commaSeparate(iusAccessions));
 		
 		StringBuilder sb = new StringBuilder();
 		for (String a : runArgs) {
