@@ -190,6 +190,9 @@ public class Bcl2fastqDecider extends Plugin {
 		} catch (HttpResponseException e) {
 			Log.error("Error retrieving data from Pinery", e);
 			return new ReturnValue(ReturnValue.PROGRAMFAILED);
+		} catch (DataMismatchException e) {
+			Log.error(e);
+			return new ReturnValue(ReturnValue.PROGRAMFAILED);
 		}
 		
 		String ini = createIniFile(getIniParameters());
@@ -237,7 +240,14 @@ public class Bcl2fastqDecider extends Plugin {
 		}
 	}
 	
-	private RunData buildDataStructure() throws HttpResponseException { // TODO: handle exceptions
+	/**
+	 * Retrieves and combines all of the necessary run data from LIMS and SeqWare
+	 * 
+	 * @return the RunData
+	 * @throws HttpResponseException if there is an error retrieving data from LIMS
+	 * @throws DataMismatchException if there is an error matching LIMS data with SeqWare data 
+	 */
+	private RunData buildDataStructure() throws HttpResponseException, DataMismatchException {
 		try (PineryClient pinery = new PineryClient(this.pineryUrl, insecurePinery)) {
 			Log.debug("Getting sequencer run " + runName + " from LIMS");
 			RunDto limsRun = pinery.getSequencerRun().byName(runName);
@@ -248,6 +258,7 @@ public class Bcl2fastqDecider extends Plugin {
 			Collection<Lane> swLanes = metadata.getLanesFrom(swRun.getSwAccession());
 			Collection<RunPositionData> positions = new ArrayList<>();
 			for (RunDtoPosition pos : limsRun.getPositions()) {
+				if (pos.getSamples() == null || pos.getSamples().isEmpty()) continue;
 				int posNum = pos.getPosition();
 				Lane swLane = null;
 				for (Lane lane : swLanes) {
@@ -256,16 +267,29 @@ public class Bcl2fastqDecider extends Plugin {
 						break;
 					}
 				}
-				if (swLane == null) throw new RuntimeException(); // TODO
+				if (swLane == null) {
+					throw new DataMismatchException("Could not find lane in SeqWare to match lane " + posNum + " in LIMS");
+				}
 				Collection<IusData> iusDataList = buildIusData(swLane, pos, pinery);
 				positions.add(new RunPositionData(posNum, swLane, iusDataList));
 			}
-			if (positions.isEmpty()) throw new RuntimeException(); // TODO
+			if (positions.isEmpty()) throw new DataMismatchException("No samples found in any lanes");
 			return new RunData(limsRun, swRun, positions);
 		}
 	}
 	
-	private Collection<IusData> buildIusData(Lane swLane, RunDtoPosition pos, PineryClient pinery) throws HttpResponseException {
+	/**
+	 * Retrieves and combines all the necessary IUS data from LIMS and SeqWare for a lane, matching LIMS samples to SeqWare IUS 
+	 * by barcode
+	 * 
+	 * @param swLane lane from SeqWare
+	 * @param pos lane from LIMS
+	 * @param pinery
+	 * @return all of the IusData for a lane
+	 * @throws HttpResponseException if there is an error retrieving data from LIMS
+	 * @throws DataMismatchException if there is an error matching LIMS data with SeqWare data
+	 */
+	private Collection<IusData> buildIusData(Lane swLane, RunDtoPosition pos, PineryClient pinery) throws HttpResponseException, DataMismatchException {
 		Collection<IusData> iusDataList = new ArrayList<>();
 		Log.debug("Getting all IUS for lane " + pos.getPosition() + " with SWID " + swLane.getSwAccession() + " from SeqWare");
 		List<IUS> swLaneIuss = metadata.getIUSFrom(swLane.getSwAccession());;
@@ -282,8 +306,7 @@ public class Bcl2fastqDecider extends Plugin {
 					swIus.setTag("NoIndex");
 				}
 				else {
-					Log.error("No barcode found for sample in multiplexed lane");
-					throw new RuntimeException(); // TODO
+					throw new DataMismatchException("Failed to match LIMS sample with SeqWare IUS");
 				}
 				
 			}
@@ -296,10 +319,8 @@ public class Bcl2fastqDecider extends Plugin {
 				}
 				
 				if (swIus == null) {
-					Log.error("Could not find IUS in SeqWare with barcode " + limsBarcode + " to match LIMS sample " + limsSample.getName() + 
-							" in lane " + pos.getPosition());
-					Log.debug("LIMS barcodeTwo = " + laneSample.getBarcodeTwo());
-					throw new RuntimeException(); // TODO
+					throw new DataMismatchException("Could not find IUS in SeqWare with barcode " + limsBarcode + 
+							" to match LIMS sample " + limsSample.getName() + " in lane " + pos.getPosition());
 				}
 			}
 			
@@ -449,6 +470,12 @@ public class Bcl2fastqDecider extends Plugin {
 		return new ReturnValue(ReturnValue.SUCCESS);
 	}
 	
+	/**
+	 * Combines a collection of IDs into a comma-separated String
+	 * 
+	 * @param things
+	 * @return A comma-separated String of integers. e.g. {@code "123,456,789"}
+	 */
 	private String commaSeparate(Collection<Integer> things) {
 		if (things == null || things.isEmpty()) return "";
 		StringBuilder sb = new StringBuilder();
