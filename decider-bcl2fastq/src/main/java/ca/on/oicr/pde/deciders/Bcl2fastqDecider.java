@@ -54,7 +54,7 @@ public class Bcl2fastqDecider extends Plugin {
 	private static final String ARG_MISSING_STATS = "ignore-missing-stats";
 	private static final String ARG_INSECURE_PINERY = "insecure-pinery";
 	
-	private String pineryUrl = null;
+	private PineryClient pinery = null;
 	
 	private String workflowAccession = null;
 	private String runName = null;
@@ -76,7 +76,6 @@ public class Bcl2fastqDecider extends Plugin {
 	private int readEnds = 2; // TODO: Get from Pinery/SeqWare instead of requiring default/parameter
 	private final String useBasesMask = "";
 	
-	private boolean insecurePinery = false;
 	private boolean testing = false;
 	
 	
@@ -111,6 +110,9 @@ public class Bcl2fastqDecider extends Plugin {
 	
 	@Override
 	public ReturnValue init() {
+		String pineryUrl = null;
+		boolean insecurePinery = false;
+		
 		// Show help
 		if (this.options.has(ARG_HELP)) {
 			System.err.println(get_syntax());
@@ -138,7 +140,7 @@ public class Bcl2fastqDecider extends Plugin {
 			return missingParameter(ARG_PINERY_URL);
 		}
 		else {
-			this.pineryUrl = this.options.valueOf(ARG_PINERY_URL).toString();
+			pineryUrl = this.options.valueOf(ARG_PINERY_URL).toString();
             this.workflowAccession = options.valueOf(ARG_WORKFLOW_ACCESSION).toString();
             this.runName = this.options.valueOf(ARG_RUN_NAME).toString();
             this.runDir = this.options.valueOf(ARG_RUN_DIR).toString();
@@ -169,8 +171,10 @@ public class Bcl2fastqDecider extends Plugin {
 		if (this.options.has(ARG_MISSING_BCL)) this.ignoreMissingBcl = true;
 		if (this.options.has(ARG_MISSING_STATS)) this.ignoreMissingStats = true;
 		
-		if (this.options.has(ARG_INSECURE_PINERY)) this.insecurePinery = true;
+		if (this.options.has(ARG_INSECURE_PINERY)) insecurePinery = true;
 		if (this.options.has(ARG_TEST_MODE)) this.testing = true;
+		
+		this.pinery = new PineryClient(pineryUrl, insecurePinery);
 		
 		return new ReturnValue(ReturnValue.SUCCESS);
 	}
@@ -248,34 +252,32 @@ public class Bcl2fastqDecider extends Plugin {
 	 * @throws DataMismatchException if there is an error matching LIMS data with SeqWare data 
 	 */
 	private RunData buildDataStructure() throws HttpResponseException, DataMismatchException {
-		try (PineryClient pinery = new PineryClient(this.pineryUrl, insecurePinery)) {
-			Log.debug("Getting sequencer run " + runName + " from LIMS");
-			RunDto limsRun = pinery.getSequencerRun().byName(runName);
-			Log.debug("Getting sequencer run " + runName + " from SeqWare");
-			SequencerRun swRun = metadata.getSequencerRunByName(runName);
-			
-			Log.debug("Getting lanes for sequencer run " + runName + " from SeqWare");
-			Collection<Lane> swLanes = metadata.getLanesFrom(swRun.getSwAccession());
-			Collection<RunPositionData> positions = new ArrayList<>();
-			for (RunDtoPosition pos : limsRun.getPositions()) {
-				if (pos.getSamples() == null || pos.getSamples().isEmpty()) continue;
-				int posNum = pos.getPosition();
-				Lane swLane = null;
-				for (Lane lane : swLanes) {
-					if (lane.getLaneIndex().intValue()+1 == posNum) {
-						swLane = lane;
-						break;
-					}
+		Log.debug("Getting sequencer run " + runName + " from LIMS");
+		RunDto limsRun = pinery.getSequencerRun().byName(runName);
+		Log.debug("Getting sequencer run " + runName + " from SeqWare");
+		SequencerRun swRun = metadata.getSequencerRunByName(runName);
+		
+		Log.debug("Getting lanes for sequencer run " + runName + " from SeqWare");
+		Collection<Lane> swLanes = metadata.getLanesFrom(swRun.getSwAccession());
+		Collection<RunPositionData> positions = new ArrayList<>();
+		for (RunDtoPosition pos : limsRun.getPositions()) {
+			if (pos.getSamples() == null || pos.getSamples().isEmpty()) continue;
+			int posNum = pos.getPosition();
+			Lane swLane = null;
+			for (Lane lane : swLanes) {
+				if (lane.getLaneIndex().intValue()+1 == posNum) {
+					swLane = lane;
+					break;
 				}
-				if (swLane == null) {
-					throw new DataMismatchException("Could not find lane in SeqWare to match lane " + posNum + " in LIMS");
-				}
-				Collection<IusData> iusDataList = buildIusData(swLane, pos, pinery);
-				positions.add(new RunPositionData(posNum, swLane, iusDataList));
 			}
-			if (positions.isEmpty()) throw new DataMismatchException("No samples found in any lanes");
-			return new RunData(limsRun, swRun, positions);
+			if (swLane == null) {
+				throw new DataMismatchException("Could not find lane in SeqWare to match lane " + posNum + " in LIMS");
+			}
+			Collection<IusData> iusDataList = buildIusData(swLane, pos);
+			positions.add(new RunPositionData(posNum, swLane, iusDataList));
 		}
+		if (positions.isEmpty()) throw new DataMismatchException("No samples found in any lanes");
+		return new RunData(limsRun, swRun, positions);
 	}
 	
 	/**
@@ -284,12 +286,11 @@ public class Bcl2fastqDecider extends Plugin {
 	 * 
 	 * @param swLane lane from SeqWare
 	 * @param pos lane from LIMS
-	 * @param pinery
 	 * @return all of the IusData for a lane
 	 * @throws HttpResponseException if there is an error retrieving data from LIMS
 	 * @throws DataMismatchException if there is an error matching LIMS data with SeqWare data
 	 */
-	private Collection<IusData> buildIusData(Lane swLane, RunDtoPosition pos, PineryClient pinery) throws HttpResponseException, DataMismatchException {
+	private Collection<IusData> buildIusData(Lane swLane, RunDtoPosition pos) throws HttpResponseException, DataMismatchException {
 		Collection<IusData> iusDataList = new ArrayList<>();
 		Log.debug("Getting all IUS for lane " + pos.getPosition() + " with SWID " + swLane.getSwAccession() + " from SeqWare");
 		List<IUS> swLaneIuss = metadata.getIUSFrom(swLane.getSwAccession());;
@@ -505,6 +506,7 @@ public class Bcl2fastqDecider extends Plugin {
 
 	@Override
 	public ReturnValue clean_up() {
-		return new ReturnValue(ReturnValue.NOTIMPLEMENTED);
+		pinery.close();
+		return new ReturnValue(ReturnValue.SUCCESS);
 	}
 }
