@@ -9,6 +9,8 @@ public class RunPositionData {
 	private int positionNumber;
 	private Lane swLane;
 	private Collection<IusData> ius;
+	private String laneString;
+	private String basesMask;
 	
 	public RunPositionData() {
 		
@@ -42,6 +44,22 @@ public class RunPositionData {
 
 	public void setIus(Collection<IusData> ius) {
 		this.ius = ius;
+	}
+
+	public String getBasesMask() {
+		return basesMask;
+	}
+
+	public void setBasesMask(String basesMask) {
+		this.basesMask = basesMask;
+	}
+
+	public String getLaneString() {
+		return laneString;
+	}
+
+	public void setLaneString(String laneString) {
+		this.laneString = laneString;
 	}
 
 }

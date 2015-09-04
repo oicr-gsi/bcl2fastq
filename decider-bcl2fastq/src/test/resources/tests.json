@@ -12,10 +12,24 @@
         "output_prefix"],
 	"tests": [
 		{
-            "id": "Run test one",
+            "id": "One lane multiplexed",
             "parameters": {
-                "--run-name": "140815_M00753_0006_000000000-A55NH",
+                "--run-name": "120914_M00753_0025_A000000000-A1M5Y",
                 "--run-dir": "/.mounts/labs/prod/archive/m753/140815_M00753_0006_000000000-A55NH/"
+            }
+        }
+        {
+            "id": "Non-multiplexed",
+            "parameters": {
+                "--run-name": "110127_h239_0106_A819M9ABXX",
+                "--run-dir": "/.mounts/labs/prod/archive/h239/110127_h239_0106_A819M9ABXX"
+            }
+        }
+        {
+            "id": "Dual barcodes",
+            "parameters": {
+                "--run-name": "141120_SN7001205_0255_AHALRRADXX",
+                "--run-dir": "/.mounts/labs/prod/archive/h1205/141120_SN7001205_0255_AHALRRADXX/"
             }
         }
 	]

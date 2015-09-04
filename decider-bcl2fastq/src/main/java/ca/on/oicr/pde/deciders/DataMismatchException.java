@@ -1,7 +1,7 @@
 package ca.on.oicr.pde.deciders;
 
 /**
- * Exception to represent errors in matching data between LIMS and SeqWare
+ * Exception to represent errors in data that doesn't exist or match expectations
  * 
  * @author dcooke
  *

@@ -54,7 +54,10 @@ public class Bcl2fastqDecider extends Plugin {
 	private static final String ARG_MISSING_STATS = "ignore-missing-stats";
 	private static final String ARG_INSECURE_PINERY = "insecure-pinery";
 	
+	private static final String noIndex = "NoIndex";
+	
 	private PineryClient pinery = null;
+	private String localhost = null;
 	
 	private String workflowAccession = null;
 	private String runName = null;
@@ -70,11 +73,9 @@ public class Bcl2fastqDecider extends Plugin {
 	private boolean ignoreMissingBcl = false;
 	private boolean ignoreMissingStats = false;
 	
-	private String lanesString = null;
 	private Set<Integer> iusAccessions;
 	private Set<Integer> laneAccessions;
 	private int readEnds = 2; // TODO: Get from Pinery/SeqWare instead of requiring default/parameter
-	private final String useBasesMask = "";
 	
 	private boolean testing = false;
 	
@@ -174,6 +175,13 @@ public class Bcl2fastqDecider extends Plugin {
 		if (this.options.has(ARG_INSECURE_PINERY)) insecurePinery = true;
 		if (this.options.has(ARG_TEST_MODE)) this.testing = true;
 		
+		LocalhostPair localhostPair = FileTools.getLocalhost(options);
+        this.localhost = localhostPair.hostname;
+        if (localhostPair.returnValue.getExitStatus() != ReturnValue.SUCCESS && localhost == null) {
+            Log.error("Could not determine localhost: Return value " + localhostPair.returnValue.getExitStatus());
+            return new ReturnValue(ReturnValue.INVALIDPARAMETERS);
+        }
+		
 		this.pinery = new PineryClient(pineryUrl, insecurePinery);
 		
 		return new ReturnValue(ReturnValue.SUCCESS);
@@ -188,9 +196,12 @@ public class Bcl2fastqDecider extends Plugin {
 	public ReturnValue do_run() {
 		try {
 			RunData runData = buildDataStructure();
-			buildLanesString(runData);
 			findAllIus(runData);
-			// TODO: determine use_bases_mask
+			for (RunPositionData lane : runData.getPositions()) {
+				String ini = createIniFile(getIniParameters(lane));
+				if (ini == null) return new ReturnValue(ReturnValue.PROGRAMFAILED);
+				launchWorkflow(ini);
+			}
 		} catch (HttpResponseException e) {
 			Log.error("Error retrieving data from Pinery", e);
 			return new ReturnValue(ReturnValue.PROGRAMFAILED);
@@ -199,49 +210,7 @@ public class Bcl2fastqDecider extends Plugin {
 			return new ReturnValue(ReturnValue.PROGRAMFAILED);
 		}
 		
-		String ini = createIniFile(getIniParameters());
-		if (ini == null) return new ReturnValue(ReturnValue.PROGRAMFAILED);
-		
-		return launchWorkflow(ini);
-	}
-	
-	/**
-	 * Builds the ini lanes String. Format: {@code <lane#>,<lane-swid>:<barcode>,<ius-swid>,<sample-name>
-	 * +<more-barcodes>...|<more-lanes>...}
-	 * 
-	 * @param runData data structure containing all run data from LIMS and SeqWare including run, lanes, ius, and samples
-	 */
-	private void buildLanesString(RunData runData) {
-		StringBuilder sb = new StringBuilder();
-		for (RunPositionData lane : runData.getPositions()) {
-			sb.append(lane.getPositionNumber())
-			.append(",")
-			.append(lane.getSwLane().getSwAccession())
-			.append(":");
-			for (IusData ius : lane.getIus()) {
-				sb.append(ius.getSwIus().getTag())
-					.append(",")
-					.append(ius.getSwIus().getSwAccession())
-					.append(",")
-					.append(ius.getLimsSample().getName())
-					.append("+");
-			}
-			sb.deleteCharAt(sb.length()-1);
-			sb.append("|");
-		}
-		sb.deleteCharAt(sb.length()-1);
-		lanesString = sb.toString();
-	}
-	
-	private void findAllIus(RunData runData) {
-		iusAccessions = new HashSet<>();
-		laneAccessions = new HashSet<>();
-		for (RunPositionData posData : runData.getPositions()) {
-			laneAccessions.add(posData.getSwLane().getSwAccession());
-			for (IusData iusData : posData.getIus()) {
-				iusAccessions.add(iusData.getSwIus().getSwAccession());
-			}
-		}
+		return new ReturnValue(ReturnValue.SUCCESS);
 	}
 	
 	/**
@@ -277,6 +246,10 @@ public class Bcl2fastqDecider extends Plugin {
 			positions.add(new RunPositionData(posNum, swLane, iusDataList));
 		}
 		if (positions.isEmpty()) throw new DataMismatchException("No samples found in any lanes");
+		for (RunPositionData pos : positions) {
+			buildLaneString(pos);
+			determineBasesMask(pos);
+		}
 		return new RunData(limsRun, swRun, positions);
 	}
 	
@@ -300,11 +273,11 @@ public class Bcl2fastqDecider extends Plugin {
 			SampleDto limsSample = pinery.getSample().byId(laneSample.getId());
 			IUS swIus = null;
 			
-			String limsBarcode = laneSample.getBarcode();
+			String limsBarcode = getLimsBarcode(laneSample);
 			if (limsBarcode == null || limsBarcode.isEmpty()) {
 				if (pos.getSamples().size() == 1 && swLaneIuss.size() == 1) {
 					swIus = swLaneIuss.get(0);
-					swIus.setTag("NoIndex");
+					swIus.setTag(noIndex);
 				}
 				else {
 					throw new DataMismatchException("Failed to match LIMS sample with SeqWare IUS");
@@ -332,10 +305,89 @@ public class Bcl2fastqDecider extends Plugin {
 	}
 	
 	/**
+	 * Gets the barcode(s) from a LIMS run sample - either the single barcode, or dual barcode joined by a hyphen
+	 * 
+	 * @param runSample
+	 * @return the sample's barcode in either format "AAAAAAAA" or "AAAAAAAA-CCCCCCCC"
+	 */
+	private String getLimsBarcode(RunDtoSample runSample) {
+		if (runSample.getBarcodeTwo() != null && !runSample.getBarcodeTwo().isEmpty()) {
+			return runSample.getBarcode() + "-" + runSample.getBarcodeTwo();
+		}
+		else {
+			return runSample.getBarcode();
+		}
+	}
+	
+	/**
+	 * Builds the ini lanes String
+	 * 
+	 * @param lane data structure containing all lane data from LIMS and SeqWare including lane, ius, and samples
+	 * @return lanes String in the format: {@code <lane#>,<lane-swid>:<barcode>,<ius-swid>,<sample-name>+<more-barcodes>...}
+	 */
+	private void buildLaneString(RunPositionData lane) {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append(lane.getPositionNumber())
+		.append(",")
+		.append(lane.getSwLane().getSwAccession())
+		.append(":");
+		for (IusData ius : lane.getIus()) {
+			sb.append(ius.getSwIus().getTag())
+				.append(",")
+				.append(ius.getSwIus().getSwAccession())
+				.append(",")
+				.append(ius.getLimsSample().getName())
+				.append("+");
+		}
+		sb.deleteCharAt(sb.length()-1);
+		
+		lane.setLaneString(sb.toString());
+	}
+	
+	private void findAllIus(RunData runData) {
+		iusAccessions = new HashSet<>();
+		laneAccessions = new HashSet<>();
+		for (RunPositionData posData : runData.getPositions()) {
+			laneAccessions.add(posData.getSwLane().getSwAccession());
+			for (IusData iusData : posData.getIus()) {
+				iusAccessions.add(iusData.getSwIus().getSwAccession());
+			}
+		}
+	}
+	
+	/**
+	 * Sets the base mask for a lane based on contained barcodes
+	 * 
+	 * @param pos lane data
+	 * @throws DataMismatchException
+	 */
+	private void determineBasesMask(RunPositionData pos) throws DataMismatchException {
+		boolean dualBarcodes = false;
+		int barLength = 0;
+		for (IusData ius : pos.getIus()) {
+			String tag = ius.getSwIus().getTag();
+			if (!noIndex.equals(tag)) {
+				if (barLength == 0) {
+					dualBarcodes = tag.contains("-");
+					barLength = tag.length();
+				}
+			}
+			if (tag.length() != barLength) {
+				throw new DataMismatchException("Barcodes in lane " + pos.getPositionNumber() + " have different lengths");
+			}
+		}
+		
+		if (dualBarcodes) pos.setBasesMask("y*,I*,I*,y*");
+		else if (barLength > 0) pos.setBasesMask("y*,I" + barLength + "n*,y*");
+		else pos.setBasesMask("");
+	}
+	
+	/**
 	 * Writes the workflow ini file
 	 * 
 	 * @param iniParameters map of parameters generated by this decider run
-	 * @return path of output ini file
+	 * @return path of output ini file, or null if there is an IO error writing the INI file
 	 */
 	private String createIniFile(Map<String, String> iniParameters) {
 		// Note: private method copied over (slightly modified) from BasicDecider
@@ -389,7 +441,7 @@ public class Bcl2fastqDecider extends Plugin {
 	 * 
 	 * @return map of all parameters
 	 */
-	private Map<String, String> getIniParameters() {
+	private Map<String, String> getIniParameters(RunPositionData lane) {
 		WorkflowRun run = new WorkflowRun(null, null);
 		
 		run.addProperty("java", "/.mounts/labs/seqprodbio/private/seqware/java/default/bin/java");
@@ -405,13 +457,13 @@ public class Bcl2fastqDecider extends Plugin {
 		run.addProperty("do_olb", this.offlineBcl ? "1" : "0");
 		run.addProperty("ignore_missing_bcl", String.valueOf(this.ignoreMissingBcl));
 		run.addProperty("ignore_missing_stats", String.valueOf(this.ignoreMissingStats));
-		run.addProperty("use_bases_mask", this.useBasesMask);
+		run.addProperty("use_bases_mask", lane.getBasesMask());
 		
 		run.addProperty("output_prefix", this.outPath, "./");
 		run.addProperty("output_dir", this.outFolder, "seqware-results");
 		run.setManualOutput(this.manualOutput);
 		
-		run.addProperty("lanes", this.lanesString);
+		run.addProperty("lanes", lane.getLaneString());
 		run.addProperty("read_ends", String.valueOf(this.readEnds));
 		
 		return run.getIniFile();
@@ -422,9 +474,8 @@ public class Bcl2fastqDecider extends Plugin {
 	 * workflow will not actually be launched
 	 * 
 	 * @param iniFile ini file containing workflow parameters
-	 * @return
 	 */
-	private ReturnValue launchWorkflow(String iniFile) {
+	private void launchWorkflow(String iniFile) {
 		Log.debug("Launching workflow for run "+this.runName+" with INI: "+iniFile);
 		
 		ArrayList<String> runArgs = new ArrayList<>();
@@ -438,13 +489,6 @@ public class Bcl2fastqDecider extends Plugin {
 		if (!metadataWriteback) {
 			runArgs.add("--no-metadata");
 		}
-		
-		LocalhostPair localhostPair = FileTools.getLocalhost(options);
-        String localhost = localhostPair.hostname;
-        if (localhostPair.returnValue.getExitStatus() != ReturnValue.SUCCESS && localhost == null) {
-            Log.error("Could not determine localhost: Return value " + localhostPair.returnValue.getExitStatus());
-            return new ReturnValue(ReturnValue.INVALIDPARAMETERS);
-        }
 		runArgs.add("--host");
 		runArgs.add(localhost);
 		
@@ -467,8 +511,6 @@ public class Bcl2fastqDecider extends Plugin {
 			Log.stdout("Scheduling workflow run.");
 	        PluginRunner.main(runArgs.toArray(new String[runArgs.size()]));
 		}
-        
-		return new ReturnValue(ReturnValue.SUCCESS);
 	}
 	
 	/**
