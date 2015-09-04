@@ -367,11 +367,14 @@ public class Bcl2fastqDecider extends Plugin {
 		int barLength = 0;
 		for (IusData ius : pos.getIus()) {
 			String tag = ius.getSwIus().getTag();
-			if (!noIndex.equals(tag)) {
-				if (barLength == 0) {
-					dualBarcodes = tag.contains("-");
-					barLength = tag.length();
-				}
+			if (noIndex.equals(tag)) {
+				if (pos.getIus().size() > 1) throw new DataMismatchException("Sample " + ius.getLimsSample().getName() + 
+						" in multiplexed lane " + pos.getPositionNumber() + " has no barcode");
+				break;
+			}
+			if (barLength == 0) {
+				dualBarcodes = tag.contains("-");
+				barLength = tag.length();
 			}
 			if (tag.length() != barLength) {
 				throw new DataMismatchException("Barcodes in lane " + pos.getPositionNumber() + " have different lengths");

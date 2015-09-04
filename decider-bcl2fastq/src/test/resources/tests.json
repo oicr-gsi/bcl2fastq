@@ -21,8 +21,8 @@
         {
             "id": "Non-multiplexed",
             "parameters": {
-                "--run-name": "110127_h239_0106_A819M9ABXX",
-                "--run-dir": "/.mounts/labs/prod/archive/h239/110127_h239_0106_A819M9ABXX"
+                "--run-name": "131025_SN802_0145_AC2KVTACXX",
+                "--run-dir": "/.mounts/labs/prod/archive/h802/131025_SN802_0145_AC2KVTACXX/"
             }
         }
         {
