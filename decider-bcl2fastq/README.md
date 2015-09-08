@@ -4,14 +4,14 @@ Version 1.0, SeqWare version 1.1.0
 
 ###Overview
 
-This decider launches the [BCL2FastQ (AKA Casava) Workflow](../workflow-casava) to demultiplex and convert BCL files from an Illumina sequencer run to FASTQ format. The sequencer run name and run directory must be provided, and most of the other data is pulled from Pinery and SeqWare.
+This decider launches the [BCL2FastQ (AKA Casava) Workflow](../workflow-casava) to demultiplex and convert BCL files from an Illumina sequencer run to FASTQ format. The sequencer run name and run directory must be provided, and most of the other data is pulled from Pinery and SeqWare. This decider assumes paired-end reads, so if this is not the case, the read-ends parameter must be used. A separate workflow run will be launched for each lane of the run, as each lane may use a different barcode strategy, which affects the 'use_bases_mask' property.
 
 This decider does not extend OicrDecider or BasicDecider, and only the parameters listed below are available.
 
 ###Preconditions and Validation
 
 * The run and samples must exist and be linked in the LIMS database
-* The run and samples must exist in the SeqWare database
+* The run and ius must exist in the SeqWare database
 * Samples must have a sample type matching 'Illumina * Library Seq'
 
 ###Compile
