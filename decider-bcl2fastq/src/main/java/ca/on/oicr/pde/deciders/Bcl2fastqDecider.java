@@ -271,6 +271,7 @@ public class Bcl2fastqDecider extends Plugin {
 		for (RunDtoSample laneSample : pos.getSamples()) {
 			Log.debug("Getting sample id " + laneSample.getId() + " from lane " + pos.getPosition() + " from LIMS");
 			SampleDto limsSample = pinery.getSample().byId(laneSample.getId());
+			checkSampleType(limsSample);
 			IUS swIus = null;
 			
 			String limsBarcode = getLimsBarcode(laneSample);
@@ -302,6 +303,14 @@ public class Bcl2fastqDecider extends Plugin {
 		}
 		
 		return iusDataList;
+	}
+	
+	private void checkSampleType(SampleDto sample) throws DataMismatchException {
+		String sampleType = sample.getSampleType();
+		if (sampleType == null || !sampleType.matches("^Illumina .+ Library Seq$")) {
+			throw new DataMismatchException("Invalid sample type. All samples must be of type 'Illumina Library Seq' but sample " + 
+					sample.getName() + " has type " + (sampleType == null ? "null" : sampleType));
+		}
 	}
 	
 	/**
@@ -383,7 +392,7 @@ public class Bcl2fastqDecider extends Plugin {
 		
 		if (dualBarcodes) pos.setBasesMask("y*,I*,I*,y*");
 		else if (barLength > 0) pos.setBasesMask("y*,I" + barLength + "n*,y*");
-		else pos.setBasesMask("");
+		else pos.setBasesMask(null);
 	}
 	
 	/**
@@ -460,7 +469,7 @@ public class Bcl2fastqDecider extends Plugin {
 		run.addProperty("do_olb", this.offlineBcl ? "1" : "0");
 		run.addProperty("ignore_missing_bcl", String.valueOf(this.ignoreMissingBcl));
 		run.addProperty("ignore_missing_stats", String.valueOf(this.ignoreMissingStats));
-		run.addProperty("use_bases_mask", lane.getBasesMask());
+		if (lane.getBasesMask() != null) run.addProperty("use_bases_mask", lane.getBasesMask());
 		
 		run.addProperty("output_prefix", this.outPath, "./");
 		run.addProperty("output_dir", this.outFolder, "seqware-results");
