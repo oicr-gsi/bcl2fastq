@@ -4,7 +4,6 @@
 	"defaultParameters": {
         "--output-path": "./",
         "--verbose": "",
-        "--test": "",
         "--pinery-url": "http://localhost:8888/pinery-ws/"
     },
 	"defaultIniExclusions": ["parent-accessions", "workflow_run_accession", "workflow-run-accession",
@@ -14,22 +13,22 @@
 		{
             "id": "One lane multiplexed",
             "parameters": {
-                "--run-name": "120914_M00753_0025_A000000000-A1M5Y",
-                "--run-dir": "/.mounts/labs/prod/archive/m753/140815_M00753_0006_000000000-A55NH/"
+                "--run-name": "150727_M00753_0023_000000000-AGR8E",
+                "--run-dir": "/.mounts/labs/prod/archive/m753/150727_M00753_0023_000000000-AGR8E/"
             }
-        }
+        },
         {
             "id": "Non-multiplexed",
             "parameters": {
                 "--run-name": "131025_SN802_0145_AC2KVTACXX",
                 "--run-dir": "/.mounts/labs/prod/archive/h802/131025_SN802_0145_AC2KVTACXX/"
             }
-        }
+        },
         {
             "id": "Dual barcodes",
             "parameters": {
-                "--run-name": "141120_SN7001205_0255_AHALRRADXX",
-                "--run-dir": "/.mounts/labs/prod/archive/h1205/141120_SN7001205_0255_AHALRRADXX/"
+                "--run-name": "150814_M00146_0034_000000000-AHLAK",
+                "--run-dir": "/.mounts/labs/prod/archive/m146/150814_M00146_0034_000000000-AHLAK/"
             }
         }
 	]
