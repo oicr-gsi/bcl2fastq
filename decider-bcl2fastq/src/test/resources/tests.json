@@ -4,7 +4,7 @@
 	"defaultParameters": {
         "--output-path": "./",
         "--verbose": "",
-        "--pinery-url": "http://localhost:8888/pinery-ws/"
+        "--pinery-url": "http://gsle-pinery.res.oicr.on.ca/pinery-ws-2.0-SNAPSHOT/"
     },
 	"defaultIniExclusions": ["parent-accessions", "workflow_run_accession", "workflow-run-accession",
         "unique_string", "parent_accessions", "parent_accession", "input_file", "input_files", "workflow_bundle_dir",
