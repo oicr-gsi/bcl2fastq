@@ -1,0 +1,35 @@
+{
+	"defaultDescription": "Bcl2fastq decider test",
+	"defaultMetricsResources": "/expected_output/development/",
+	"defaultParameters": {
+        "--output-path": "./",
+        "--verbose": "",
+        "--pinery-url": "http://gsle-pinery.res.oicr.on.ca/pinery-ws-2.0-SNAPSHOT/"
+    },
+	"defaultIniExclusions": ["parent-accessions", "workflow_run_accession", "workflow-run-accession",
+        "unique_string", "parent_accessions", "parent_accession", "input_file", "input_files", "workflow_bundle_dir",
+        "output_prefix"],
+	"tests": [
+		{
+            "id": "One lane multiplexed",
+            "parameters": {
+                "--run-name": "150727_M00753_0023_000000000-AGR8E",
+                "--run-dir": "/.mounts/labs/prod/archive/m753/150727_M00753_0023_000000000-AGR8E/"
+            }
+        },
+        {
+            "id": "Non-multiplexed",
+            "parameters": {
+                "--run-name": "131025_SN802_0145_AC2KVTACXX",
+                "--run-dir": "/.mounts/labs/prod/archive/h802/131025_SN802_0145_AC2KVTACXX/"
+            }
+        },
+        {
+            "id": "Dual barcodes",
+            "parameters": {
+                "--run-name": "150814_M00146_0034_000000000-AHLAK",
+                "--run-dir": "/.mounts/labs/prod/archive/m146/150814_M00146_0034_000000000-AHLAK/"
+            }
+        }
+	]
+}
