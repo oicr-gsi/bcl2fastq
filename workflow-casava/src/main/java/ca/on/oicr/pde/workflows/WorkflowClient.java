@@ -46,6 +46,7 @@ public class WorkflowClient extends OicrWorkflow {
     private String perl;
     //private String java;
     private String swModuleCallBustard;
+    private String runFolder;
     private String intensityFolder;
     private String flowcell;
     private String lanes;
@@ -61,8 +62,11 @@ public class WorkflowClient extends OicrWorkflow {
     private Integer readEnds;
     private Boolean manualOutput;
     private Boolean ignoreMissingBcl;
+    private Boolean ignoreMissingFilter;
+    private Boolean ignoreMissingPositions;
     private Boolean ignoreMissingStats;
     private String useBasesMask;
+    private Boolean noLaneSplitting;
     private String mismatches;
     private String otherBclToFastqOptions;
     private String otherBustardOptions;
@@ -74,6 +78,7 @@ public class WorkflowClient extends OicrWorkflow {
         perl = getOptionalProperty("perl", binDir + "perl-5.14.1/perl");
         //java = getOptionalProperty("java", binDir + "jre1.6.0_29/bin/java");
         swModuleCallBustard = binDir + "sw_module_call_bustard.pl";
+        runFolder = getProperty("run_folder");
         intensityFolder = getProperty("intensity_folder");
         flowcell = getProperty("flowcell");
         readEnds = Integer.parseInt(getProperty("read_ends"));
@@ -89,8 +94,11 @@ public class WorkflowClient extends OicrWorkflow {
         queue = getOptionalProperty("queue", "");
         manualOutput = Boolean.valueOf(getOptionalProperty("manual_output", "false"));
         ignoreMissingBcl = Boolean.valueOf(getOptionalProperty("ignore_missing_bcl", "false"));
+        ignoreMissingFilter = Boolean.valueOf(getOptionalProperty("ignore_missing_filter", "false"));
+        ignoreMissingPositions = Boolean.valueOf(getOptionalProperty("ignore_missing_positions", "false"));
         ignoreMissingStats = Boolean.valueOf(getOptionalProperty("ignore_missing_stats", "false"));
         useBasesMask = getOptionalProperty("use_bases_mask", "");
+        noLaneSplitting = Boolean.valueOf(getOptionalProperty("no_lane_splitting", "false"));
         mismatches = getOptionalProperty("mismatches", "");
         otherBclToFastqOptions = getOptionalProperty("other_bcltofastq_options", "");
         otherBustardOptions = getOptionalProperty("other_bustard_options", "");
@@ -136,6 +144,7 @@ public class WorkflowClient extends OicrWorkflow {
         Job job = newJob("ID10_Bustard");
         Command c = job.getCommand();
         c.addArgument(perl).addArgument(swModuleCallBustard);
+        c.addArgument("--run-folder " + runFolder);
         c.addArgument("--intensity-folder " + intensityFolder);
         c.addArgument("--threads " + threads);
         c.addArgument("--bustard " + bustard);
@@ -153,11 +162,20 @@ public class WorkflowClient extends OicrWorkflow {
         if (ignoreMissingBcl) {
             c.addArgument("--ignore-missing-bcl");
         }
+        if (ignoreMissingFilter) {
+            c.addArgument("--ignore-missing-filter");
+        }
+        if (ignoreMissingPositions) {
+            c.addArgument("--ignore-missing-positions");
+        }
         if (ignoreMissingStats) {
             c.addArgument("--ignore-missing-stats");
         }
         if (!useBasesMask.isEmpty()) {
             c.addArgument("--use-bases-mask " + useBasesMask);
+        }
+        if (noLaneSplitting) {
+            c.addArgument("--no-lane-splitting");
         }
         if (!mismatches.isEmpty()) {
             c.addArgument("--mismatches " + mismatches);
@@ -173,27 +191,50 @@ public class WorkflowClient extends OicrWorkflow {
         c.addArgument("2>lane_" + laneNum + "_stderr.log");
 
         //for each sample sheet entry, provision out the associated fastq(s).
+        int sampleSheetRowNumber = 1;
         for (ProcessEvent p : ps) {
-            SqwFile r1 = createOutputFile(generateOutputPath(dataDir, flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(), "1", p.getGroupId()),
-                    "chemical/seq-na-fastq-gzip", manualOutput);
+            SqwFile r1 = createOutputFile(
+                    getOutputPath(dataDir, flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(),
+                            "1", p.getGroupId(), sampleSheetRowNumber, noLaneSplitting),
+                    //maintain file name produced by previous versions of bcl2fastq
+                    generateOutputFilename(flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(), "1", p.getGroupId()),
+                    "chemical/seq-na-fastq-gzip",
+                    manualOutput);
             r1.setParentAccessions(Arrays.asList(p.getLaneSwAccession(), p.getIusSwAccession()));
             job.addFile(r1);
 
             if (readEnds > 1) {
-                SqwFile r2 = createOutputFile(generateOutputPath(dataDir, flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(), "2",p.getGroupId()),
-                        "chemical/seq-na-fastq-gzip", manualOutput);
+                SqwFile r2 = createOutputFile(
+                        getOutputPath(dataDir, flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(),
+                                "2", p.getGroupId(), sampleSheetRowNumber, noLaneSplitting),
+                        //maintain file name produced by previous versions of bcl2fastq
+                        generateOutputFilename(flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(), "2", p.getGroupId()),
+                        "chemical/seq-na-fastq-gzip",
+                        manualOutput);
                 r2.setParentAccessions(Arrays.asList(p.getLaneSwAccession(), p.getIusSwAccession()));
                 job.addFile(r2);
             }
+
+            sampleSheetRowNumber++;
         }
 
         // if the sample sheet for the lane does not have a "NoIndex" entry, Undetermined_indicies will exist
         if (!ProcessEvent.containsBarcode(ps, "NoIndex")) {
-            SqwFile r1 = createOutputFile(getUndeterminedFastqPath(dataDir, flowcell, laneNum, "1"), "chemical/seq-na-fastq-gzip", manualOutput);
+            SqwFile r1 = createOutputFile(
+                    getUndeterminedFastqPath(dataDir, flowcell, laneNum, "1", noLaneSplitting),
+                    //maintain file name produced by previous versions of bcl2fastq
+                    "lane" + laneNum + "_Undetermined_L00" + laneNum + "_R1_001.fastq.gz",
+                    "chemical/seq-na-fastq-gzip",
+                    manualOutput);
             r1.setParentAccessions(Arrays.asList(ProcessEvent.getLaneSwid(ps, laneNum)));
             job.addFile(r1);
             if (readEnds > 1) {
-                SqwFile r2 = createOutputFile(getUndeterminedFastqPath(dataDir, flowcell, laneNum, "2"), "chemical/seq-na-fastq-gzip", manualOutput);
+                SqwFile r2 = createOutputFile(
+                        getUndeterminedFastqPath(dataDir, flowcell, laneNum, "2", noLaneSplitting),
+                        //maintain file name produced by previous versions of bcl2fastq
+                        "lane" + laneNum + "_Undetermined_L00" + laneNum + "_R2_001.fastq.gz",
+                        "chemical/seq-na-fastq-gzip",
+                        manualOutput);
                 r2.setParentAccessions(Arrays.asList(ProcessEvent.getLaneSwid(ps, laneNum)));
                 job.addFile(r2);
             }
@@ -225,38 +266,69 @@ public class WorkflowClient extends OicrWorkflow {
 
     }
 
-    public static String generateOutputPath(String dataDir, String flowcell, String laneNum, String iusSwAccession, String sampleName, String barcode, String read, String groupId) {
-
+    public static String generateOutputFilename(String flowcell, String laneNum, String iusSwAccession, String sampleName, String barcode, String read, String groupId) {
         StringBuilder o = new StringBuilder();
-        o.append(getLanePath(dataDir, flowcell, laneNum));
-        o.append("/Project_na/Sample_SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_").append(flowcell);
-        o.append("/SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_").append(flowcell).append("_").append(barcode).append("_");
-        o.append("L00").append(laneNum).append("_R").append(read).append("_001.fastq.gz");
-
+        o.append("SWID_");
+        o.append(iusSwAccession).append("_");
+        o.append(sampleName).append("_");
+        o.append(groupId).append("_");
+        o.append(flowcell).append("_");
+        o.append(barcode).append("_");
+        o.append("L00").append(laneNum).append("_");
+        o.append("R").append(read).append("_");
+        o.append("001.fastq.gz");
         return o.toString();
-
     }
 
-    public static String getUndeterminedFastqPath(String dataDir, String flowcell, String laneNum, String read) {
-
+    public static String getOutputPath(String dataDir, String flowcell, String laneNum, String iusSwAccession, String sampleName,
+            String barcode, String read, String groupId, int sampleSheetRowNumber, boolean noLaneSplitting) {
         StringBuilder o = new StringBuilder();
         o.append(getLanePath(dataDir, flowcell, laneNum));
-        o.append("/Undetermined_indices");
-        o.append("/Sample_lane").append(laneNum);
-        o.append("/lane").append(laneNum).append("_Undetermined_L00").append(laneNum).append("_R").append(read).append("_001.fastq.gz");
+        o.append("SWID_").append(iusSwAccession).append("_").append(sampleName).append("_").append(groupId).append("_").append(flowcell).append("_");
+        o.append("S").append(sampleSheetRowNumber).append("_");
+        if (!noLaneSplitting) {
+            o.append("L00").append(laneNum).append("_");
+        }
+        o.append("R").append(read).append("_001.fastq.gz");
 
         return o.toString();
+    }
 
+    public static String getUndeterminedFastqPath(String dataDir, String flowcell, String laneNum, String read, boolean noLaneSplitting) {
+        StringBuilder o = new StringBuilder();
+        o.append(getLanePath(dataDir, flowcell, laneNum));
+        o.append("Undetermined_S0_");
+        if (!noLaneSplitting) {
+            o.append("L00").append(laneNum).append("_");
+        }
+        o.append("R").append(read).append("_001.fastq.gz");
+
+        return o.toString();
     }
 
     public static String getLanePath(String dataDir, String flowcell, String laneNum) {
-
         StringBuilder o = new StringBuilder();
         o.append(dataDir);
-        o.append("Unaligned_").append(flowcell).append("_").append(laneNum);
+        o.append("Unaligned_").append(flowcell).append("_").append(laneNum).append("/");
 
         return o.toString();
+    }
 
+    protected SqwFile createOutputFile(String workingPath, String outputFileName, String metatype, boolean manualOutput) {
+        SqwFile file = new SqwFile();
+        file.setForceCopy(true);
+        file.setIsOutput(true);
+        file.setSourcePath(workingPath);
+        file.setType(metatype);
+
+        if (manualOutput) {
+            file.setOutputPath(this.getMetadata_output_file_prefix() + getMetadata_output_dir() + "/" + outputFileName);
+        } else {
+            file.setOutputPath(this.getMetadata_output_file_prefix()
+                    + getMetadata_output_dir() + "/" + this.getName() + "_" + this.getVersion() + "/" + this.getRandom() + "/" + outputFileName);
+        }
+
+        return file;
     }
 
 }
