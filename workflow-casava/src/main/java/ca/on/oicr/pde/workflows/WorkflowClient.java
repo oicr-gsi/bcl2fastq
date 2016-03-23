@@ -256,7 +256,7 @@ public class WorkflowClient extends OicrWorkflow {
         c.addArgument("zip -r");
         c.addArgument("../" + zipFileName);
         c.addArgument("."); //currect directory which is "inputDirectoryPath"
-        c.addArgument("-x \\*.fastq.gz 1>/dev/null");
+        c.addArgument("-x \\*.fastq.gz");
 
         SqwFile f = createOutputFile(outputZipFilePath, "application/zip-report-bundle", manualOutput);
         f.setParentAccessions(Arrays.asList(laneAccession));

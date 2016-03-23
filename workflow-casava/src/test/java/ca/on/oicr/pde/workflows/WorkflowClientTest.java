@@ -27,6 +27,8 @@
 
 package ca.on.oicr.pde.workflows;
 
+import ca.on.oicr.pde.testing.workflow.DryRun;
+import ca.on.oicr.pde.testing.workflow.TestDefinition;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -122,7 +124,6 @@ public class WorkflowClientTest {
 
     }
 
-
     @Test
     public void testGetOutputPath() {
 
@@ -204,5 +205,15 @@ public class WorkflowClientTest {
 
         String actual = WorkflowClient.generateOutputFilename(flowcell, laneNum, iusSwAccession, sampleName, barcode, read, groupId);
         Assert.assertEquals(actual, expected);
+    }
+
+    @Test
+    public void validateRegressionTestDefinition() throws IllegalAccessException, InstantiationException, IOException, Exception {
+        TestDefinition td = TestDefinition.buildFromJson(FileUtils.readFileToString(new File("src/test/resources/developmentRunTests.json")));
+        for (TestDefinition.Test t : td.getTests()) {
+            DryRun d = new DryRun(System.getProperty("bundleDirectory"), t.getParameters(), WorkflowClient.class);
+            d.buildWorkflowModel();
+            d.validateWorkflow();
+        }
     }
 }
