@@ -13,18 +13,18 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Contact us:
- * 
- *  Ontario Institute for Cancer Research  
- *  MaRS Centre, West Tower
- *  661 University Avenue, Suite 510
- *  Toronto, Ontario, Canada M5G 0A3
- *  Phone: 416-977-7599
- *  Toll-free: 1-866-678-6427
- *  www.oicr.on.ca
-**/
-
+ *
+ * Ontario Institute for Cancer Research
+ * MaRS Centre, West Tower
+ * 661 University Avenue, Suite 510
+ * Toronto, Ontario, Canada M5G 0A3
+ * Phone: 416-977-7599
+ * Toll-free: 1-866-678-6427
+ * www.oicr.on.ca
+ *
+ */
 package ca.on.oicr.pde.workflows;
 
 import ca.on.oicr.pde.testing.workflow.DryRun;
@@ -102,25 +102,25 @@ public class WorkflowClientTest {
 
     @Test
     public void parseGroupIdFromString() {
-	String[] barcodes =	{"AAAA", "AAAT", "AATT", "ATTT", "TTTT"};
-	String[] ius = 		{"1111", "1110", "1100", "1000", "0000"};
-	String[] groupId =	{"15", "14", "12", "8", "0"};
-	String sampleName = "SampleName";
+        String[] barcodes = {"AAAA", "AAAT", "AATT", "ATTT", "TTTT"};
+        String[] ius = {"1111", "1110", "1100", "1000", "0000"};
+        String[] groupId = {"15", "14", "12", "8", "0"};
+        String sampleName = "SampleName";
 
-        String input = 	"1,100:";
-	for (int i =0; i< barcodes.length; i++) {
-	    input += barcodes[i] +","+ ius[i] +","+ sampleName+","+groupId[i];
-	    if (i!=barcodes.length-1)
-		input += "+";
-	}
-        List<ProcessEvent> pes =  ProcessEvent.parseLanesString(input);
+        String input = "1,100:";
+        for (int i = 0; i < barcodes.length; i++) {
+            input += barcodes[i] + "," + ius[i] + "," + sampleName + "," + groupId[i];
+            if (i != barcodes.length - 1) {
+                input += "+";
+            }
+        }
+        List<ProcessEvent> pes = ProcessEvent.parseLanesString(input);
 
-	for (int i =0; i< barcodes.length; i++) {
-	    String expected = "[1, 100, " + barcodes[i] +", "+ ius[i] +", "+ sampleName+", "+groupId[i]+"]";
-	    String actual = pes.get(i).toString();
-	    Assert.assertEquals(actual, expected);
-	}	
-       
+        for (int i = 0; i < barcodes.length; i++) {
+            String expected = "[1, 100, " + barcodes[i] + ", " + ius[i] + ", " + sampleName + ", " + groupId[i] + "]";
+            String actual = pes.get(i).toString();
+            Assert.assertEquals(actual, expected);
+        }
 
     }
 

@@ -13,18 +13,18 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Contact us:
- * 
- *  Ontario Institute for Cancer Research  
- *  MaRS Centre, West Tower
- *  661 University Avenue, Suite 510
- *  Toronto, Ontario, Canada M5G 0A3
- *  Phone: 416-977-7599
- *  Toll-free: 1-866-678-6427
- *  www.oicr.on.ca
-**/
-
+ *
+ * Ontario Institute for Cancer Research
+ * MaRS Centre, West Tower
+ * 661 University Avenue, Suite 510
+ * Toronto, Ontario, Canada M5G 0A3
+ * Phone: 416-977-7599
+ * Toll-free: 1-866-678-6427
+ * www.oicr.on.ca
+ *
+ */
 package ca.on.oicr.pde.workflows;
 
 import ca.on.oicr.pde.utilities.workflows.OicrWorkflow;
