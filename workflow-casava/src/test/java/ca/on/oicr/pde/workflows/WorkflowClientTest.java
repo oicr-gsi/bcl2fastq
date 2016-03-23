@@ -27,8 +27,11 @@
 
 package ca.on.oicr.pde.workflows;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -121,11 +124,11 @@ public class WorkflowClientTest {
 
 
     @Test
-    public void outputString() {
+    public void testGetOutputPath() {
 
-        String expected = "/tmp/Unaligned_110916_SN804_0064_AD04TBACXX_1/Project_na/"
-                + "Sample_SWID_9858_PCSI_0106_Ly_R_PE_190_WG_NoGroup_110916_SN804_0064_AD04TBACXX/"
-                + "SWID_9858_PCSI_0106_Ly_R_PE_190_WG_NoGroup_110916_SN804_0064_AD04TBACXX_NoIndex_L001_R1_001.fastq.gz";
+        String expected = "/tmp/Unaligned_110916_SN804_0064_AD04TBACXX_1/"
+                + "SWID_9858_PCSI_0106_Ly_R_PE_190_WG_NoGroup_110916_SN804_0064_AD04TBACXX_S1_L001_R1_001.fastq.gz";
+
         String dataDir = "/tmp/";
         String flowcell = "110916_SN804_0064_AD04TBACXX";
         String laneNum = "1";
@@ -133,10 +136,35 @@ public class WorkflowClientTest {
         String sampleName = "PCSI_0106_Ly_R_PE_190_WG";
         String barcode = "NoIndex";
         String read = "1";
-	String groupId = "NoGroup";
-        String actual = WorkflowClient.generateOutputPath(dataDir, flowcell, laneNum, iusSwAccession, sampleName, barcode, read, groupId);
+        String groupId = "NoGroup";
+        int sampleSheetRowNumber = 1;
+
+        boolean noLaneSplitting = false;
+
+        String actual = WorkflowClient.getOutputPath(dataDir, flowcell, laneNum, iusSwAccession, sampleName, barcode, read, groupId, sampleSheetRowNumber, noLaneSplitting);
         Assert.assertEquals(actual, expected);
 
+    }
+
+    @Test
+    public void testGetOutputPathWithNoLaneSplitting() {
+        String expected = "/tmp/Unaligned_110916_SN804_0064_AD04TBACXX_1/"
+                + "SWID_9858_PCSI_0106_Ly_R_PE_190_WG_NoGroup_110916_SN804_0064_AD04TBACXX_S1_R1_001.fastq.gz";
+
+        String dataDir = "/tmp/";
+        String flowcell = "110916_SN804_0064_AD04TBACXX";
+        String laneNum = "1";
+        String iusSwAccession = "9858";
+        String sampleName = "PCSI_0106_Ly_R_PE_190_WG";
+        String barcode = "NoIndex";
+        String read = "1";
+        String groupId = "NoGroup";
+        int sampleSheetRowNumber = 1;
+
+        boolean noLaneSplitting = true;
+
+        String actual = WorkflowClient.getOutputPath(dataDir, flowcell, laneNum, iusSwAccession, sampleName, barcode, read, groupId, sampleSheetRowNumber, noLaneSplitting);
+        Assert.assertEquals(actual, expected);
     }
 
     @Test
@@ -159,5 +187,22 @@ public class WorkflowClientTest {
         Assert.assertEquals(ProcessEvent.getLaneSwid(ps, "3"), "107");
         Assert.assertEquals(ProcessEvent.getLaneSwid(ps, "100"), null);
 
+    }
+
+    @Test
+    public void testGenerateOutputFilename() {
+        String flowcell = "110916_SN804_0064_AD04TBACXX";
+        String laneNum = "1";
+        String iusSwAccession = "9858";
+        String sampleName = "PCSI_0106_Ly_R_PE_190_WG";
+        String barcode = "NoIndex";
+        String read = "1";
+        String groupId = "NoGroup";
+
+        String expected = "SWID_" + iusSwAccession + "_" + sampleName + "_" + groupId + "_" + flowcell + "_" + barcode + "_L00" + laneNum
+                + "_R" + read + "_001.fastq.gz";
+
+        String actual = WorkflowClient.generateOutputFilename(flowcell, laneNum, iusSwAccession, sampleName, barcode, read, groupId);
+        Assert.assertEquals(actual, expected);
     }
 }
