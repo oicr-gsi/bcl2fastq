@@ -1,3 +1,6 @@
+## 2.8 - 2016-03-23
+- GP-759 - Update CASAVA to bcl2fastq v2.17
+
 ## 2.7.1 - 2015-07-03
 - GP-361 - Polish CASAVA (bcl2fastq) for release
 
