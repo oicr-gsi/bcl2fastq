@@ -1,10 +1,10 @@
 ##bcl2fastq workflow
 
-Version 2.7
+Version 2.8
 
 ###Overview
 
-Uses [Illumina](http://www.illumina.com/) run folders to produce fastq files using [SeqWare](http://seqware.github.io/) and [bcl2fastq](http://support.illumina.com/downloads/bcl2fastq_conversion_software_184.html). The "CASAVA" name is a misnomer since bcl2fastq is used exclusively, but is maintained for historical purposes.
+Uses [Illumina](http://www.illumina.com/) run folders to produce fastq files using [SeqWare](http://seqware.github.io/) and [bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v217.html). The "CASAVA" name is a misnomer since bcl2fastq is used exclusively, but is maintained for historical purposes.
 
 ![bcl2fastq flowchart](docs/CASAVA_spec.png)
 
@@ -13,12 +13,12 @@ Uses [Illumina](http://www.illumina.com/) run folders to produce fastq files usi
 This workflow requires:
 
 * [SeqWare](http://seqware.github.io/)
-* [Bcl2fastq](http://support.illumina.com/downloads/bcl2fastq_conversion_software_184.html) 1.8.4
+* [Bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v217.html) 2.17.1
 
 ###Compile
-When compiling, you most likely will need to add the -Dbcl2fastq-root and -Dbcl2fastq-version flags in order to configure it properly. An example is below.
+When compiling, you most likely will need to add the -Dbcl2fastq-bin flags in order to configure it properly. An example is below.
 ```
-mvn clean install -Dbcl2fastq-root=/path/to/bcl2fastq/install/dir -Dbcl2fastq-version=1.8.2
+mvn clean install -Dbcl2fastq-bin=/path/to/bcl2fastq
 ```
 
 ###Usage
@@ -29,6 +29,8 @@ These parameters can be overridden either in the INI file on on the command line
 
 Required:
 
+    run_folder                dir         Sequencer run directory
+    intensity_folder          dir         Sequencer run intensity directory 
     called_bases              dir         Instrument BaseCall directory
     lanes                     string      Defines the lanes and barcodes for the sequencer
                                           run. See the documentation for more information
@@ -49,9 +51,12 @@ Optional:
 
     read_ends                 int         Number of ends [2]
     ignore_missing_bcl        true|false  Appends --ignore-missing-bcl to bcl2fastq call
+    ignore_missing_filter     true|false  Appends --ignore-missing-filter to bcl2fastq call
+    ignore_missing_positions  true|false  Appends --ignore-missing-positions to bcl2fastq call
     ignore_missing_stats      true|false  Appends --ignore-missing-stats to bcl2fastq call
     use_bases_mask            string      Appends the value of --use_bases_mask and the given 
                                           string to bcl2fastq call
+    no_lane_splitting         true|false  Appends --no-lane-splitting to bcl2fastq call
     mismatches                int         Sets the number of mismatches permitted [1]
     other_bcltofastq_options  string      A catch-all for any other options you want to pass 
                                           to the BCLtofastq program

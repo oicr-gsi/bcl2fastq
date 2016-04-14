@@ -13,22 +13,27 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Contact us:
- * 
- *  Ontario Institute for Cancer Research  
- *  MaRS Centre, West Tower
- *  661 University Avenue, Suite 510
- *  Toronto, Ontario, Canada M5G 0A3
- *  Phone: 416-977-7599
- *  Toll-free: 1-866-678-6427
- *  www.oicr.on.ca
-**/
-
+ *
+ * Ontario Institute for Cancer Research
+ * MaRS Centre, West Tower
+ * 661 University Avenue, Suite 510
+ * Toronto, Ontario, Canada M5G 0A3
+ * Phone: 416-977-7599
+ * Toll-free: 1-866-678-6427
+ * www.oicr.on.ca
+ *
+ */
 package ca.on.oicr.pde.workflows;
 
+import ca.on.oicr.pde.testing.workflow.DryRun;
+import ca.on.oicr.pde.testing.workflow.TestDefinition;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -97,35 +102,34 @@ public class WorkflowClientTest {
 
     @Test
     public void parseGroupIdFromString() {
-	String[] barcodes =	{"AAAA", "AAAT", "AATT", "ATTT", "TTTT"};
-	String[] ius = 		{"1111", "1110", "1100", "1000", "0000"};
-	String[] groupId =	{"15", "14", "12", "8", "0"};
-	String sampleName = "SampleName";
+        String[] barcodes = {"AAAA", "AAAT", "AATT", "ATTT", "TTTT"};
+        String[] ius = {"1111", "1110", "1100", "1000", "0000"};
+        String[] groupId = {"15", "14", "12", "8", "0"};
+        String sampleName = "SampleName";
 
-        String input = 	"1,100:";
-	for (int i =0; i< barcodes.length; i++) {
-	    input += barcodes[i] +","+ ius[i] +","+ sampleName+","+groupId[i];
-	    if (i!=barcodes.length-1)
-		input += "+";
-	}
-        List<ProcessEvent> pes =  ProcessEvent.parseLanesString(input);
+        String input = "1,100:";
+        for (int i = 0; i < barcodes.length; i++) {
+            input += barcodes[i] + "," + ius[i] + "," + sampleName + "," + groupId[i];
+            if (i != barcodes.length - 1) {
+                input += "+";
+            }
+        }
+        List<ProcessEvent> pes = ProcessEvent.parseLanesString(input);
 
-	for (int i =0; i< barcodes.length; i++) {
-	    String expected = "[1, 100, " + barcodes[i] +", "+ ius[i] +", "+ sampleName+", "+groupId[i]+"]";
-	    String actual = pes.get(i).toString();
-	    Assert.assertEquals(actual, expected);
-	}	
-       
+        for (int i = 0; i < barcodes.length; i++) {
+            String expected = "[1, 100, " + barcodes[i] + ", " + ius[i] + ", " + sampleName + ", " + groupId[i] + "]";
+            String actual = pes.get(i).toString();
+            Assert.assertEquals(actual, expected);
+        }
 
     }
 
-
     @Test
-    public void outputString() {
+    public void testGetOutputPath() {
 
-        String expected = "/tmp/Unaligned_110916_SN804_0064_AD04TBACXX_1/Project_na/"
-                + "Sample_SWID_9858_PCSI_0106_Ly_R_PE_190_WG_NoGroup_110916_SN804_0064_AD04TBACXX/"
-                + "SWID_9858_PCSI_0106_Ly_R_PE_190_WG_NoGroup_110916_SN804_0064_AD04TBACXX_NoIndex_L001_R1_001.fastq.gz";
+        String expected = "/tmp/Unaligned_110916_SN804_0064_AD04TBACXX_1/"
+                + "SWID_9858_PCSI_0106_Ly_R_PE_190_WG_NoGroup_110916_SN804_0064_AD04TBACXX_S1_L001_R1_001.fastq.gz";
+
         String dataDir = "/tmp/";
         String flowcell = "110916_SN804_0064_AD04TBACXX";
         String laneNum = "1";
@@ -133,10 +137,35 @@ public class WorkflowClientTest {
         String sampleName = "PCSI_0106_Ly_R_PE_190_WG";
         String barcode = "NoIndex";
         String read = "1";
-	String groupId = "NoGroup";
-        String actual = WorkflowClient.generateOutputPath(dataDir, flowcell, laneNum, iusSwAccession, sampleName, barcode, read, groupId);
+        String groupId = "NoGroup";
+        int sampleSheetRowNumber = 1;
+
+        boolean noLaneSplitting = false;
+
+        String actual = WorkflowClient.getOutputPath(dataDir, flowcell, laneNum, iusSwAccession, sampleName, barcode, read, groupId, sampleSheetRowNumber, noLaneSplitting);
         Assert.assertEquals(actual, expected);
 
+    }
+
+    @Test
+    public void testGetOutputPathWithNoLaneSplitting() {
+        String expected = "/tmp/Unaligned_110916_SN804_0064_AD04TBACXX_1/"
+                + "SWID_9858_PCSI_0106_Ly_R_PE_190_WG_NoGroup_110916_SN804_0064_AD04TBACXX_S1_R1_001.fastq.gz";
+
+        String dataDir = "/tmp/";
+        String flowcell = "110916_SN804_0064_AD04TBACXX";
+        String laneNum = "1";
+        String iusSwAccession = "9858";
+        String sampleName = "PCSI_0106_Ly_R_PE_190_WG";
+        String barcode = "NoIndex";
+        String read = "1";
+        String groupId = "NoGroup";
+        int sampleSheetRowNumber = 1;
+
+        boolean noLaneSplitting = true;
+
+        String actual = WorkflowClient.getOutputPath(dataDir, flowcell, laneNum, iusSwAccession, sampleName, barcode, read, groupId, sampleSheetRowNumber, noLaneSplitting);
+        Assert.assertEquals(actual, expected);
     }
 
     @Test
@@ -159,5 +188,32 @@ public class WorkflowClientTest {
         Assert.assertEquals(ProcessEvent.getLaneSwid(ps, "3"), "107");
         Assert.assertEquals(ProcessEvent.getLaneSwid(ps, "100"), null);
 
+    }
+
+    @Test
+    public void testGenerateOutputFilename() {
+        String flowcell = "110916_SN804_0064_AD04TBACXX";
+        String laneNum = "1";
+        String iusSwAccession = "9858";
+        String sampleName = "PCSI_0106_Ly_R_PE_190_WG";
+        String barcode = "NoIndex";
+        String read = "1";
+        String groupId = "NoGroup";
+
+        String expected = "SWID_" + iusSwAccession + "_" + sampleName + "_" + groupId + "_" + flowcell + "_" + barcode + "_L00" + laneNum
+                + "_R" + read + "_001.fastq.gz";
+
+        String actual = WorkflowClient.generateOutputFilename(flowcell, laneNum, iusSwAccession, sampleName, barcode, read, groupId);
+        Assert.assertEquals(actual, expected);
+    }
+
+    @Test
+    public void validateRegressionTestDefinition() throws IllegalAccessException, InstantiationException, IOException, Exception {
+        TestDefinition td = TestDefinition.buildFromJson(FileUtils.readFileToString(new File("src/test/resources/developmentRunTests.json")));
+        for (TestDefinition.Test t : td.getTests()) {
+            DryRun d = new DryRun(System.getProperty("bundleDirectory"), t.getParameters(), WorkflowClient.class);
+            d.buildWorkflowModel();
+            d.validateWorkflow();
+        }
     }
 }

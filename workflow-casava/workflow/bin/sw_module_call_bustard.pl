@@ -37,42 +37,45 @@ use Getopt::Long;
 # 
 #	* Means an argument is required
 # Input:	BASE CALLING
-#		--bcl-to-fastq		: *the path to bcl2fastq.pl
-#	   	--intensity-folder 	: *an intensity folder from a sequencing run
-#		--called-bases-folder	: *the folder containing the BCL files in the sequencing run
-#		--flowcell		: *the name of the flowcell (sequencer run)
-#		--lane			: *the lane number to perform bcl2fastq on
-#		--tile			: the sequencing tile. Primarily for testing.
-#		--barcodes		: *A "+" separated list of barcodes, accessions, sample names which are separated by comma.
-#					  Used in the Sample sheet and in the final file name 
-#					  For example: AATC,121212,sample1+AATG,1238291,sample2
-#		--output-dir		: *the location where the final files should be placed
-#		--mismatches		: number of mismatches to allow in the barcode (default: 1)
-#		--ignore-missing-bcl	: flag passed to bcl2fastq, allows missing bcl files
-#		--ignore-missing-stats	: flag passed to bcl2fastq, allows missing stat files
-#		--use-bases-mask	: specify the bases mask for bcl2fastq
-#		--threads 		: *the number of threads to use when running bcl2fastq
-#		--other-bcltofastq-options : any other options that will be passed directly to bcl2fastq
+#		--bcl-to-fastq		    : *the path to bcl2fastq.pl
+#	   	--run-folder     	    : *a run folder from a sequencing run
+#	   	--intensity-folder 	    : *an intensity folder from a sequencing run
+#		--called-bases-folder	    : *the folder containing the BCL files in the sequencing run
+#		--flowcell		    : *the name of the flowcell (sequencer run)
+#		--lane			    : *the lane number to perform bcl2fastq on
+#		--tile			    : the sequencing tile. Primarily for testing.
+#		--barcodes		    : *A "+" separated list of barcodes, accessions, sample names which are separated by comma.
+#					      Used in the Sample sheet and in the final file name 
+#					      For example: AATC,121212,sample1+AATG,1238291,sample2
+#		--output-dir		    : *the location where the final files should be placed
+#		--mismatches		    : number of mismatches to allow in the barcode (default: 1)
+#		--ignore-missing-bcl	    : flag passed to bcl2fastq, allows missing bcl files
+#		--ignore-missing-filter     : flag passed to bcl2fastq, allows missing or corrupt filter files
+#		--ignore-missing-positions  : flag passed to bcl2fastq, allows missing or corrupt positions files
+#		--ignore-missing-stats      : flag passed to bcl2fastq, allows missing stat files
+#		--use-bases-mask            : specify the bases mask for bcl2fastq
+#		--threads                   : *the number of processing threads to use when running bcl2fastq
+#		--other-bcltofastq-options  : any other options that will be passed directly to bcl2fastq
 #		
 #		BUSTARD/OLB
-#		--do-olb		: flag to perform Bustard (create BCLs from Intensity files)
-#		--cleanup		: flag to clean up Bustard results after run
-#		--other-bustard-options	: any other options that will be passed directly to bustard
-#		--bustard		: the path to the bustard.py script if --do-olb is enabled
-#		--help			: flag to print usage
+#		--do-olb                    : flag to perform Bustard (create BCLs from Intensity files)
+#		--cleanup                   : flag to clean up Bustard results after run
+#		--other-bustard-options     : any other options that will be passed directly to bustard
+#		--bustard                   : the path to the bustard.py script if --do-olb is enabled
+#		--help                      : flag to print usage
 #
 # Output:  	a directory with the results from bcl2fastq
 #
 ##########
 
-my ($intensity_folder, $flowcell, $lane, $barcodes, $bclToFastq, $bustard_threads, $bustard, $output_dir, $help, $cleanup, $tile, $called_bases_folder, $do_olb, $mismatches, $ignore_missing_bcl, $ignore_missing_stats, $mask, $other_bcltofastq_options, $other_bustard_options);
+my ($run_folder, $intensity_folder, $flowcell, $lane, $barcodes, $bclToFastq, $bustard_threads, $bustard, $output_dir, $help, $cleanup, $tile, $called_bases_folder, $do_olb, $mismatches, $ignore_missing_bcl, $ignore_missing_filter, $ignore_missing_positions, $ignore_missing_stats, $mask, $no_lane_splitting, $other_bcltofastq_options, $other_bustard_options);
 $help = 0;
 $cleanup = 0;
 $do_olb = 0;
 my $argSize = scalar(@ARGV);
-my $getOptResult = GetOptions('intensity-folder=s' => \$intensity_folder, 'threads=i' => \$bustard_threads, 'bustard=s' => \$bustard, 'bcl-to-fastq=s' => \$bclToFastq, 'flowcell=s' => \$flowcell, 'lane=i' => \$lane, 'tile=i' => \$tile, 'barcodes=s' => \$barcodes, 'output-dir=s' => \$output_dir, 'cleanup' => \$cleanup, 'do-olb=i' => \$do_olb, 'called-bases-folder=s' => \$called_bases_folder, 'help' => \$help, 'mismatches=s' => \$mismatches, 'ignore-missing-bcl' => \$ignore_missing_bcl, 'ignore-missing-stats' => \$ignore_missing_stats, 'use-bases-mask=s' => \$mask, 'other-bcltofastq-options=s' => \$other_bcltofastq_options, 'other-bustard-options=s' => \$other_bustard_options);
+my $getOptResult = GetOptions('run-folder=s' => \$run_folder, 'intensity-folder=s' => \$intensity_folder, 'threads=i' => \$bustard_threads, 'bustard=s' => \$bustard, 'bcl-to-fastq=s' => \$bclToFastq, 'flowcell=s' => \$flowcell, 'lane=i' => \$lane, 'tile=i' => \$tile, 'barcodes=s' => \$barcodes, 'output-dir=s' => \$output_dir, 'cleanup' => \$cleanup, 'do-olb=i' => \$do_olb, 'called-bases-folder=s' => \$called_bases_folder, 'help' => \$help, 'mismatches=s' => \$mismatches, 'ignore-missing-bcl' => \$ignore_missing_bcl, 'ignore-missing-filter' => \$ignore_missing_filter, 'ignore-missing-positions' => \$ignore_missing_positions, 'ignore-missing-stats' => \$ignore_missing_stats, 'use-bases-mask=s' => \$mask, 'no-lane-splitting' => \$no_lane_splitting, 'other-bcltofastq-options=s' => \$other_bcltofastq_options, 'other-bustard-options=s' => \$other_bustard_options);
 usage() if (!$getOptResult || $help);
-usage() if (not defined $bclToFastq || not defined $intensity_folder || not defined $bustard_threads || not defined $flowcell || not defined $lane || not defined $barcodes ||  not defined $output_dir || not defined $called_bases_folder);
+usage() if (not defined $bclToFastq || not defined $run_folder || not defined $intensity_folder || not defined $bustard_threads || not defined $flowcell || not defined $lane || not defined $barcodes ||  not defined $output_dir || not defined $called_bases_folder);
 ###########################################################################################################################
 
 # original dir
@@ -145,25 +148,48 @@ my $result = system("mkdir -p $output_dir/Unaligned_${flowcell}_${lane}");
 if ($result != 0) { print "Errors! exit code: $result\n"; exit(1); }
 
 open OUT, ">$output_dir/Unaligned_${flowcell}_${lane}/metadata_${flowcell}_${lane}.csv" or die "Can't open file $output_dir/Unaligned_${flowcell}_${lane}/metadata_${flowcell}_${lane}.csv";
-print OUT "FCID,Lane,SampleID,SampleRef,Index,Description,Control,Recipe,Operator,SampleProject\n";
+print OUT "[Data]\n";
+if (defined $no_lane_splitting ){
+  print OUT "Sample_ID,Sample_Name,index,index2\n";
+} else {
+  print OUT "Lane,Sample_ID,Sample_Name,index,index2\n";
+}
 my @barcode_arr = split /\+/, $barcodes;
 foreach my $barcode_record (@barcode_arr) {
   my @barcode_record_arr = split /,/, $barcode_record;
   my $barcode = $barcode_record_arr[0];
+  my @index = split /-/, $barcode;
+  my $index1 = $index[0];
+  if ($index1 eq "NoIndex") {
+    $index1 = "";
+  }
+  my $index2 = $index[1];
   my $ius_accession = $barcode_record_arr[1];
   my $ius_ass_sample_str = $barcode_record_arr[2];
-  print OUT "$flowcell,$lane,SWID_$ius_accession\_$ius_ass_sample_str\_$flowcell,na,$barcode,na,N,na,na,na\n";
+  my $sample_id = "SWID_$ius_accession\_$ius_ass_sample_str\_$flowcell";
+  my $sample_name = "";
+  if (defined $no_lane_splitting ){
+    print OUT "$sample_id,$sample_name,$index1,$index2\n";
+  } else {
+    print OUT "$lane,$sample_id,$sample_name,$index1,$index2\n";
+  }
 }
 close OUT;
 
 # now run bcl2fastq
 if (! defined $mismatches) {$mismatches = '1';}
-my $cmd = "$bclToFastq --force --fastq-cluster-count 1600000000 --input-dir $bustard_dir --output-dir $output_dir/Unaligned_${flowcell}_${lane} --intensities-dir $intensity_folder --sample-sheet $output_dir/Unaligned_${flowcell}_${lane}/metadata_${flowcell}_${lane}.csv --mismatches $mismatches";
+my $cmd = "$bclToFastq --runfolder-dir $run_folder --input-dir $bustard_dir --output-dir $output_dir/Unaligned_${flowcell}_${lane} --intensities-dir $intensity_folder --sample-sheet $output_dir/Unaligned_${flowcell}_${lane}/metadata_${flowcell}_${lane}.csv --barcode-mismatches $mismatches --processing-threads $bustard_threads";
 if (defined($tile) && $tile ne "") {
     $cmd .= " --tiles s_${lane}_${tile}";
 }
 if (defined $ignore_missing_bcl) {
-  $cmd .= ' --ignore-missing-bcl';
+  $cmd .= ' --ignore-missing-bcls';
+}
+if (defined $ignore_missing_filter) {
+  $cmd .= ' --ignore-missing-filter';
+}
+if (defined $ignore_missing_positions) {
+  $cmd .= ' --ignore-missing-positions';
 }
 if (defined $ignore_missing_stats) {
   $cmd .= ' --ignore-missing-stats';
@@ -171,17 +197,14 @@ if (defined $ignore_missing_stats) {
 if (defined $mask) {
   $cmd .= " --use-bases-mask $mask"
 }
+if (defined $no_lane_splitting) {
+  $cmd .= " --no-lane-splitting"
+}
 if (defined $other_bcltofastq_options) {
   $cmd .= " $other_bcltofastq_options"
 }
 print "Running: $cmd\n";
 $result = system($cmd);
-if ($result != 0) { print "Errors! exit code: $result\n"; exit(1); }
-
-# run the actual demultiplex and conversion from bcl to fastq
-chdir("$output_dir/Unaligned_${flowcell}_${lane}");
-print "Running: make -j ${bustard_threads}\n";
-$result = system("make -j ${bustard_threads}");
 if ($result != 0) { print "Errors! exit code: $result\n"; exit(1); }
 
 # cleanup the bustard dir
@@ -197,7 +220,7 @@ exit(0);
 
 sub usage {
   print "Unknown option: @_\n" if ( @_ );
-  print "usage: sw_module_call_bustard.pl --intensity-folder IlluminaIntensityFolder --threads int --bcl-to-fastq path_to_configureBclToFastq.pl --flowcell flowcell_name --lane int --barcodes AATC,121212;AATG,1238291 --output-dir output_dir_path [[--cleanup]] [[--ignore-missing-bcl]] [[--ignore-missing-stats]] [[--use-bases-mask *mask*]] [[--mismatches *num_of_mismatches per barcode component*]] [[--do-olb]] [[--bustard path_to_bustard.py]] [[--other-bcltofastq-options \"other opts\"]] [[--other-bustard-options \"other opts\"]] [[--help|-?]\n";
+  print "usage: sw_module_call_bustard.pl --run-folder IlluminaRunFolder --intensity-folder IlluminaIntensityFolder --threads int --bcl-to-fastq path_to_configureBclToFastq.pl --flowcell flowcell_name --lane int --barcodes AATC,121212;AATG,1238291 --output-dir output_dir_path [[--cleanup]] [[--ignore-missing-bcl]] [[--ignore-missing-filter]] [[--ignore-missing-positions]] [[--ignore-missing-stats]] [[--use-bases-mask *mask*]] [[--no-lane-splitting]] [[--mismatches *num_of_mismatches per barcode component*]] [[--do-olb]] [[--bustard path_to_bustard.py]] [[--other-bcltofastq-options \"other opts\"]] [[--other-bustard-options \"other opts\"]] [[--help|-?]\n";
   exit(1);
 }
 
