@@ -1,18 +1,17 @@
 ##BCL2FastQ Decider
 
-Version 1.0, SeqWare version 1.1.0
+Version 1.0, SeqWare version 1.1.1-gsi-rc1
 
 ###Overview
 
-This decider launches the [BCL2FastQ (AKA Casava) Workflow](../workflow-casava) to demultiplex and convert BCL files from an Illumina sequencer run to FASTQ format. The sequencer run name and run directory must be provided, and most of the other data is pulled from Pinery and SeqWare. This decider assumes paired-end reads, so if this is not the case, the read-ends parameter must be used. A separate workflow run will be launched for each lane of the run, as each lane may use a different barcode strategy, which affects the 'use_bases_mask' property.
+This decider launches the [BCL2FastQ (AKA Casava) Workflow](../workflow-casava) to demultiplex and convert BCL files from an Illumina sequencer run to FASTQ format. This decider assumes paired-end reads, so if this is not the case, the read-ends parameter must be used.
 
-This decider does not extend OicrDecider or BasicDecider, and only the parameters listed below are available.
-
-###Preconditions and Validation
-
-* The run and samples must exist and be linked in the LIMS database
-* The run and ius must exist in the SeqWare database
-* Samples must have a sample type matching 'Illumina * Library Seq'
+The decider operates as follows:
+- retrieves all lanes that are available from the sample and lane provenance providers (specified in the provenance settings file)
+- retrieves all lanes that have associated analysis from the analysis provenance providers (specified in the provenance settings file)
+- calculates the difference between the above two lane name sets to determine the set of lanes that have not be analyzed
+- creates a SeqWare IUS-LimsKey (a SeqWare object that is used to link LIMS data from provenance providers such as Pinery and SeqWare to SeqWare workflow runs) for each lane and a SeqWare IUS-LimsKey for each sample in the associated lane
+- schedules a separate SeqWare workflow run for each lane and links the workflow run to the appropriate SeqWare IUS-LimsKey(s)
 
 ###Compile
 
@@ -22,7 +21,7 @@ mvn clean install
 
 ###Usage
 
-java -jar Decider.jar --wf-accession \<bcl2fastq-workflow-accession\> --run-name \<run-name\> --run-dir \<run-dir\> --pinery-url \<pinery-url\>
+java -jar Decider.jar --wf-accession \<bcl2fastq-workflow-accession\> --provenance-settings /path/to/provenance-settings.json
 
 ###Options
 
@@ -30,27 +29,27 @@ java -jar Decider.jar --wf-accession \<bcl2fastq-workflow-accession\> --run-name
 
 Parameter | Type | Description \[default\]
 ----------|------|-------------------------
-pinery-url | String (URL) | URL of Pinery webservice
-run-name | String | sequencer run name
-run-dir | String (path) | sequencer run directory
+provenance-settings | String (Path) | Path to provenance settings json
 wf-accession | Integer | Bcl2FastQ workflow accession
 
 **Optional**
 
+Please see [basic deciders](http://seqware.github.io/docs/17-plugins/#basicdecider) and [oicr deciders](https://github.com/oicr-gsi/pipedev/tree/master/deciders#options) for general decider options.
+
+Additional optional parameters include:
 Parameter | Type | Description \[default\]
 ----------|------|-------------------------
-do-olb | none | Enable offline basecalling
 help | none | Display help
-ignore-missing-bcl | none | Bustard parameter
-ignore-missing-stats | none | Bustard parameter
-insecure-pinery | none | Force decider to ignore certificate errors from Pinery
-manual-output | none | Set output path manually
-no-metadata | none | Prevent metadata writeback
 output-path | String (path) | Absolute path of directory to put the final files
 output-folder | String (path) | Path to put the final files, relative to output-path
-read-ends | Integer | 1 for single-end, 2 for paired-end \[2\]
 test | none | Runs the decider entirely except for launching the workflow
 verbose | none | Log verbose output
+
+**Note**
+All of the [workflow properties](../workflow-casava) can be overridden by providing <property, value> pairs in the command, for example:
+```
+java -jar /path/to/decider.jar --wf-accession 000000 --provenance-settings /path/to/provenance-settings.json -- --property1 value1 --property2 value2
+```
 
 ##Support
 
