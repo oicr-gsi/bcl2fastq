@@ -19,6 +19,44 @@ The decider operates as follows:
 mvn clean install
 ```
 
+###Testing
+
+```
+mvn clean verify \
+-DskipITs=false \
+-DworkingDirectory=/path/to/tmp/ \
+-DschedulingHost=oozie-node \
+-DwebserviceUrl=http://test-seqware-webservice:8080/seqware-webservice-1.1.1-gsi \
+-DprovenanceSettingsPath=/path/to/test-provenance-settings.json \
+-DdbHost=localhost \
+-DdbPort=5432 \
+-DdbUser=user-that-can-create-db
+```
+
+An example provenance settings file:
+```
+[ {
+  "type" : "ca.on.oicr.gsi.provenance.SeqwareMetadataLimsMetadataProvenanceProvider",
+  "provider" : "seqware",
+  "providerSettings" : {
+    "SW_METADATA_METHOD" : "webservice",
+    "SW_REST_URL" : "http://test-seqware-webservice:8080/seqware-webservice-1.1.1-gsi",
+    "SW_REST_USER" : "user",
+    "SW_REST_PASS" : "password"
+  }
+}, {
+  "type" : "ca.on.oicr.gsi.provenance.SeqwareMetadataAnalysisProvenanceProvider",
+  "provider" : "seqware",
+  "providerSettings" : {
+    "SW_METADATA_METHOD" : "webservice",
+    "SW_REST_URL" : "http://test-seqware-webservice:8080/seqware-webservice-1.1.1-gsi",
+    "SW_REST_USER" : "user",
+    "SW_REST_PASS" : "password"
+  }
+} ]
+
+```
+
 ###Usage
 
 java -jar Decider.jar --wf-accession \<bcl2fastq-workflow-accession\> --provenance-settings /path/to/provenance-settings.json
@@ -37,8 +75,11 @@ wf-accession | Integer | Bcl2FastQ workflow accession
 Please see [basic deciders](http://seqware.github.io/docs/17-plugins/#basicdecider) and [oicr deciders](https://github.com/oicr-gsi/pipedev/tree/master/deciders#options) for general decider options.
 
 Additional optional parameters include:
+
 Parameter | Type | Description \[default\]
 ----------|------|-------------------------
+lane-number | String (number) | If sequencer-run-name is provided, use this parameter to run a specific lane
+ignore-previous-lims-keys | none | WARNING: use with caution This parameter creates new IUS-LimsKeys and workflow runs for all sample and lane provenance that passes the command line filters
 help | none | Display help
 output-path | String (path) | Absolute path of directory to put the final files
 output-folder | String (path) | Path to put the final files, relative to output-path
