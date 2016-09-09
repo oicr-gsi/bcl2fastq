@@ -1,11 +1,13 @@
 package ca.on.oicr.pde.deciders.handlers;
 
+import ca.on.oicr.gsi.common.transformation.StringSanitizerBuilder;
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.DataMismatchException;
 import ca.on.oicr.pde.deciders.IusWithProvenance;
 import ca.on.oicr.pde.deciders.ProvenanceWithProvider;
 import ca.on.oicr.pde.deciders.WorkflowRun;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -21,7 +23,18 @@ import java.util.SortedSet;
  */
 public abstract class Bcl2FastqHandler implements Handler {
 
+    protected final Function<String, String> stringSanitizer;
+
     public abstract WorkflowRun modifyWorkflowRun(Bcl2FastqData data, WorkflowRun workflowRun) throws DataMismatchException;
+
+    public Bcl2FastqHandler() {
+        StringSanitizerBuilder stringSanitizerBuilder = new StringSanitizerBuilder();
+        stringSanitizerBuilder.add(";", "\u2300");
+        stringSanitizerBuilder.add("=", "\u2300");
+        stringSanitizerBuilder.add("&", "\u2300");
+        stringSanitizerBuilder.add(" ", "_");
+        stringSanitizer = stringSanitizerBuilder.build();
+    }
 
     public WorkflowRun getWorkflowRun(Bcl2FastqData data) throws DataMismatchException {
         WorkflowRun wr = new WorkflowRun(null, null);
@@ -68,6 +81,19 @@ public abstract class Bcl2FastqHandler implements Handler {
             wr.addProperty("metadata", "metadata");
         } else {
             wr.addProperty("metadata", "no-metadata");
+        }
+
+        if (data.getStudyToOutputPathConfig() != null) {
+            Set<String> studyTitles = new HashSet<>();
+            for (SampleProvenance sp : data.getSps()) {
+                //OicrDecider sanitizes study titles, so the same sanitization should be applied to sample provenance title
+                studyTitles.add(stringSanitizer.apply(sp.getStudyTitle()));
+            }
+            if (studyTitles.size() == 1) {
+                wr.addProperty("output_prefix", data.getStudyToOutputPathConfig().getOutputPathForStudy(Iterables.getOnlyElement(studyTitles)));
+            } else {
+                throw new DataMismatchException("[" + studyTitles.size() + "] study title(s) found for workflow run - expected one study title");
+            }
         }
 
         wr = modifyWorkflowRun(data, wr);
