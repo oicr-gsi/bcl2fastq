@@ -118,6 +118,10 @@ public class Bcl2fastqDecider extends OicrDecider {
                 String laneName = lp.getSequencerRunName() + "_lane_" + lp.getLaneNumber();
                 providerAndIdToLaneName.put(provider + lp.getLaneProvenanceId(), laneName);
 
+                if (lp.getCreatedDate() == null) {
+                    log.warn("The lane = [" + laneName + "] has a null created date - treating lane as incomplete");
+                }
+
                 if (lp.getSkip()) {
                     continue;
                 }
