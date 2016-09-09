@@ -98,12 +98,12 @@ public class Bcl2fastqDeciderRegressionStudyIT {
         WorkflowReport report = WorkflowReport.generateReport(seqwareClient, provenanceClient, bcl2fastqWorkflow);
         Assert.assertEquals(report.getMaxInputFiles().intValue(), 0);
         Assert.assertEquals(report.getMinInputFiles().intValue(), 0);
-        Assert.assertEquals(report.getWorkflowRunCount().intValue(), 15);
+        Assert.assertEquals(report.getWorkflowRunCount().intValue(), 14);
 
         //all fastqs have been scheduled for processing, no new workflow runs should be schedulable
         runDecider(bcl2fastqWorkflow, "--all", "--parent-wf-accession", "0");
         WorkflowReport report2 = WorkflowReport.generateReport(seqwareClient, provenanceClient, bcl2fastqWorkflow);
-        Assert.assertEquals(report2.getWorkflowRunCount().intValue(), 15);
+        Assert.assertEquals(report2.getWorkflowRunCount().intValue(), 14);
         Assert.assertEquals(report, report2);
     }
 
@@ -131,7 +131,7 @@ public class Bcl2fastqDeciderRegressionStudyIT {
         //schedule the rest
         runDecider(bcl2fastqWorkflow, "--all", "--launch-max", "20", "--parent-wf-accession", "0");
         report = WorkflowReport.generateReport(seqwareClient, provenanceClient, bcl2fastqWorkflow);
-        Assert.assertEquals(report.getWorkflowRunCount().intValue(), 15);
+        Assert.assertEquals(report.getWorkflowRunCount().intValue(), 14);
     }
 
     @Test

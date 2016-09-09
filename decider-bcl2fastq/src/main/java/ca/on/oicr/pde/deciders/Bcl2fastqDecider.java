@@ -290,6 +290,11 @@ public class Bcl2fastqDecider extends OicrDecider {
                     sps.add(spWithProvider.getProvenance());
                 }
 
+                if (sps.isEmpty()) {
+                    log.warn("There are no valid samples associated with lane = [" + laneName + "]");
+                    continue;
+                }
+
                 List<Integer> iusSwidsToLinkWorkflowRunTo = new ArrayList<>();
                 iusSwidsToLinkWorkflowRunTo.add(linkedLane.getIusSwid());
                 for (IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> linkedSample : linkedSamples) {
