@@ -309,6 +309,7 @@ public class Bcl2fastqDecider extends OicrDecider {
                 data.setSps(sps);
                 data.setProperties(getCommonIniProperties());
                 data.setMetadataWriteback(getMetadataWriteback());
+                data.setStudyToOutputPathConfig(studyToOutputPathConfig);
 
                 WorkflowRun wr = handler.getWorkflowRun(data);
                 workflowRuns.add(wr);

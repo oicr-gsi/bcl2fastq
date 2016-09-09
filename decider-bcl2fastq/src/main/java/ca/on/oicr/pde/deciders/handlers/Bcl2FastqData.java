@@ -4,6 +4,7 @@ import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.IusWithProvenance;
 import ca.on.oicr.pde.deciders.ProvenanceWithProvider;
+import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +21,7 @@ public class Bcl2FastqData {
     private List<SampleProvenance> sps;
     private LaneProvenance lp;
     private Boolean metadataWriteback;
+    private StudyToOutputPathConfig studyToOutputPathConfig;
 
     public Bcl2FastqData() {
 
@@ -88,6 +90,14 @@ public class Bcl2FastqData {
 
     public void setMetadataWriteback(Boolean metadataWriteback) {
         this.metadataWriteback = metadataWriteback;
+    }
+
+    public StudyToOutputPathConfig getStudyToOutputPathConfig() {
+        return studyToOutputPathConfig;
+    }
+
+    public void setStudyToOutputPathConfig(StudyToOutputPathConfig studyToOutputPathConfig) {
+        this.studyToOutputPathConfig = studyToOutputPathConfig;
     }
 
 }

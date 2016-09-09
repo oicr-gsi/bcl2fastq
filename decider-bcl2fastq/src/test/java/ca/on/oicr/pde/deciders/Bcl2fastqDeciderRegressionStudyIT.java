@@ -10,6 +10,7 @@ import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.client.SeqwareClient;
 import ca.on.oicr.pde.testing.metadata.RegressionTestStudy;
 import ca.on.oicr.pde.reports.WorkflowReport;
+import ca.on.oicr.pde.reports.WorkflowRunReport;
 import ca.on.oicr.pde.testing.metadata.SeqwareTestEnvironment;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -27,8 +28,10 @@ import net.sourceforge.seqware.common.metadata.Metadata;
 import net.sourceforge.seqware.common.model.IUS;
 import net.sourceforge.seqware.common.model.LimsKey;
 import net.sourceforge.seqware.common.model.Workflow;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.testng.Assert;
+import static org.testng.Assert.assertEquals;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertNotNull;
@@ -194,6 +197,26 @@ public class Bcl2fastqDeciderRegressionStudyIT {
         runDecider(bcl2fastqWorkflow2, "--sequencer-run-name", "TEST_SEQUENCER_RUN_001", "--parent-wf-accession", "0");
         report = WorkflowReport.generateReport(seqwareClient, provenanceClient, bcl2fastqWorkflow2);
         Assert.assertEquals(report.getWorkflowRunCount().intValue(), 8);
+    }
+
+    @Test
+    public void studyToOutputPathTest() throws IOException {
+        Workflow bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.8", "", ImmutableMap.of("metadata", "metadata"));
+
+        WorkflowReport report;
+
+        //schedule all runs
+        runDecider(bcl2fastqWorkflow,
+                "--all",
+                "--parent-wf-accession", "0",
+                "--study-to-output-path-csv", FileUtils.toFile(this.getClass().getClassLoader().getResource("test-study-to-output-path.csv")).getAbsolutePath()
+        );
+        report = WorkflowReport.generateReport(seqwareClient, provenanceClient, bcl2fastqWorkflow);
+        Assert.assertEquals(report.getWorkflowRunCount().intValue(), 14);
+
+        for (WorkflowRunReport wrr : report.getWorkflowRuns()) {
+            assertEquals(wrr.getWorkflowIni().get("output_prefix"), "/tmp/PDE_TEST/");
+        }
     }
 
     private void runDecider(Workflow workflow, String... extraDeciderParams) throws IOException {
