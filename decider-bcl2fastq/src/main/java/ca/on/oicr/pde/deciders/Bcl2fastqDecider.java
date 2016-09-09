@@ -31,13 +31,14 @@ import joptsimple.OptionSpec;
 import net.sourceforge.seqware.common.model.FileProvenanceParam;
 import net.sourceforge.seqware.common.model.Workflow;
 import net.sourceforge.seqware.common.module.ReturnValue;
-import net.sourceforge.seqware.common.util.Log;
 import net.sourceforge.seqware.pipeline.runner.PluginRunner;
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 
 public class Bcl2fastqDecider extends OicrDecider {
 
+    private final Logger log = Logger.getLogger(Bcl2fastqDecider.class);
     private Integer workflowSwid;
     private Integer launchMax;
     private boolean isIgnorePreviousAnalysisMode = false;
@@ -65,7 +66,7 @@ public class Bcl2fastqDecider extends OicrDecider {
 
         filters = parseOptions();
 
-        Log.debug("INIT");
+        log.debug("INIT");
 
         if (options.has("launch-max")) {
             launchMax = Integer.parseInt(options.valueOf("launch-max").toString());
@@ -183,7 +184,7 @@ public class Bcl2fastqDecider extends OicrDecider {
 
                 String laneName = providerAndIdToLaneName.get(provider + id);
                 if (laneName == null) {
-                    Log.warn("Missing lane name for provider-id=[" + provider + "-" + id + "]");
+                    log.warn("Missing lane name for provider-id=[" + provider + "-" + id + "]");
                     continue;
                 }
 
@@ -307,7 +308,7 @@ public class Bcl2fastqDecider extends OicrDecider {
                 WorkflowRun wr = handler.getWorkflowRun(data);
                 workflowRuns.add(wr);
             } catch (DataMismatchException dme) {
-                Log.error(laneName + " error: ", dme);
+                log.error(laneName + " error: ", dme);
             }
         }
 
@@ -324,10 +325,10 @@ public class Bcl2fastqDecider extends OicrDecider {
             List<String> runArgs = cmdBuilder.build();
 
             if (isDryRunMode()) {
-                Log.stdout("Dry-run mode: not launching workflow");
+                log.info("Dry-run mode: not launching workflow");
                 System.out.println(runArgs.toString());
             } else {
-                Log.stdout("Scheduling workflow run.");
+                log.info("Scheduling workflow run.");
                 PluginRunner pluginRunner = new PluginRunner();
                 pluginRunner.setConfig(config);
                 pluginRunner.run(runArgs.toArray(new String[runArgs.size()]));
