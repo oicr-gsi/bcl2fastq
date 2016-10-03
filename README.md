@@ -1,6 +1,6 @@
 # bcl2fastq
 
-This [SeqWare](http://seqware.github.io/) workflow transforms Illumina base calls from sequencer run directories into paired-end fastq.gz files and log files using [bcl2fastq](http://support.illumina.com/downloads/bcl2fastq_conversion_software_184.html). The "CASAVA" name is a misnomer since bcl2fastq is used exclusively, but is maintained for historical purposes.
+This [SeqWare](http://seqware.github.io/) workflow transforms Illumina base calls from sequencer run directories into paired-end fastq.gz files and log files using [bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v2-18.html). The "CASAVA" name is a misnomer since bcl2fastq is used exclusively, but is maintained for historical purposes.
 
 ##Workflow
 
