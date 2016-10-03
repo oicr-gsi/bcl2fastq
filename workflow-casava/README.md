@@ -1,10 +1,10 @@
 ##bcl2fastq workflow
 
-Version 2.8.1
+Version 2.9
 
 ###Overview
 
-Uses [Illumina](http://www.illumina.com/) run folders to produce fastq files using [SeqWare](http://seqware.github.io/) and [bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v217.html). The "CASAVA" name is a misnomer since bcl2fastq is used exclusively, but is maintained for historical purposes.
+Uses [Illumina](http://www.illumina.com/) run folders to produce fastq files using [SeqWare](http://seqware.github.io/) and [bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v2-18.html). The "CASAVA" name is a misnomer since bcl2fastq is used exclusively, but is maintained for historical purposes.
 
 ![bcl2fastq flowchart](docs/CASAVA_spec.png)
 
@@ -13,7 +13,7 @@ Uses [Illumina](http://www.illumina.com/) run folders to produce fastq files usi
 This workflow requires:
 
 * [SeqWare](http://seqware.github.io/)
-* [Bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v217.html) 2.17.1
+* [Bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v2-18.html) 2.18.0.12
 
 ###Compile
 When compiling, you most likely will need to add the -Dbcl2fastq-bin flags in order to configure it properly. An example is below.
