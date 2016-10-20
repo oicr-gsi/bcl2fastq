@@ -1,10 +1,10 @@
 ##bcl2fastq workflow
 
-Version 2.8
+Version 2.9
 
 ###Overview
 
-Uses [Illumina](http://www.illumina.com/) run folders to produce fastq files using [SeqWare](http://seqware.github.io/) and [bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v217.html). The "CASAVA" name is a misnomer since bcl2fastq is used exclusively, but is maintained for historical purposes.
+Uses [Illumina](http://www.illumina.com/) run folders to produce fastq files using [SeqWare](http://seqware.github.io/) and [bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v2-18.html). The "CASAVA" name is a misnomer since bcl2fastq is used exclusively, but is maintained for historical purposes.
 
 ![bcl2fastq flowchart](docs/CASAVA_spec.png)
 
@@ -13,7 +13,7 @@ Uses [Illumina](http://www.illumina.com/) run folders to produce fastq files usi
 This workflow requires:
 
 * [SeqWare](http://seqware.github.io/)
-* [Bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v217.html) 2.17.1
+* [Bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v2-18.html) 2.18.0.12
 
 ###Compile
 When compiling, you most likely will need to add the -Dbcl2fastq-bin flags in order to configure it properly. An example is below.
@@ -91,11 +91,12 @@ The accessions are required because they link the fastq files with a lane, IUS a
 * R1 : either R1 or R2 depending on the read number
 * 001 : meaningless (?) suffix maintained for convention
 
-**log zip** : Zips the contents of the text and log files in the bcl2fastq working directory and saves in a zip file: Unaligned_110916_SN804_0064_AD04TBACXX_1.zip
+**reports zip** : Zip of the bcl2fastq "Reports/html" output directory: Reports_110916_SN804_0064_AD04TBACXX_1.zip
+**stats zip** : Zip of the bcl2fastq "Stats" output directory: Stats_110916_SN804_0064_AD04TBACXX_1.zip
 * 110916_SN804_0064_AD04TBACXX : the sequencer run name
 * 1 : lane number
 
-**Undetermined_indices.zip** :  if in a particular lane there is no 'NoIndex', a fastq.gz file will also be produced containing any reads that were not allocated to one of the fastq files
+**Undetermined_indices.zip** :  if in a particular lane there is no 'NoIndex', a R1 and R2 fastq.gz file will also be produced containing any reads that were not allocated to one of the fastq files
 
 ###Support
 For support, please file an issue on the [Github project](https://github.com/oicr-gsi) or send an email to gsi@oicr.on.ca .

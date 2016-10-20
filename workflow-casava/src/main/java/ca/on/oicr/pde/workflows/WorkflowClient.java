@@ -34,7 +34,6 @@ import java.util.Map;
 import net.sourceforge.seqware.pipeline.workflowV2.model.Command;
 import net.sourceforge.seqware.pipeline.workflowV2.model.Job;
 import net.sourceforge.seqware.pipeline.workflowV2.model.SqwFile;
-import org.apache.commons.io.FileUtils;
 
 /**
  * Workflow for bcl2fastq. See the README for more information.
@@ -129,9 +128,19 @@ public class WorkflowClient extends OicrWorkflow {
             Job bustardJob = getBustardJob(laneNum, ProcessEvent.getProcessEventListFromLaneNumber(ls, laneNum));
             bustardJob.setMaxMemory(memory).setQueue(queue);
 
-            Job zipJob = getZipReportJob(getLanePath(dataDir, flowcell, laneNum), ProcessEvent.getLaneSwid(ls, laneNum));
-            zipJob.setMaxMemory(memory).setQueue(queue);
-            zipJob.addParent(bustardJob);
+            Job zipReportsJob = getZipJob(
+                    getLanePath(dataDir, flowcell, laneNum) + "/Reports/html/",
+                    ProcessEvent.getLaneSwid(ls, laneNum),
+                    "Reports_" + flowcell + "_" + laneNum + ".zip");
+            zipReportsJob.setMaxMemory(memory).setQueue(queue);
+            zipReportsJob.addParent(bustardJob);
+
+            Job zipStatsJob = getZipJob(
+                    getLanePath(dataDir, flowcell, laneNum) + "/Stats/",
+                    ProcessEvent.getLaneSwid(ls, laneNum),
+                    "Stats_" + flowcell + "_" + laneNum + ".zip");
+            zipStatsJob.setMaxMemory(memory).setQueue(queue);
+            zipStatsJob.addParent(bustardJob);
         }
 
     }
@@ -244,19 +253,17 @@ public class WorkflowClient extends OicrWorkflow {
 
     }
 
-    private Job getZipReportJob(String inputDirectoryPath, String laneAccession) {
+    private Job getZipJob(String inputDirectoryPath, String laneAccession, String outputFileName) {
 
-        String zipFileName = FileUtils.getFile(inputDirectoryPath).getName() + ".zip";
-        String outputZipFilePath = dataDir + zipFileName;
+        String outputZipFilePath = inputDirectoryPath + "/" + outputFileName;
 
-        Job job = newJob("ZipReports");
+        Job job = newJob("Create_" + outputFileName);
 
         Command c = job.getCommand();
         c.addArgument("cd " + inputDirectoryPath + " &&");
         c.addArgument("zip -r");
-        c.addArgument("../" + zipFileName);
-        c.addArgument("."); //currect directory which is "inputDirectoryPath"
-        c.addArgument("-x \\*.fastq.gz");
+        c.addArgument(outputFileName);
+        c.addArgument("."); //zip all files in current directory ("inputDirectoryPath")
 
         SqwFile f = createOutputFile(outputZipFilePath, "application/zip-report-bundle", manualOutput);
         f.setParentAccessions(Arrays.asList(laneAccession));

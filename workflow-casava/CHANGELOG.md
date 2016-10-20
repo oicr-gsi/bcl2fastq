@@ -1,3 +1,9 @@
+## 2.9 - 2016-10-03
+- [GP-981](https://jira.oicr.on.ca/browse/GP-918) - Update to bcl2fastq 2.18.0.12
+
+## 2.8.1 - 2016-09-19
+- [GP-781](https://jira.oicr.on.ca/browse/GP-781) - Provision out zipped "Reports" and "Stats" directories
+
 ## 2.8 - 2016-03-23
 - GP-759 - Update CASAVA to bcl2fastq v2.17
 
