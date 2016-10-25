@@ -72,19 +72,47 @@ wf-accession | Integer | Bcl2FastQ workflow accession
 
 **Optional**
 
-Please see [basic deciders](http://seqware.github.io/docs/17-plugins/#basicdecider) and [oicr deciders](https://github.com/oicr-gsi/pipedev/tree/master/deciders#options) for general decider options.
+Parameters to filter/select the set of lanes to operate on:
+
+Parameter | Type | Description \[default\]
+----------|------|-------------------------
+check-wf-accessions                      | String  | The comma-separated, no spaces, workflow accessions of the workflow that      
+                                                     perform the same function (e.g. older versions). Any files that have been   
+                                                     processed with these workflows will be skipped.
+after-date                               | String  | Include only lanes created after the specified date
+before-date                              | String  | Include only lanes created before the specified date
+include-instrument                       | String  | Include only lanes with sequencer run attribute "instrument name"  
+include-lane                             | String  | Include only lanes with lane name
+include-sequencer-run                    | String  | Include only lanes with sequencer run name
+include-sequencer-run-platform-model     | String  | Include only lanes with sequencer run platform model
+include-study                            | String  | Include only lanes with study (determined by associated samples)
+exclude-instrument                       | String  | Exclude lanes with sequencer run attribute "instrument name
+exclude-lane                             | String  | Exclude lanes with lane name
+exclude-sequencer-run                    | String  | Exclude lanes with sequencer run name
+exclude-sequencer-run-platform-model     | String  | Exclude lanes with sequencer run platform model
+exclude-study                            | String  | Exclude lanes with study (determined by associated samples)
+all                                      | none    | Operate on all lanes defined in the provenance-settings json
 
 Additional optional parameters include:
 
 Parameter | Type | Description \[default\]
 ----------|------|-------------------------
-lane-number | String (number) | If sequencer-run-name is provided, use this parameter to run a specific lane
-ignore-previous-lims-keys | none | WARNING: use with caution This parameter creates new IUS-LimsKeys and workflow runs for all sample and lane provenance that passes the command line filters
-help | none | Display help
-output-path | String (path) | Absolute path of directory to put the final files
-output-folder | String (path) | Path to put the final files, relative to output-path
-test | none | Runs the decider entirely except for launching the workflow
-verbose | none | Log verbose output
+help                                     | none    | Display help
+verbose                                  | Boolean | Log verbose output
+host                                     | String  | Used only in combination with --schedule to schedule onto a specific host. If 
+                                                     not provided, the default is the local host [local hostname]
+dry-run or test                          | Boolean | Dry-run/test mode. Prints the INI files to standard out and does not submit the workflow [false]
+no-meta-db or no-metadata                | Boolean | Prevents metadata writeback (which is done by default) by the Decider and that is subsequently passed 
+                                                     to the called workflow which can use it to determine if they should write metadata at runtime on the cluster [false]
+disable-run-complete-check               | Boolean | Disable checking that the file "oicr_run_complete" is present in the "run_dir" [false]
+no-null-created-date                     | Boolean | Set the filter comparison date to "last modified" date if "created date" is null [false]
+force-run-all or ignore-previous-runs    | Boolean | (WARNING: use with caution) Forces the decider to run all matches regardless of whether they've been run before or not [false]
+ignore-previous-lims-keys                | Boolean | (WARNING: use with caution) Ignore all existing analysis (workflow runs and IUS skip) [false]
+launch-max                               | Integer | The maximum number of workflow runs to launch at once [10]
+study-to-output-path-csv                 | String (path) | The absolulte path to the "Study To Output Path" CSV file that defines the workflow "output-prefix"
+output-path                              | String (path) | Absolute path of directory to put the final files
+output-folder                            | String (path) | Path to put the final files, relative to output-path
+
 
 **Note**
 All of the [workflow properties](../workflow-casava) can be overridden by providing <property, value> pairs in the command, for example:

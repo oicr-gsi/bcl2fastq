@@ -1,17 +1,17 @@
 package ca.on.oicr.pde.deciders.handlers;
 
-import ca.on.oicr.gsi.common.transformation.StringSanitizerBuilder;
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.DataMismatchException;
 import ca.on.oicr.pde.deciders.IusWithProvenance;
 import ca.on.oicr.pde.deciders.ProvenanceWithProvider;
 import ca.on.oicr.pde.deciders.WorkflowRun;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,18 +23,7 @@ import java.util.SortedSet;
  */
 public abstract class Bcl2FastqHandler implements Handler {
 
-    protected final Function<String, String> stringSanitizer;
-
     public abstract WorkflowRun modifyWorkflowRun(Bcl2FastqData data, WorkflowRun workflowRun) throws DataMismatchException;
-
-    public Bcl2FastqHandler() {
-        StringSanitizerBuilder stringSanitizerBuilder = new StringSanitizerBuilder();
-        stringSanitizerBuilder.add(";", "\u2300");
-        stringSanitizerBuilder.add("=", "\u2300");
-        stringSanitizerBuilder.add("&", "\u2300");
-        stringSanitizerBuilder.add(" ", "_");
-        stringSanitizer = stringSanitizerBuilder.build();
-    }
 
     public WorkflowRun getWorkflowRun(Bcl2FastqData data) throws DataMismatchException {
         WorkflowRun wr = new WorkflowRun(null, null);
@@ -84,15 +73,16 @@ public abstract class Bcl2FastqHandler implements Handler {
         }
 
         if (data.getStudyToOutputPathConfig() != null) {
-            Set<String> studyTitles = new HashSet<>();
+            Set<String> outputPaths = new HashSet<>();
             for (SampleProvenance sp : data.getSps()) {
-                //OicrDecider sanitizes study titles, so the same sanitization should be applied to sample provenance title
-                studyTitles.add(stringSanitizer.apply(sp.getStudyTitle()));
+                //Get the output path from the study to output path csv
+                String outputPath = data.getStudyToOutputPathConfig().getOutputPathForStudy(sp.getStudyTitle());
+                outputPaths.add(outputPath);
             }
-            if (studyTitles.size() == 1) {
-                wr.addProperty("output_prefix", data.getStudyToOutputPathConfig().getOutputPathForStudy(Iterables.getOnlyElement(studyTitles)));
+            if (outputPaths.size() == 1) {
+                wr.addProperty("output_prefix", Iterables.getOnlyElement(outputPaths));
             } else {
-                throw new DataMismatchException("[" + studyTitles.size() + "] study title(s) found for workflow run - expected one study title");
+                throw new DataMismatchException("[" + outputPaths.size() + "] output paths found for workflow run - expected one.");
             }
         }
 
@@ -155,6 +145,12 @@ public abstract class Bcl2FastqHandler implements Handler {
         String laneString = lp.getLaneNumber() + "," + laneProvenanceIusSwid;
 
         List<String> es = new ArrayList<>();
+        Collections.sort(samples, new Comparator<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>>() {
+            @Override
+            public int compare(IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> o1, IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> o2) {
+                return o1.getProvenanceWithProvider().getProvenance().getSampleName().compareTo(o2.getProvenanceWithProvider().getProvenance().getSampleName());
+            }
+        });
         for (IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> s : samples) {
             Integer sampleProvenanceIusSwid = s.getIusSwid();
             SampleProvenance sp = s.getProvenanceWithProvider().getProvenance();

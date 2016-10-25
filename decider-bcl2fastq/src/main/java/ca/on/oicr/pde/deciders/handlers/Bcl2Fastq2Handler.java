@@ -3,6 +3,7 @@ package ca.on.oicr.pde.deciders.handlers;
 import ca.on.oicr.pde.deciders.DataMismatchException;
 import ca.on.oicr.pde.deciders.WorkflowRun;
 import com.google.common.collect.Iterables;
+import java.util.Arrays;
 import java.util.SortedSet;
 
 /**
@@ -13,7 +14,7 @@ public class Bcl2Fastq2Handler extends Bcl2FastqHandler {
 
     @Override
     public boolean isHandlerFor(String workflowName, String workflowVersion) {
-        return "CASAVA".equals(workflowName) && "2.8".equals(workflowVersion);
+        return "CASAVA".equals(workflowName) && Arrays.asList("2.8", "2.9").contains(workflowVersion);
     }
 
     @Override
