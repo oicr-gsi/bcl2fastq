@@ -147,13 +147,13 @@ public class WorkflowClient extends OicrWorkflow {
         for (ProcessEvent p : ps) {
             SqwFile r1 = createOutputFile(generateOutputPath(dataDir, flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(), "1", p.getGroupId()),
                     "chemical/seq-na-fastq-gzip", manualOutput);
-            r1.setParentAccessions(Arrays.asList(p.getLaneSwAccession(), p.getIusSwAccession()));
+            r1.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
             job.addFile(r1);
 
             if (readEnds > 1) {
                 SqwFile r2 = createOutputFile(generateOutputPath(dataDir, flowcell, laneNum, p.getIusSwAccession(), p.getSampleName(), p.getBarcode(), "2",p.getGroupId()),
                         "chemical/seq-na-fastq-gzip", manualOutput);
-                r2.setParentAccessions(Arrays.asList(p.getLaneSwAccession(), p.getIusSwAccession()));
+                r2.setParentAccessions(Arrays.asList(p.getIusSwAccession()));
                 job.addFile(r2);
             }
         }
