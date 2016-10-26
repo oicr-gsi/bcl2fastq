@@ -72,6 +72,8 @@ public abstract class Bcl2FastqHandler implements Handler {
             wr.addProperty("metadata", "no-metadata");
         }
 
+        wr.addProperty("flowcell", data.getLp().getSequencerRunName());
+
         if (data.getStudyToOutputPathConfig() != null) {
             Set<String> outputPaths = new HashSet<>();
             for (SampleProvenance sp : data.getSps()) {

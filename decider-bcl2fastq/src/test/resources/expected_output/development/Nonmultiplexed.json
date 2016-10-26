@@ -13,6 +13,7 @@
   "workflowRuns" : [ {
     "workflowIni" : {
       "called_bases" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "131025_SN802_0145_AC2KVTACXX",
       "intensity_folder" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/",
       "lanes" : "1,IUS_SWID:NoIndex,IUS_SWID,PCSI_0231_Pa_P_PE_575_WG",
       "manual_output" : "false",
@@ -25,6 +26,7 @@
   }, {
     "workflowIni" : {
       "called_bases" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "131025_SN802_0145_AC2KVTACXX",
       "intensity_folder" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/",
       "lanes" : "2,IUS_SWID:NoIndex,IUS_SWID,PCSI_0232_Pa_P_PE_593_WG",
       "manual_output" : "false",
@@ -37,6 +39,7 @@
   }, {
     "workflowIni" : {
       "called_bases" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "131025_SN802_0145_AC2KVTACXX",
       "intensity_folder" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/",
       "lanes" : "3,IUS_SWID:NoIndex,IUS_SWID,PCSI_0232_Pa_P_PE_593_WG",
       "manual_output" : "false",
@@ -49,6 +52,7 @@
   }, {
     "workflowIni" : {
       "called_bases" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "131025_SN802_0145_AC2KVTACXX",
       "intensity_folder" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/",
       "lanes" : "4,IUS_SWID:NoIndex,IUS_SWID,PCSI_0231_Pa_P_PE_574_WG",
       "manual_output" : "false",
@@ -61,6 +65,7 @@
   }, {
     "workflowIni" : {
       "called_bases" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "131025_SN802_0145_AC2KVTACXX",
       "intensity_folder" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/",
       "lanes" : "5,IUS_SWID:NoIndex,IUS_SWID,PCSI_0274_Pa_P_PE_583_WG",
       "manual_output" : "false",
@@ -73,6 +78,7 @@
   }, {
     "workflowIni" : {
       "called_bases" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "131025_SN802_0145_AC2KVTACXX",
       "intensity_folder" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/",
       "lanes" : "6,IUS_SWID:NoIndex,IUS_SWID,PCSI_0274_Pa_P_PE_583_WG",
       "manual_output" : "false",
@@ -85,6 +91,7 @@
   }, {
     "workflowIni" : {
       "called_bases" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "131025_SN802_0145_AC2KVTACXX",
       "intensity_folder" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/",
       "lanes" : "7,IUS_SWID:NoIndex,IUS_SWID,PCSI_0274_Pa_P_PE_551_WG",
       "manual_output" : "false",
@@ -97,6 +104,7 @@
   }, {
     "workflowIni" : {
       "called_bases" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "131025_SN802_0145_AC2KVTACXX",
       "intensity_folder" : "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/",
       "lanes" : "8,IUS_SWID:NoIndex,IUS_SWID,CPCG_0335_Pr_P_PE_583_WG",
       "manual_output" : "false",
