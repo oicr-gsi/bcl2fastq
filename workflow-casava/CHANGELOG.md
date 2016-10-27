@@ -1,3 +1,6 @@
+## 2.9.1 - 2016-10-26
+- [GP-949](https://jira.oicr.on.ca/browse/GP-949) - Hotfix for SeqWare 1.1.1-gsi: do not provision out fastq with link to sample and lane.
+
 ## 2.9 - 2016-10-03
 - [GP-981](https://jira.oicr.on.ca/browse/GP-918) - Update to bcl2fastq 2.18.0.12
 
