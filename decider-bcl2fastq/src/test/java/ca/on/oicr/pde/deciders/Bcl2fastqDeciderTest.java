@@ -77,7 +77,7 @@ public class Bcl2fastqDeciderTest {
         bcl2fastqDecider.setProvenanceClient(client);
 
         SeqwareClient seqwareClient = new MetadataBackedSeqwareClient(metadata, config);
-        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.8", "test workflow");
+        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.7.1", "test workflow");
         bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
 
         File runDir = Files.createTempDir();

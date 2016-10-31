@@ -10,7 +10,7 @@ public class Bcl2Fastq1Handler extends Bcl2FastqHandler {
 
     @Override
     public boolean isHandlerFor(String workflowName, String workflowVersion) {
-        return "CASAVA".equals(workflowName) && "2.7".equals(workflowVersion);
+        return "CASAVA".equals(workflowName) && "2.7.1".equals(workflowVersion);
     }
 
     @Override

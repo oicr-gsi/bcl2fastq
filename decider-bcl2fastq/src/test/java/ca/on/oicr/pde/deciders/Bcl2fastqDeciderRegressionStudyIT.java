@@ -89,7 +89,7 @@ public class Bcl2fastqDeciderRegressionStudyIT {
 
     @Test
     public void basicScheduleTest() throws IOException {
-        Workflow bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.8", "", ImmutableMap.of("metadata", "metadata"));
+        Workflow bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "", ImmutableMap.of("metadata", "metadata"));
 
         Bcl2fastqDecider d = new Bcl2fastqDecider();
         d.setWorkflow(bcl2fastqWorkflow);
@@ -114,7 +114,7 @@ public class Bcl2fastqDeciderRegressionStudyIT {
 
     @Test
     public void launchMaxTest() throws IOException {
-        Workflow bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.8", "", ImmutableMap.of("metadata", "metadata"));
+        Workflow bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "", ImmutableMap.of("metadata", "metadata"));
 
         WorkflowReport report;
 
@@ -162,7 +162,7 @@ public class Bcl2fastqDeciderRegressionStudyIT {
         //add a lims key with no associated analysis - this IUS should be skipped by the decider
         IUS ius = seqwareClient.addLims("seqware", sp.getSampleProvenanceId(), sp.getVersion(), sp.getLastModified());
 
-        Workflow bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.8", "", ImmutableMap.of("metadata", "metadata"));
+        Workflow bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "", ImmutableMap.of("metadata", "metadata"));
         WorkflowReport report;
 
         Bcl2fastqDecider d = new Bcl2fastqDecider();
@@ -229,7 +229,7 @@ public class Bcl2fastqDeciderRegressionStudyIT {
         }
 
         //schedule new workflow runs for TEST_SEQUENCER_RUN_001, all 8 lanes should be processed now that the IUS-LimsKey has been removed
-        Workflow bcl2fastqWorkflow2 = seqwareClient.createWorkflow("CASAVA", "2.8", "", ImmutableMap.of("metadata", "metadata"));
+        Workflow bcl2fastqWorkflow2 = seqwareClient.createWorkflow("CASAVA", "2.9.1", "", ImmutableMap.of("metadata", "metadata"));
         filters.clear();
         filters.put(FileProvenanceFilter.sequencer_run, ImmutableSet.of("TEST_SEQUENCER_RUN_001"));
         d.setIncludeFilters(filters);
@@ -241,7 +241,7 @@ public class Bcl2fastqDeciderRegressionStudyIT {
 
     @Test
     public void studyToOutputPathTest() throws IOException {
-        Workflow bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.8", "", ImmutableMap.of("metadata", "metadata"));
+        Workflow bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "", ImmutableMap.of("metadata", "metadata"));
 
         WorkflowReport report;
 
