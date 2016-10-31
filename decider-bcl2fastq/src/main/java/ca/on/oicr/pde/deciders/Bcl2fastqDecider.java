@@ -486,14 +486,19 @@ public class Bcl2fastqDecider {
             List<ProvenanceWithProvider<LaneProvenance>> lps = laneNameToLaneProvenance.get(laneName);
             if (lps.size() != 1) {
                 invalidLanes.add(laneName);
-                log.warn("Lane = [{}] can not be processed, lane provenance count = [{}], expected 1", laneName, lps.size());
+                log.warn("Lane = [{}] can not be processed, lane provenance count = [{}], expected 1.\n"
+                        + "Lane provenance info: [{}]",
+                        laneName, lps.size(), Joiner.on(";").join(lps));
             }
 
             //expect one or more sample provenance per lane name
             List<ProvenanceWithProvider<SampleProvenance>> sps = laneNameToSampleProvenance.get(laneName);
             if (sps.isEmpty()) {
                 invalidLanes.add(laneName);
-                log.warn("Lane = [{}] can not be processed, sample provenance count = [{}], expected 1 or more", laneName, sps.size());
+                log.warn("Lane = [{}] can not be processed, sample provenance count = [{}], expected 1 or more.\n"
+                        + "Lane provenance info: [{}]\n"
+                        + "Sample provenance info: [{}]",
+                        laneName, sps.size(), Joiner.on(";").join(lps), Joiner.on(";").join(sps));
             }
 
             if (!disableRunCompleteCheck) {
@@ -507,16 +512,22 @@ public class Bcl2fastqDecider {
                             if (oicrRunCompleteTouchFile.exists()) {
                                 //run is complete
                             } else {
-                                log.info("Lane = [{}] has not completed sequencing ([{}] is missing)", laneName, oicrRunCompleteTouchFile.getAbsolutePath());
                                 invalidLanes.add(laneName);
+                                log.info("Lane = [{}] has not completed sequencing ([{}] is missing).\n"
+                                        + "Lane provenance info: [{}]",
+                                        laneName, oicrRunCompleteTouchFile.getAbsolutePath(), Joiner.on(";").join(lps));
                             }
                         } else {
-                            log.info("Lane = [{}] run_dir = [{}] is not accessible or does not exist", laneName, runDir.getAbsolutePath());
                             invalidLanes.add(laneName);
+                            log.info("Lane = [{}] run_dir = [{}] is not accessible or does not exist.\n"
+                                    + "Lane provenance info: [{}]",
+                                    laneName, runDir.getAbsolutePath(), Joiner.on(";").join(lps));
                         }
                     } else {
-                        log.warn("Lane = [{}] can not be processed, run_dir = [{}]", laneName, (runDirs == null ? "" : Joiner.on(",").join(runDirs)));
                         invalidLanes.add(laneName);
+                        log.warn("Lane = [{}] can not be processed, run_dir = [{}].\n"
+                                + "Lane provenance info: [{}]",
+                                laneName, (runDirs == null ? "" : Joiner.on(",").join(runDirs)), Joiner.on(";").join(lps));
                     }
                 }
             }
@@ -532,7 +543,7 @@ public class Bcl2fastqDecider {
         for (String laneName : lanesToAnalyze) {
 
             if (launchMax != null && workflowRuns.size() >= launchMax) {
-                log.info("Launch max reached");
+                log.info("Launch max [{}] reached.", launchMax);
                 break;
             }
 

@@ -37,4 +37,9 @@ public class ProvenanceWithProvider<T extends LimsProvenance> {
         return lk;
     }
 
+    @Override
+    public String toString() {
+        return getLimsKey().toString();
+    }
+
 }
