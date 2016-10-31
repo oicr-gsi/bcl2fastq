@@ -521,10 +521,6 @@ public class Bcl2fastqDecider {
                 }
             }
 
-            if (studyToOutputPathConfig != null && laneNameToStudyNames.get(laneName).size() != 1) {
-                log.warn("Lane = [{}] can not be processed, multiple study names detected [{}]", laneName, Joiner.on(",").join(laneNameToStudyNames.get(laneName)));
-                invalidLanes.add(laneName);
-            }
         }
 
         //remove invalid lanes from lanes to analyze set
