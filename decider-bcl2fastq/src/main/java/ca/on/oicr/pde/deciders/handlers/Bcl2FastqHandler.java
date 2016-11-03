@@ -5,7 +5,7 @@ import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.DataMismatchException;
 import ca.on.oicr.pde.deciders.IusWithProvenance;
 import ca.on.oicr.pde.deciders.ProvenanceWithProvider;
-import ca.on.oicr.pde.deciders.WorkflowRun;
+import ca.on.oicr.pde.deciders.WorkflowRunV2;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -23,10 +23,10 @@ import java.util.SortedSet;
  */
 public abstract class Bcl2FastqHandler implements Handler {
 
-    public abstract WorkflowRun modifyWorkflowRun(Bcl2FastqData data, WorkflowRun workflowRun) throws DataMismatchException;
+    public abstract WorkflowRunV2 modifyWorkflowRun(Bcl2FastqData data, WorkflowRunV2 workflowRun);
 
-    public WorkflowRun getWorkflowRun(Bcl2FastqData data) throws DataMismatchException {
-        WorkflowRun wr = new WorkflowRun(null, null);
+    public WorkflowRunV2 getWorkflowRun(Bcl2FastqData data) {
+        WorkflowRunV2 wr = new WorkflowRunV2(null, null);
         wr.addProperty(data.getProperties());
 
         wr.setIusSwidsToLinkWorkflowRunTo(data.getIusSwidsToLinkWorkflowRunTo());
@@ -48,7 +48,14 @@ public abstract class Bcl2FastqHandler implements Handler {
             // do not do demultiplexing if there is only one sample in the lane https://jira.oicr.on.ca/browse/GR-261
             barcodes = Lists.newArrayList("NoIndex");
         }
-        String basesMask = calculateBasesMask(barcodes);
+
+        String basesMask;
+        try {
+            basesMask = calculateBasesMask(barcodes);
+        } catch (DataMismatchException dme) {
+            basesMask = "ERROR";
+            wr.addError(dme.getMessage());
+        }
         if (basesMask != null) {
             wr.addProperty("use_bases_mask", basesMask);
         }
@@ -56,7 +63,8 @@ public abstract class Bcl2FastqHandler implements Handler {
         String runDir = null;
         SortedSet<String> runDirs = data.getLp().getSequencerRunAttributes().get("run_dir");
         if (runDirs == null || runDirs.size() != 1) {
-            throw new DataMismatchException("Run dir is missing");
+            runDir = "ERROR";
+            wr.addError("Run dir is missing");
         } else {
             runDir = Iterables.getOnlyElement(runDirs);
             if (!runDir.endsWith("/")) {
@@ -81,11 +89,14 @@ public abstract class Bcl2FastqHandler implements Handler {
                 String outputPath = data.getStudyToOutputPathConfig().getOutputPathForStudy(sp.getStudyTitle());
                 outputPaths.add(outputPath);
             }
+            String outputPrefix;
             if (outputPaths.size() == 1) {
-                wr.addProperty("output_prefix", Iterables.getOnlyElement(outputPaths));
+                outputPrefix = Iterables.getOnlyElement(outputPaths);
             } else {
-                throw new DataMismatchException("[" + outputPaths.size() + "] output paths found for workflow run - expected one.");
+                outputPrefix = "ERROR";
+                wr.addError("[" + outputPaths.size() + "] output paths found for workflow run - expected one.");
             }
+            wr.addProperty("output_prefix", outputPrefix);
         }
 
         wr = modifyWorkflowRun(data, wr);
@@ -137,7 +148,7 @@ public abstract class Bcl2FastqHandler implements Handler {
         } else if (barcodeLength > 0) {
             return "y*,I" + barcodeLength + "n*,y*";
         } else {
-            throw new RuntimeException("");
+            throw new DataMismatchException("Unable to calculate bases mask");
         }
     }
 

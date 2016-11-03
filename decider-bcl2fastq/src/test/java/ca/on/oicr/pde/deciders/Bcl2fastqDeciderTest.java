@@ -14,6 +14,7 @@ import ca.on.oicr.pde.client.SeqwareClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Table;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import net.sourceforge.seqware.common.model.Workflow;
 import org.joda.time.DateTime;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
+import org.powermock.reflect.Whitebox;
 import static org.testng.Assert.assertEquals;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -316,6 +318,43 @@ public class Bcl2fastqDeciderTest {
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0002"));
         }
+    }
+
+    @Test
+    public void dryRunOverrides() {
+        EnumMap<FileProvenanceFilter, Set<String>> filters = new EnumMap<>(FileProvenanceFilter.class);
+        filters.put(FileProvenanceFilter.study, ImmutableSet.of("TEST_STUDY_1"));
+        bcl2fastqDecider.setIncludeFilters(filters);
+
+        bcl2fastqDecider.setIsDryRunMode(true);
+        bcl2fastqDecider.setDoCreateIusLimsKeys(true);
+        bcl2fastqDecider.setDoScheduleWorkflowRuns(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+
+        bcl2fastqDecider.setIsDryRunMode(false);
+        bcl2fastqDecider.setDoCreateIusLimsKeys(true);
+        bcl2fastqDecider.setDoScheduleWorkflowRuns(false);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+
+        bcl2fastqDecider.setIsDryRunMode(false);
+        bcl2fastqDecider.setDoCreateIusLimsKeys(true);
+        bcl2fastqDecider.setDoScheduleWorkflowRuns(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+
+        bcl2fastqDecider.setIsDryRunMode(false);
+        bcl2fastqDecider.setDoCreateIusLimsKeys(true);
+        bcl2fastqDecider.setDoScheduleWorkflowRuns(true);
+        bcl2fastqDecider.setIgnorePreviousLimsKeysMode(true);
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+
+        Collection<FileProvenance> fps = getFpsForCurrentWorkflow();
+        assertEquals(fps.size(), 2);
+        for (FileProvenance fp : getFpsForCurrentWorkflow()) {
+            assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0001"));
+        }
+
+        //clear static "STORE" table in MetadataInMemory after this test - it creates blocking Ius-LimsKeys
+        Whitebox.<Table>getInternalState(MetadataInMemory.class, "STORE").clear();
     }
 
     private Collection<FileProvenance> getFpsForCurrentWorkflow() {

@@ -46,6 +46,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<Boolean> noNullCreatedDateOpt;
     private final OptionSpec<Boolean> disableRunCompleteCheckOpt;
     private final OptionSpec<Boolean> dryRunOpt;
+    private final OptionSpec<Boolean> createIusLimsKeysOpt;
+    private final OptionSpec<Boolean> scheduleWorkflowRunsOpt;
     private final OptionSpec<Boolean> noMetadataOpt;
     private final OptionSpec<Integer> launchMaxOpt;
     private final OptionSpec<String> hostOpt;
@@ -101,6 +103,12 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         dryRunOpt = parser.acceptsAll(Arrays.asList("dry-run", "test"),
                 "Dry-run/test mode. Prints the INI files to standard out and does not submit the workflow.")
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
+        createIusLimsKeysOpt = parser.acceptsAll(Arrays.asList("create-ius-lims-keys"),
+                "Enable or disable the creation of IUS-LimsKeys objects in the SeqWare db (--dry-run/--test overrides this option).")
+                .withOptionalArg().ofType(Boolean.class).defaultsTo(true);
+        scheduleWorkflowRunsOpt = parser.acceptsAll(Arrays.asList("schedule-workflow-runs"),
+                "Enable or disable the scheduling of workflow runs (--dry-run/--test overrides this option).")
+                .withOptionalArg().ofType(Boolean.class).defaultsTo(true);
         noMetadataOpt = parser.acceptsAll(Arrays.asList("no-meta-db", "no-metadata"),
                 "Prevents metadata writeback (which is done "
                 + "by default) by the Decider and that is subsequently "
@@ -230,12 +238,15 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         }
         decider.setHost(options.valueOf(hostOpt));
 
+        decider.setDoCreateIusLimsKeys(getBooleanFlagOrArgValue(createIusLimsKeysOpt));
+        decider.setDoScheduleWorkflowRuns(getBooleanFlagOrArgValue(scheduleWorkflowRunsOpt));
         if (getBooleanFlagOrArgValue(dryRunOpt) || getBooleanFlagOrArgValue(noMetadataOpt)) {
             decider.setIsDryRunMode(true);
             decider.setDoMetadataWriteback(false);
+            decider.setDoCreateIusLimsKeys(false);
+            decider.setDoScheduleWorkflowRuns(false);
         } else {
             decider.setIsDryRunMode(false);
-            decider.setDoMetadataWriteback(true);
         }
 
         decider.setIgnorePreviousAnalysisMode(getBooleanFlagOrArgValue(ignorePreviousRunsOpt));
@@ -345,6 +356,10 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     @Override
     public ReturnValue clean_up() {
         return new ReturnValue(ReturnValue.ExitStatus.SUCCESS);
+    }
+
+    public Bcl2fastqDecider getBcl2fastqDecider() {
+        return decider;
     }
 
     public static void main(String args[]) {

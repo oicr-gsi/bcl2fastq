@@ -1,6 +1,6 @@
 package ca.on.oicr.pde.deciders.handlers;
 
-import ca.on.oicr.pde.deciders.WorkflowRun;
+import ca.on.oicr.pde.deciders.WorkflowRunV2;
 
 /**
  *
@@ -14,7 +14,7 @@ public class Bcl2Fastq1Handler extends Bcl2FastqHandler {
     }
 
     @Override
-    public WorkflowRun modifyWorkflowRun(Bcl2FastqData data, WorkflowRun run) {
+    public WorkflowRunV2 modifyWorkflowRun(Bcl2FastqData data, WorkflowRunV2 run) {
         return run;
     }
 }

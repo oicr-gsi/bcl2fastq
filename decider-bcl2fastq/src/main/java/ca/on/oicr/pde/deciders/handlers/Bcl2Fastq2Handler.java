@@ -1,7 +1,6 @@
 package ca.on.oicr.pde.deciders.handlers;
 
-import ca.on.oicr.pde.deciders.DataMismatchException;
-import ca.on.oicr.pde.deciders.WorkflowRun;
+import ca.on.oicr.pde.deciders.WorkflowRunV2;
 import com.google.common.collect.Iterables;
 import java.util.Arrays;
 import java.util.SortedSet;
@@ -18,11 +17,12 @@ public class Bcl2Fastq2Handler extends Bcl2FastqHandler {
     }
 
     @Override
-    public WorkflowRun modifyWorkflowRun(Bcl2FastqData data, WorkflowRun run) throws DataMismatchException {
+    public WorkflowRunV2 modifyWorkflowRun(Bcl2FastqData data, WorkflowRunV2 run) {
         String runDir = null;
         SortedSet<String> runDirs = data.getLp().getSequencerRunAttributes().get("run_dir");
         if (runDirs == null || runDirs.size() != 1) {
-            throw new DataMismatchException("Run dir is missing");
+            runDir = "ERROR";
+            run.addError("Run dir is missing");
         } else {
             runDir = Iterables.getOnlyElement(runDirs);
             if (!runDir.endsWith("/")) {

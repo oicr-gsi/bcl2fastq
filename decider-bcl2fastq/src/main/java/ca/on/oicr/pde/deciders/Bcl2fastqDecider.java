@@ -68,6 +68,8 @@ public class Bcl2fastqDecider {
 
     private Boolean isDryRunMode = false;
     private Boolean doMetadataWriteback = true;
+    private Boolean doCreateIusLimsKeys = true;
+    private Boolean doScheduleWorkflowRuns = true;
     private Boolean ignorePreviousAnalysisMode = false;
     private Boolean ignorePreviousLimsKeysMode = false;
     private Boolean disableRunCompleteCheck = false;
@@ -123,6 +125,22 @@ public class Bcl2fastqDecider {
 
     public void setDoMetadataWriteback(Boolean doMetadataWriteback) {
         this.doMetadataWriteback = doMetadataWriteback;
+    }
+
+    public Boolean getDoCreateIusLimsKeys() {
+        return doCreateIusLimsKeys;
+    }
+
+    public void setDoCreateIusLimsKeys(Boolean doCreateIusLimsKeys) {
+        this.doCreateIusLimsKeys = doCreateIusLimsKeys;
+    }
+
+    public Boolean getDoScheduleWorkflowRuns() {
+        return doScheduleWorkflowRuns;
+    }
+
+    public void setDoScheduleWorkflowRuns(Boolean doScheduleWorkflowRuns) {
+        this.doScheduleWorkflowRuns = doScheduleWorkflowRuns;
     }
 
     public Set<String> getWorkflowAccessionsToCheck() {
@@ -539,7 +557,7 @@ public class Bcl2fastqDecider {
 
         //collect required workflow run data - create IUS-LimsKey records in seqware that will be linked to the workflow run
         List<WorkflowRun> workflowRuns = new ArrayList<>();
-        int workflowRunValidationErrors = 0;
+        List<WorkflowRun> invalidWorkflowRuns = new ArrayList<>();
         for (String laneName : lanesToAnalyze) {
 
             if (launchMax != null && workflowRuns.size() >= launchMax) {
@@ -547,68 +565,58 @@ public class Bcl2fastqDecider {
                 break;
             }
 
-            try {
-                ProvenanceWithProvider<LaneProvenance> lane = Iterables.getOnlyElement(laneNameToLaneProvenance.get(laneName));
-                IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> linkedLane = createIusToProvenanceLink(lane, getDoMetadataWriteback());
-                LaneProvenance lp = lane.getProvenance();
+            ProvenanceWithProvider<LaneProvenance> lane = Iterables.getOnlyElement(laneNameToLaneProvenance.get(laneName));
+            IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> linkedLane = createIusToProvenanceLink(lane, getDoCreateIusLimsKeys() && !getIsDryRunMode());
+            LaneProvenance lp = lane.getProvenance();
 
-                List<ProvenanceWithProvider<SampleProvenance>> samples = laneNameToSampleProvenance.get(laneName);
-                List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> linkedSamples = new ArrayList<>();
-                for (ProvenanceWithProvider<SampleProvenance> provenanceWithProvider : samples) {
-                    linkedSamples.add(createIusToProvenanceLink(provenanceWithProvider, getDoMetadataWriteback()));
-                }
-                List<SampleProvenance> sps = new ArrayList<>();
-                for (ProvenanceWithProvider<SampleProvenance> spWithProvider : samples) {
-                    sps.add(spWithProvider.getProvenance());
-                }
-
-                List<Integer> iusSwidsToLinkWorkflowRunTo = new ArrayList<>();
-                iusSwidsToLinkWorkflowRunTo.add(linkedLane.getIusSwid());
-                for (IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> linkedSample : linkedSamples) {
-                    iusSwidsToLinkWorkflowRunTo.add(linkedSample.getIusSwid());
-                }
-
-                Bcl2FastqData data = new Bcl2FastqData();
-                data.setIusSwidsToLinkWorkflowRunTo(iusSwidsToLinkWorkflowRunTo);
-                data.setLinkedLane(linkedLane);
-                data.setLinkedSamples(linkedSamples);
-                data.setLp(lp);
-                data.setSps(sps);
-                data.setProperties(ImmutableMap.of("output_prefix", outputPath, "output_dir", outputFolder));
-                data.setMetadataWriteback(getDoMetadataWriteback());
-                data.setStudyToOutputPathConfig(studyToOutputPathConfig);
-
-                WorkflowRun wr = handler.getWorkflowRun(data);
-                workflowRuns.add(wr);
-            } catch (DataMismatchException dme) {
-                workflowRunValidationErrors++;
-                log.error("Error while generating workflow run for lane = [{}]: ", laneName, dme);
+            List<ProvenanceWithProvider<SampleProvenance>> samples = laneNameToSampleProvenance.get(laneName);
+            List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> linkedSamples = new ArrayList<>();
+            for (ProvenanceWithProvider<SampleProvenance> provenanceWithProvider : samples) {
+                linkedSamples.add(createIusToProvenanceLink(provenanceWithProvider, getDoCreateIusLimsKeys() && !getIsDryRunMode()));
             }
+            List<SampleProvenance> sps = new ArrayList<>();
+            for (ProvenanceWithProvider<SampleProvenance> spWithProvider : samples) {
+                sps.add(spWithProvider.getProvenance());
+            }
+
+            List<Integer> iusSwidsToLinkWorkflowRunTo = new ArrayList<>();
+            iusSwidsToLinkWorkflowRunTo.add(linkedLane.getIusSwid());
+            for (IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> linkedSample : linkedSamples) {
+                iusSwidsToLinkWorkflowRunTo.add(linkedSample.getIusSwid());
+            }
+
+            Bcl2FastqData data = new Bcl2FastqData();
+            data.setIusSwidsToLinkWorkflowRunTo(iusSwidsToLinkWorkflowRunTo);
+            data.setLinkedLane(linkedLane);
+            data.setLinkedSamples(linkedSamples);
+            data.setLp(lp);
+            data.setSps(sps);
+            data.setProperties(ImmutableMap.of("output_prefix", outputPath, "output_dir", outputFolder));
+            data.setMetadataWriteback(getDoMetadataWriteback());
+            data.setStudyToOutputPathConfig(studyToOutputPathConfig);
+
+            WorkflowRunV2 wr = handler.getWorkflowRun(data);
+            if (wr.getErrors().isEmpty()) {
+                workflowRuns.add(wr);
+            } else {
+                invalidWorkflowRuns.add(wr);
+                log.error("Error while generating workflow run for lane = [{}], errors:\n{}", laneName, Joiner.on("\n").join(wr.getErrors()));
+            }
+        }
+
+        //list invalid workflow runs
+        for (WorkflowRun wr : invalidWorkflowRuns) {
+            log.info("Invalid workflow run:\n" + debugWorkflowRun(wr));
         }
 
         //schedule workflow runs
         List<WorkflowRun> scheduledWorkflowRuns = new ArrayList<>();
         for (WorkflowRun wr : workflowRuns) {
-            //write ini properties to file
-            Path iniFilePath = writeWorkflowRunIniPropertiesToFile(wr);
-
-            WorkflowSchedulerCommandBuilder cmdBuilder = new WorkflowSchedulerCommandBuilder(workflow.getSwAccession());
-            cmdBuilder.setIniFile(iniFilePath);
-            cmdBuilder.setMetadataWriteback(getDoMetadataWriteback());
-            cmdBuilder.setIusSwidsToLinkWorkflowRunTo(wr.getIusSwidsToLinkWorkflowRunTo());
-            cmdBuilder.setOverrideArgs(overrides);
-            List<String> runArgs = cmdBuilder.build();
-
-            if (getIsDryRunMode()) {
-                log.info("Dry-run mode: not scheduling workflow run\n"
-                        + "Command: " + "java -jar seqware-distribution.jar " + Joiner.on(" ").join(runArgs) + "\n"
-                        + "Ini:\n" + Joiner.on("\n").withKeyValueSeparator("=").join(wr.getIniFile()));
-            } else {
-                log.info("Scheduling workflow run");
-                PluginRunner pluginRunner = new PluginRunner();
-                pluginRunner.setConfig(config);
-                pluginRunner.run(runArgs.toArray(new String[runArgs.size()]));
+            if (getDoScheduleWorkflowRuns() && !getIsDryRunMode()) {
+                log.info("Scheduled workflow run:\n" + scheduleWorkflowRun(wr));
                 scheduledWorkflowRuns.add(wr);
+            } else {
+                log.info("Dry run mode enabled - not scheduling:\n" + debugWorkflowRun(wr));
             }
         }
 
@@ -617,9 +625,38 @@ public class Bcl2fastqDecider {
         log.info("Requested summary: requested={} invalid={} valid={}",
                 candidateLanesToAnalyze.size(), invalidLanes.size(), lanesToAnalyze.size());
         log.info("Workflow run summary: candidate={} invalid={} valid={} scheduled={}",
-                lanesToAnalyze.size(), workflowRunValidationErrors, workflowRuns.size(), scheduledWorkflowRuns.size());
+                lanesToAnalyze.size(), invalidWorkflowRuns.size(), workflowRuns.size(), scheduledWorkflowRuns.size());
 
         return scheduledWorkflowRuns;
+    }
+
+    private String scheduleWorkflowRun(WorkflowRun wr) {
+        return scheduleWorkflowRun(wr, true);
+    }
+
+    private String debugWorkflowRun(WorkflowRun wr) {
+        return scheduleWorkflowRun(wr, false);
+    }
+
+    private String scheduleWorkflowRun(WorkflowRun wr, boolean doScheduling) {
+        //write ini properties to file
+        Path iniFilePath = writeWorkflowRunIniPropertiesToFile(wr);
+
+        WorkflowSchedulerCommandBuilder cmdBuilder = new WorkflowSchedulerCommandBuilder(workflow.getSwAccession());
+        cmdBuilder.setIniFile(iniFilePath);
+        cmdBuilder.setMetadataWriteback(getDoMetadataWriteback());
+        cmdBuilder.setIusSwidsToLinkWorkflowRunTo(wr.getIusSwidsToLinkWorkflowRunTo());
+        cmdBuilder.setOverrideArgs(overrides);
+        List<String> runArgs = cmdBuilder.build();
+
+        if (doScheduling) {
+            PluginRunner pluginRunner = new PluginRunner();
+            pluginRunner.setConfig(config);
+            pluginRunner.run(runArgs.toArray(new String[runArgs.size()]));
+        }
+
+        return "Command: " + "java -jar seqware-distribution.jar " + Joiner.on(" ").join(runArgs) + "\n"
+                + "Ini:\n" + Joiner.on("\n").withKeyValueSeparator("=").join(wr.getIniFile());
     }
 
     private boolean hasHandler(String workflowName, String workflowVersion) {
