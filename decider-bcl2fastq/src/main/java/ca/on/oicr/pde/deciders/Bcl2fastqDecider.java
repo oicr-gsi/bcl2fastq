@@ -496,27 +496,32 @@ public class Bcl2fastqDecider {
             candidateLanesToAnalyze.addAll(unprocessedLanes);
         }
 
-        //validation before scheduling workflow run
+        //lane validation before scheduling workflow run
         Set<String> invalidLanes = new HashSet<>();
         for (String laneName : candidateLanesToAnalyze) {
+            List<String> errors = new ArrayList<>();
 
             //expect one and only one lane provenance per lane name
             List<ProvenanceWithProvider<LaneProvenance>> lps = laneNameToLaneProvenance.get(laneName);
             if (lps.size() != 1) {
                 invalidLanes.add(laneName);
-                log.warn("Lane = [{}] can not be processed, lane provenance count = [{}], expected 1.\n"
-                        + "Lane provenance info: [{}]",
-                        laneName, lps.size(), Joiner.on(";").join(lps));
+                errors.add(String.format("Lane provenance count = [{}], expected 1.", lps.size()));
             }
 
             //expect one or more sample provenance per lane name
             List<ProvenanceWithProvider<SampleProvenance>> sps = laneNameToSampleProvenance.get(laneName);
             if (sps.isEmpty()) {
                 invalidLanes.add(laneName);
-                log.warn("Lane = [{}] can not be processed, sample provenance count = [{}], expected 1 or more.\n"
-                        + "Lane provenance info: [{}]\n"
-                        + "Sample provenance info: [{}]",
-                        laneName, sps.size(), Joiner.on(";").join(lps), Joiner.on(";").join(sps));
+                errors.add(String.format("Sample provenance count = [{}], expected 1 or more.", sps.size()));
+            }
+
+            //check that 0 or 1 group ids for all samples
+            for (ProvenanceWithProvider<SampleProvenance> p : sps) {
+                SampleProvenance sp = p.getProvenance();
+                Set<String> groupIds = sp.getSampleAttributes().get(Lims.GROUP_ID.getAttributeTitle());
+                if (groupIds != null && groupIds.size() > 1) {
+                    errors.add(String.format("Sample = [{}] has multiple group ids - expected 0 or 1.", sp.getSampleName()));
+                }
             }
 
             if (!disableRunCompleteCheck) {
@@ -530,26 +535,25 @@ public class Bcl2fastqDecider {
                             if (oicrRunCompleteTouchFile.exists()) {
                                 //run is complete
                             } else {
-                                invalidLanes.add(laneName);
-                                log.info("Lane = [{}] has not completed sequencing ([{}] is missing).\n"
-                                        + "Lane provenance info: [{}]",
-                                        laneName, oicrRunCompleteTouchFile.getAbsolutePath(), Joiner.on(";").join(lps));
+                                errors.add(String.format("Lane has not completed sequencing ([{}] is missing).", oicrRunCompleteTouchFile.getAbsolutePath()));
                             }
                         } else {
-                            invalidLanes.add(laneName);
-                            log.info("Lane = [{}] run_dir = [{}] is not accessible or does not exist.\n"
-                                    + "Lane provenance info: [{}]",
-                                    laneName, runDir.getAbsolutePath(), Joiner.on(";").join(lps));
+                            errors.add(String.format("Lane run_dir = [{}] is not accessible or does not exist.", runDir.getAbsolutePath()));
                         }
                     } else {
-                        invalidLanes.add(laneName);
-                        log.warn("Lane = [{}] can not be processed, run_dir = [{}].\n"
-                                + "Lane provenance info: [{}]",
-                                laneName, (runDirs == null ? "" : Joiner.on(",").join(runDirs)), Joiner.on(";").join(lps));
+                        errors.add(String.format("Lane run_dir = [{}].", (runDirs == null ? "" : Joiner.on(",").join(runDirs))));
                     }
                 }
             }
 
+            if (!errors.isEmpty()) {
+                invalidLanes.add(laneName);
+                log.warn("Lane = [{}] can not be processed due to the following reasons:\n"
+                        + "{}\n"
+                        + "Lane provenance: [{}]\n"
+                        + "Sample provenance: [{}]",
+                        laneName, Joiner.on("\n").join(errors), Joiner.on(";").join(lps), Joiner.on(";").join(sps));
+            }
         }
 
         //remove invalid lanes from lanes to analyze set

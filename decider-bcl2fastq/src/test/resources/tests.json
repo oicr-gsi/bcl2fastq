@@ -12,7 +12,8 @@
         "iniExclusions": ["parent-accessions", "workflow_run_accession", "workflow-run-accession",
             "unique_string", "parent_accessions", "parent_accession", "input_file", "input_files", "workflow_bundle_dir"],
         "iniStringSubstitutions": {
-            ",\\d+": ",IUS_SWID"
+            ",\\d+,": ",SAMPLE_IUS_SWID,",
+            ",\\d+:": ",LANE_IUS_SWID:"
         }
     },
     "tests": [
@@ -48,6 +49,14 @@
                 "--include-lane": "160615_D00331_0195_AC93ACANXX_lane_5",
                 "--check-wf-accessions": "996126,1753095,4186700,942766,37742,11034,538766,37743,4186700",
                 "--ignore-previous-runs": ""
+            }
+        },
+        {
+            "id": "Group id test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "130404_SN802_0108_AC1TUBACXX_lane_4"
             }
         }
     ]

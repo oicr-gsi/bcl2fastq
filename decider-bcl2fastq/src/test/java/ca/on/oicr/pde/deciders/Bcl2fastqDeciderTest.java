@@ -54,6 +54,9 @@ public class Bcl2fastqDeciderTest {
     private Workflow bcl2fastqWorkflow;
     private DateTime expectedDate = DateTime.parse("2016-01-01T00:00:00Z");
 
+    private SortedMap<String, SortedSet<String>> sp1Attrs = new TreeMap<>();
+    private SortedMap<String, SortedSet<String>> sp2Attrs = new TreeMap<>();
+
     @BeforeMethod
     public void setup() throws IOException {
         bcl2fastqDecider = new Bcl2fastqDecider();
@@ -106,6 +109,7 @@ public class Bcl2fastqDeciderTest {
                 .sequencerRunPlatformModel("HiSeq")
                 .createdDate(expectedDate)
                 .rootSampleName("TEST_0001")
+                .sampleAttributes(sp1Attrs)
                 .skip(false)
                 .provenanceId("1")
                 .version("1")
@@ -131,6 +135,7 @@ public class Bcl2fastqDeciderTest {
                 .sequencerRunPlatformModel("NextSeq")
                 .createdDate(expectedDate)
                 .rootSampleName("TEST_0001")
+                .sampleAttributes(sp2Attrs)
                 .skip(false)
                 .provenanceId("2")
                 .version("1")
@@ -357,6 +362,23 @@ public class Bcl2fastqDeciderTest {
         Whitebox.<Table>getInternalState(MetadataInMemory.class, "STORE").clear();
     }
 
+    @Test
+    public void multipleGroupIdTest() {
+        sp2Attrs.clear();
+        sp2Attrs.put(Lims.GROUP_ID.getAttributeTitle(), ImmutableSortedSet.of("group1", "group2"));
+
+        //sp2 has two group ids, can not be run
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2);
+
+        //correct the group ids
+        sp2Attrs.clear();
+        sp2Attrs.put(Lims.GROUP_ID.getAttributeTitle(), ImmutableSortedSet.of("group2"));
+
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(getFpsForCurrentWorkflow().size(), 4);
+    }
+
     private Collection<FileProvenance> getFpsForCurrentWorkflow() {
         return provenanceClient.getFileProvenance(
                 ImmutableMap.<FileProvenanceFilter, Set<String>>of(FileProvenanceFilter.workflow, ImmutableSet.of(bcl2fastqWorkflow.getSwAccession().toString())));
@@ -390,7 +412,7 @@ public class Bcl2fastqDeciderTest {
         private String rootSampleName;
         private String parentSampleName;
         private String sampleName;
-        private SortedMap<String, SortedSet<String>> sampleAttributes = new TreeMap<>();
+        private SortedMap<String, SortedSet<String>> sampleAttributes;
         private String sequencerRunName;
         private SortedMap<String, SortedSet<String>> sequencerRunAttributes = new TreeMap<>();
         private String sequencerRunPlatformModel;

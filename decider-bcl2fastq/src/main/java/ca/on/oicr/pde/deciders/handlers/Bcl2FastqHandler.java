@@ -4,12 +4,14 @@ import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.DataMismatchException;
 import ca.on.oicr.pde.deciders.IusWithProvenance;
+import ca.on.oicr.pde.deciders.Lims;
 import ca.on.oicr.pde.deciders.ProvenanceWithProvider;
 import ca.on.oicr.pde.deciders.WorkflowRunV2;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -31,14 +33,12 @@ public abstract class Bcl2FastqHandler implements Handler {
 
         wr.setIusSwidsToLinkWorkflowRunTo(data.getIusSwidsToLinkWorkflowRunTo());
 
-        String laneString;
-        if (data.getLinkedSamples().size() == 1) {
-            // do not do demultiplexing if there is only one sample in the lane https://jira.oicr.on.ca/browse/GR-261
-            laneString = generateLinkingStringAndOverrideBarcode(data.getLinkedLane(), Iterables.getOnlyElement(data.getLinkedSamples()), "NoIndex");
-        } else {
-            laneString = generateLinkingString(data.getLinkedLane(), data.getLinkedSamples());
+        try {
+            wr.addProperty("lanes", generateLinkingString(data.getLinkedLane(), data.getLinkedSamples()));
+        } catch (DataMismatchException dme) {
+            wr.addError(dme.toString());
+            wr.addProperty("lanes", "ERROR");
         }
-        wr.addProperty("lanes", laneString);
 
         List<String> barcodes = new ArrayList<>();
         for (SampleProvenance sp : data.getSps()) {
@@ -112,21 +112,25 @@ public abstract class Bcl2FastqHandler implements Handler {
 
         Set<Boolean> isNoIndexSet = new HashSet<>();
         for (String barcode : barcodes) {
-            isNoIndexSet.add(barcode.equals("NoIndex"));
+            isNoIndexSet.add(barcode == null || barcode.isEmpty() || "NoIndex".equals(barcode));
         }
 
         Set<Boolean> isDualBarcodeSet = new HashSet<>();
         for (String barcode : barcodes) {
-            isDualBarcodeSet.add(barcode.contains("-"));
+            isDualBarcodeSet.add(barcode != null && barcode.contains("-"));
         }
 
         Set<Integer> barcodeLengths = new HashSet<>();
         for (String barcode : barcodes) {
-            barcodeLengths.add(barcode.length());
+            if (barcode == null || barcode.isEmpty() || "NoIndex".equals(barcode)) {
+                barcodeLengths.add(0);
+            } else {
+                barcodeLengths.add(barcode.length());
+            }
         }
 
         if (isNoIndexSet.size() != 1) {
-            throw new DataMismatchException("Combination of NoIndex and barcodes");
+            throw new DataMismatchException("Combination of NoIndex and barcoded samples");
         }
 
         if (isDualBarcodeSet.size() != 1) {
@@ -152,38 +156,65 @@ public abstract class Bcl2FastqHandler implements Handler {
         }
     }
 
-    private String generateLinkingString(IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> lane, List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> samples) {
-        Integer laneProvenanceIusSwid = lane.getIusSwid();
-        LaneProvenance lp = lane.getProvenanceWithProvider().getProvenance();
-        String laneString = lp.getLaneNumber() + "," + laneProvenanceIusSwid;
-
-        List<String> es = new ArrayList<>();
-        Collections.sort(samples, new Comparator<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>>() {
+    private String generateLinkingString(IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> lane, List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> sps) throws DataMismatchException {
+        List<String> sampleStringEntries = new ArrayList<>();
+        Collections.sort(sps, new Comparator<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>>() {
             @Override
             public int compare(IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> o1, IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> o2) {
                 return o1.getProvenanceWithProvider().getProvenance().getSampleName().compareTo(o2.getProvenanceWithProvider().getProvenance().getSampleName());
             }
         });
-        for (IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> s : samples) {
-            Integer sampleProvenanceIusSwid = s.getIusSwid();
-            SampleProvenance sp = s.getProvenanceWithProvider().getProvenance();
-            es.add(sp.getIusTag() + "," + sampleProvenanceIusSwid + "," + sp.getSampleName());
+        if (sps.size() == 1) {
+            // do not do demultiplexing if there is only one sample in the lane https://jira.oicr.on.ca/browse/GR-261
+            sampleStringEntries.add(generateSampleString(Iterables.getOnlyElement(sps), "NoIndex"));
+        } else {
+            for (IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> s : sps) {
+                sampleStringEntries.add(generateSampleString(s, null));
+            }
         }
-        String sampleString = Joiner.on("+").join(es);
+        String sampleString = Joiner.on("+").join(sampleStringEntries);
 
-        return laneString + ":" + sampleString;
+        return generateLaneString(lane) + ":" + sampleString;
     }
 
-    private String generateLinkingStringAndOverrideBarcode(IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> lane, IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> sample, String barcode) {
-        Integer laneProvenanceIusSwid = lane.getIusSwid();
+    private String generateLaneString(String laneNumber, String laneIusSwid) {
+        return laneNumber + "," + laneIusSwid;
+    }
+
+    private String generateLaneString(IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> lane) {
         LaneProvenance lp = lane.getProvenanceWithProvider().getProvenance();
-        String laneString = lp.getLaneNumber() + "," + laneProvenanceIusSwid;
+        return generateLaneString(lp.getLaneNumber(), lane.getIusSwid().toString());
+    }
 
-        Integer sampleProvenanceIusSwid = sample.getIusSwid();
+    private String generateSampleString(String iusTag, String iusSwid, String sampleName, String groupId) {
+        String sampleString = iusTag + "," + iusSwid + "," + sampleName;
+        if (groupId != null && !groupId.isEmpty()) {
+            sampleString = sampleString + "," + groupId;
+        }
+        return sampleString;
+    }
+
+    private String generateSampleString(IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> sample, String barcodeOverride) throws DataMismatchException {
         SampleProvenance sp = sample.getProvenanceWithProvider().getProvenance();
-        String sampleString = barcode + "," + sampleProvenanceIusSwid + "," + sp.getSampleName();
 
-        return laneString + ":" + sampleString;
+        String barcode;
+        if (barcodeOverride != null) {
+            barcode = barcodeOverride;
+        } else {
+            barcode = sp.getIusTag();
+        }
+
+        String groupId = null;
+        Collection<String> groupIds = sp.getSampleAttributes().get(Lims.GROUP_ID.getAttributeTitle());
+        if (groupIds != null && !groupIds.isEmpty()) {
+            if (groupIds.size() != 1) {
+                throw new DataMismatchException("[" + groupIds.size() + "] group ids were detected for "
+                        + "sample = [" + sp.getSampleName() + "], sample provenance id = [" + sp.getSampleProvenanceId() + "]");
+            }
+            groupId = Iterables.getOnlyElement(groupIds);
+        }
+
+        return generateSampleString(barcode, sample.getIusSwid().toString(), sp.getSampleName(), groupId);
     }
 
 }

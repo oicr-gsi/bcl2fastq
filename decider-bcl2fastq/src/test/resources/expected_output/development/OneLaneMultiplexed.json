@@ -15,7 +15,7 @@
       "called_bases" : "/oicr/data/archive/m753/150727_M00753_0023_000000000-AGR8E/Data/Intensities/BaseCalls/",
       "flowcell" : "150727_M00753_0023_000000000-AGR8E",
       "intensity_folder" : "/oicr/data/archive/m753/150727_M00753_0023_000000000-AGR8E/Data/Intensities/",
-      "lanes" : "1,IUS_SWID:GCCAAT,IUS_SWID,PCSI_0486_Lv_X_PE_491_WG+ACAGTG,IUS_SWID,PCSI_0486_Lv_X_PE_640_WG",
+      "lanes" : "1,LANE_IUS_SWID:GCCAAT,SAMPLE_IUS_SWID,PCSI_0486_Lv_X_PE_491_WG,526+ACAGTG,SAMPLE_IUS_SWID,PCSI_0486_Lv_X_PE_640_WG,526",
       "manual_output" : "false",
       "memory" : "16384",
       "metadata" : "metadata",
