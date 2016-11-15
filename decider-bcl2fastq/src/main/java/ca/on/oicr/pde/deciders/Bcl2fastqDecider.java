@@ -505,14 +505,14 @@ public class Bcl2fastqDecider {
             List<ProvenanceWithProvider<LaneProvenance>> lps = laneNameToLaneProvenance.get(laneName);
             if (lps.size() != 1) {
                 invalidLanes.add(laneName);
-                errors.add(String.format("Lane provenance count = [{}], expected 1.", lps.size()));
+                errors.add(String.format("Lane provenance count = [%s], expected 1.", lps.size()));
             }
 
             //expect one or more sample provenance per lane name
             List<ProvenanceWithProvider<SampleProvenance>> sps = laneNameToSampleProvenance.get(laneName);
             if (sps.isEmpty()) {
                 invalidLanes.add(laneName);
-                errors.add(String.format("Sample provenance count = [{}], expected 1 or more.", sps.size()));
+                errors.add(String.format("Sample provenance count = [%s], expected 1 or more.", sps.size()));
             }
 
             //check that 0 or 1 group ids for all samples
@@ -520,7 +520,7 @@ public class Bcl2fastqDecider {
                 SampleProvenance sp = p.getProvenance();
                 Set<String> groupIds = sp.getSampleAttributes().get(Lims.GROUP_ID.getAttributeTitle());
                 if (groupIds != null && groupIds.size() > 1) {
-                    errors.add(String.format("Sample = [{}] has multiple group ids - expected 0 or 1.", sp.getSampleName()));
+                    errors.add(String.format("Sample = [%s] has multiple group ids - expected 0 or 1.", sp.getSampleName()));
                 }
             }
 
@@ -535,13 +535,13 @@ public class Bcl2fastqDecider {
                             if (oicrRunCompleteTouchFile.exists()) {
                                 //run is complete
                             } else {
-                                errors.add(String.format("Lane has not completed sequencing ([{}] is missing).", oicrRunCompleteTouchFile.getAbsolutePath()));
+                                errors.add(String.format("Lane has not completed sequencing ([%s] is missing).", oicrRunCompleteTouchFile.getAbsolutePath()));
                             }
                         } else {
-                            errors.add(String.format("Lane run_dir = [{}] is not accessible or does not exist.", runDir.getAbsolutePath()));
+                            errors.add(String.format("Lane run_dir = [%s] is not accessible or does not exist.", runDir.getAbsolutePath()));
                         }
                     } else {
-                        errors.add(String.format("Lane run_dir = [{}].", (runDirs == null ? "" : Joiner.on(",").join(runDirs))));
+                        errors.add(String.format("Lane run_dir = [%s].", (runDirs == null ? "" : Joiner.on(",").join(runDirs))));
                     }
                 }
             }
