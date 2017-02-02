@@ -1,6 +1,6 @@
 ##BCL2FastQ Decider
 
-Version 1.0, SeqWare version 1.1.1-gsi-rc1
+Version 1.0, SeqWare version 1.1.1-gsi
 
 ###Overview
 
