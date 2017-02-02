@@ -649,6 +649,7 @@ public class Bcl2fastqDecider {
         WorkflowSchedulerCommandBuilder cmdBuilder = new WorkflowSchedulerCommandBuilder(workflow.getSwAccession());
         cmdBuilder.setIniFile(iniFilePath);
         cmdBuilder.setMetadataWriteback(getDoMetadataWriteback());
+        cmdBuilder.setHost(host);
         cmdBuilder.setIusSwidsToLinkWorkflowRunTo(wr.getIusSwidsToLinkWorkflowRunTo());
         cmdBuilder.setOverrideArgs(overrides);
         List<String> runArgs = cmdBuilder.build();
