@@ -109,6 +109,7 @@
                             <goal>integration-test</goal>
                         </goals>
                         <configuration>
+                            <threadCount>1</threadCount>
                             <includes>
                                 <include>**/**OicrDataIT.java</include>
                             </includes>
