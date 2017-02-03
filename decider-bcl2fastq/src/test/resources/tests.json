@@ -1,35 +1,63 @@
 {
-	"defaultDescription": "Bcl2fastq decider test",
-	"defaultMetricsResources": "/expected_output/development/",
-	"defaultParameters": {
-        "--output-path": "./",
-        "--verbose": "",
-        "--pinery-url": "http://gsle-pinery.res.oicr.on.ca/pinery-ws-2.0-SNAPSHOT/"
+    "defaults": {
+        "description": "Bcl2fastq decider test",
+        "metricsResources": "/expected_output/development/",
+        "parameters": {
+            "--disable-run-complete-check": "",
+            "--no-null-created-date": ""
+        },
+        "properties": {
+            "memory": "16384"
+        },
+        "iniExclusions": ["parent-accessions", "workflow_run_accession", "workflow-run-accession",
+            "unique_string", "parent_accessions", "parent_accession", "input_file", "input_files", "workflow_bundle_dir"],
+        "iniStringSubstitutions": {
+            ",\\d+,": ",SAMPLE_IUS_SWID,",
+            ",\\d+:": ",LANE_IUS_SWID:"
+        }
     },
-	"defaultIniExclusions": ["parent-accessions", "workflow_run_accession", "workflow-run-accession",
-        "unique_string", "parent_accessions", "parent_accession", "input_file", "input_files", "workflow_bundle_dir",
-        "output_prefix"],
-	"tests": [
-		{
+    "tests": [
+        {
             "id": "One lane multiplexed",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
             "parameters": {
-                "--run-name": "150727_M00753_0023_000000000-AGR8E",
-                "--run-dir": "/.mounts/labs/prod/archive/m753/150727_M00753_0023_000000000-AGR8E/"
+                "--include-sequencer-run": "150727_M00753_0023_000000000-AGR8E"
             }
         },
         {
             "id": "Non-multiplexed",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
             "parameters": {
-                "--run-name": "131025_SN802_0145_AC2KVTACXX",
-                "--run-dir": "/.mounts/labs/prod/archive/h802/131025_SN802_0145_AC2KVTACXX/"
+                "--include-sequencer-run": "131025_SN802_0145_AC2KVTACXX"
             }
         },
         {
             "id": "Dual barcodes",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
             "parameters": {
-                "--run-name": "150814_M00146_0034_000000000-AHLAK",
-                "--run-dir": "/.mounts/labs/prod/archive/m146/150814_M00146_0034_000000000-AHLAK/"
+                "--include-sequencer-run": "150814_M00146_0034_000000000-AHLAK"
+            }
+        },
+        {
+            "id": "Single lane rerun",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "160615_D00331_0195_AC93ACANXX_lane_5",
+                "--check-wf-accessions": "996126,1753095,4186700,942766,37742,11034,538766,37743,4186700",
+                "--ignore-previous-runs": ""
+            }
+        },
+        {
+            "id": "Group id test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "130404_SN802_0108_AC1TUBACXX_lane_4"
             }
         }
-	]
+    ]
 }

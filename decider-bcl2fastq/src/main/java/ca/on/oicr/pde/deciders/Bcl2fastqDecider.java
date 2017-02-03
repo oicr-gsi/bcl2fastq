@@ -1,566 +1,718 @@
 package ca.on.oicr.pde.deciders;
 
+import ca.on.oicr.gsi.provenance.ExtendedProvenanceClient;
+import ca.on.oicr.gsi.provenance.FileProvenanceFilter;
+import ca.on.oicr.gsi.provenance.model.FileProvenance;
+import ca.on.oicr.gsi.provenance.model.LaneProvenance;
+import ca.on.oicr.gsi.provenance.model.LimsKey;
+import ca.on.oicr.gsi.provenance.model.LimsProvenance;
+import ca.on.oicr.gsi.provenance.model.SampleProvenance;
+import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
+import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq1Handler;
+import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq2Handler;
+import ca.on.oicr.pde.deciders.handlers.Bcl2FastqData;
+import ca.on.oicr.pde.deciders.handlers.Bcl2FastqHandler;
+import ca.on.oicr.pde.deciders.handlers.Handler;
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeMap;
-
-import net.sourceforge.seqware.common.model.IUS;
-import net.sourceforge.seqware.common.model.Lane;
-import net.sourceforge.seqware.common.model.SequencerRun;
-import net.sourceforge.seqware.common.model.WorkflowParam;
-import net.sourceforge.seqware.common.module.ReturnValue;
-import net.sourceforge.seqware.common.util.Log;
-import net.sourceforge.seqware.common.util.filetools.FileTools;
-import net.sourceforge.seqware.common.util.filetools.FileTools.LocalhostPair;
-import net.sourceforge.seqware.pipeline.plugin.Plugin;
+import net.sourceforge.seqware.common.metadata.Metadata;
+import net.sourceforge.seqware.common.model.Workflow;
 import net.sourceforge.seqware.pipeline.runner.PluginRunner;
-import ca.on.oicr.pde.deciders.model.IusData;
-import ca.on.oicr.pde.deciders.model.RunData;
-import ca.on.oicr.pde.deciders.model.RunPositionData;
-import ca.on.oicr.pinery.client.HttpResponseException;
-import ca.on.oicr.pinery.client.PineryClient;
-import ca.on.oicr.ws.dto.RunDto;
-import ca.on.oicr.ws.dto.RunDtoPosition;
-import ca.on.oicr.ws.dto.RunDtoSample;
-import ca.on.oicr.ws.dto.SampleDto;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.joda.time.DateTime;
 
-public class Bcl2fastqDecider extends Plugin {
-	
-	private static final String ARG_HELP = "help";
-	private static final String ARG_VERBOSE = "verbose";
-	private static final String ARG_TEST_MODE = "test";
-	private static final String ARG_PINERY_URL = "pinery-url";
-	private static final String ARG_NO_META = "no-metadata";
-	private static final String ARG_RUN_NAME = "run-name";
-	private static final String ARG_RUN_DIR = "run-dir";
-	private static final String ARG_READ_ENDS = "read-ends";
-	private static final String ARG_WORKFLOW_ACCESSION = "wf-accession";
-	private static final String ARG_OUT_PATH = "output-path";
-	private static final String ARG_OUT_FOLDER = "output-folder";
-	private static final String ARG_MANUAL_OUT = "manual-output";
-	private static final String ARG_OFFLINE_BCL = "do-olb";
-	private static final String ARG_MISSING_BCL = "ignore-missing-bcl";
-	private static final String ARG_MISSING_STATS = "ignore-missing-stats";
-	private static final String ARG_INSECURE_PINERY = "insecure-pinery";
-	
-	private static final String noIndex = "NoIndex";
-	
-	private PineryClient pinery = null;
-	private String localhost = null;
-	
-	private String workflowAccession = null;
-	private String runName = null;
-	private String runDir = null;
-	
-	private boolean metadataWriteback = true;
-	
-	private String outPath = null;
-	private String outFolder = null;
-	private boolean manualOutput = false;
-	
-	private boolean offlineBcl = false;
-	private boolean ignoreMissingBcl = false;
-	private boolean ignoreMissingStats = false;
-	
-	private Set<Integer> iusAccessions;
-	private Set<Integer> laneAccessions;
-	private int readEnds = 2; // TODO: Get from Pinery/SeqWare instead of requiring default/parameter
-	
-	private boolean testing = false;
-	
-	
-	public Bcl2fastqDecider() {
-		super();
-		parser.accepts(ARG_HELP, "Prints this help message.");
-		parser.accepts(ARG_VERBOSE, "Optional: Log all SeqWare information.");
-		
-		parser.accepts(ARG_TEST_MODE, "Optional: Testing mode. Prints the INI files to standard out and does not submit the workflow.");
-		
-		parser.accepts(ARG_PINERY_URL, "Required: Pinery webservice URL.").withRequiredArg();
-		
-		parser.accepts(ARG_WORKFLOW_ACCESSION, "Required: The workflow accession of the workflow").withRequiredArg();
-		parser.accepts(ARG_RUN_NAME, "Required: The sequencer run to process").withRequiredArg();
-		parser.accepts(ARG_RUN_DIR, "Required: The sequencer run directory").withRequiredArg();
-		parser.accepts(ARG_READ_ENDS, "Optional: Must specify 1 if single end. Defaults to 2 (paired end)").withRequiredArg();
-		
-		parser.accepts(ARG_NO_META, "Optional: a flag that prevents metadata writeback (which is done "
-                + "by default) by the Decider and that is subsequently "
-                + "passed to the called workflow which can use it to determine if "
-                + "they should write metadata at runtime on the cluster.");
-		
-		parser.accepts(ARG_OUT_PATH, "Optional: The absolute path of the directory to put the final file(s) (workflow output-prefix option).").withRequiredArg();
-		parser.accepts(ARG_OUT_FOLDER, "Optional: The relative path to put the final result(s) (workflow output-dir option).").withRequiredArg();
-		parser.accepts(ARG_MANUAL_OUT, "Optional: Set output path manually.");
-		
-		parser.accepts(ARG_OFFLINE_BCL, "Optional: Perform offline base calling.");
-		parser.accepts(ARG_MISSING_BCL, "Optional: Passed on to Bustard.");
-		parser.accepts(ARG_MISSING_STATS, "Optional: Passed on to Bustard.");
-		parser.accepts(ARG_INSECURE_PINERY, "Optional: Ignore certificate and hostname errors from Pinery.");
-	}
-	
-	@Override
-	public ReturnValue init() {
-		String pineryUrl = null;
-		boolean insecurePinery = false;
-		
-		// Show help
-		if (this.options.has(ARG_HELP)) {
-			System.err.println(get_syntax());
-            return new ReturnValue(ReturnValue.RETURNEDHELPMSG);
-		}
-		
-		if (this.options.has(ARG_VERBOSE)) Log.setVerbose(true);
-		Log.debug("INIT");
-		
-		// Required args
-		if (!this.options.has(ARG_WORKFLOW_ACCESSION) || this.options.valueOf(ARG_WORKFLOW_ACCESSION) == null || 
-				this.options.valueOf(ARG_WORKFLOW_ACCESSION).toString().isEmpty()) {
-			return missingParameter(ARG_WORKFLOW_ACCESSION);
-		}
-		else if (!this.options.has(ARG_RUN_NAME) || this.options.valueOf(ARG_RUN_NAME) == null || 
-				this.options.valueOf(ARG_RUN_NAME).toString().isEmpty()) {
-			return missingParameter(ARG_RUN_NAME);
-		}
-		else if (!this.options.has(ARG_RUN_DIR) || this.options.valueOf(ARG_RUN_DIR) == null || 
-				this.options.valueOf(ARG_RUN_DIR).toString().isEmpty()) {
-			return missingParameter(ARG_RUN_DIR);
-		}
-		else if (!this.options.has(ARG_PINERY_URL) || this.options.valueOf(ARG_PINERY_URL) == null || 
-				this.options.valueOf(ARG_PINERY_URL).toString().isEmpty()) {
-			return missingParameter(ARG_PINERY_URL);
-		}
-		else {
-			pineryUrl = this.options.valueOf(ARG_PINERY_URL).toString();
-            this.workflowAccession = options.valueOf(ARG_WORKFLOW_ACCESSION).toString();
-            this.runName = this.options.valueOf(ARG_RUN_NAME).toString();
-            this.runDir = this.options.valueOf(ARG_RUN_DIR).toString();
-            if (!this.runDir.endsWith("/")) runDir += "/";
-        }
-		
-		// Optional args
-		if (this.options.has(ARG_READ_ENDS)) {
-			String ends = this.options.valueOf(ARG_READ_ENDS).toString().trim();
-			if ("1".equals(ends)) this.readEnds = 1;
-			else if ("2".equals(ends)) this.readEnds = 2;
-			else {
-				Log.error("Invalid argument. Value of read-ends must be 1 or 2.");
-				return new ReturnValue(ReturnValue.INVALIDARGUMENT);
-			}
-		}
-		
-		if (this.options.has(ARG_NO_META)) this.metadataWriteback = false;
-		
-		if (this.options.has(ARG_OUT_PATH)) {
-			this.outPath = this.options.valueOf(ARG_OUT_PATH).toString();
-			if (!this.outPath.endsWith("/")) outPath += "/";
-		}
-		if (this.options.has(ARG_OUT_FOLDER)) this.outFolder = this.options.valueOf(ARG_OUT_FOLDER).toString();
-		if (this.options.has(ARG_MANUAL_OUT)) this.manualOutput = true;
-		
-		if (this.options.has(ARG_OFFLINE_BCL)) this.offlineBcl = true;
-		if (this.options.has(ARG_MISSING_BCL)) this.ignoreMissingBcl = true;
-		if (this.options.has(ARG_MISSING_STATS)) this.ignoreMissingStats = true;
-		
-		if (this.options.has(ARG_INSECURE_PINERY)) insecurePinery = true;
-		if (this.options.has(ARG_TEST_MODE)) this.testing = true;
-		
-		LocalhostPair localhostPair = FileTools.getLocalhost(options);
-        this.localhost = localhostPair.hostname;
-        if (localhostPair.returnValue.getExitStatus() != ReturnValue.SUCCESS && localhost == null) {
-            Log.error("Could not determine localhost: Return value " + localhostPair.returnValue.getExitStatus());
-            return new ReturnValue(ReturnValue.INVALIDPARAMETERS);
-        }
-		
-		this.pinery = new PineryClient(pineryUrl, insecurePinery);
-		
-		return new ReturnValue(ReturnValue.SUCCESS);
-	}
-	
-	private ReturnValue missingParameter(String parameter) {
-		Log.error("Required parameter missing: "+parameter);
-		return new ReturnValue(ReturnValue.INVALIDARGUMENT);
-	}
-	
-	@Override
-	public ReturnValue do_run() {
-		try {
-			RunData runData = buildDataStructure();
-			findAllIus(runData);
-			for (RunPositionData lane : runData.getPositions()) {
-				String ini = createIniFile(getIniParameters(lane));
-				if (ini == null) return new ReturnValue(ReturnValue.PROGRAMFAILED);
-				launchWorkflow(ini);
-			}
-		} catch (HttpResponseException e) {
-			Log.error("Error retrieving data from Pinery", e);
-			return new ReturnValue(ReturnValue.PROGRAMFAILED);
-		} catch (DataMismatchException e) {
-			Log.error(e);
-			return new ReturnValue(ReturnValue.PROGRAMFAILED);
-		}
-		
-		return new ReturnValue(ReturnValue.SUCCESS);
-	}
-	
-	/**
-	 * Retrieves and combines all of the necessary run data from LIMS and SeqWare
-	 * 
-	 * @return the RunData
-	 * @throws HttpResponseException if there is an error retrieving data from LIMS
-	 * @throws DataMismatchException if there is an error matching LIMS data with SeqWare data 
-	 */
-	private RunData buildDataStructure() throws HttpResponseException, DataMismatchException {
-		Log.debug("Getting sequencer run " + runName + " from LIMS");
-		RunDto limsRun = pinery.getSequencerRun().byName(runName);
-		Log.debug("Getting sequencer run " + runName + " from SeqWare");
-		SequencerRun swRun = metadata.getSequencerRunByName(runName);
-		
-		Log.debug("Getting lanes for sequencer run " + runName + " from SeqWare");
-		Collection<Lane> swLanes = metadata.getLanesFrom(swRun.getSwAccession());
-		Collection<RunPositionData> positions = new ArrayList<>();
-		for (RunDtoPosition pos : limsRun.getPositions()) {
-			if (pos.getSamples() == null || pos.getSamples().isEmpty()) continue;
-			int posNum = pos.getPosition();
-			Lane swLane = null;
-			for (Lane lane : swLanes) {
-				if (lane.getLaneIndex().intValue()+1 == posNum) {
-					swLane = lane;
-					break;
-				}
-			}
-			if (swLane == null) {
-				throw new DataMismatchException("Could not find lane in SeqWare to match lane " + posNum + " in LIMS");
-			}
-			Collection<IusData> iusDataList = buildIusData(swLane, pos);
-			positions.add(new RunPositionData(posNum, swLane, iusDataList));
-		}
-		if (positions.isEmpty()) throw new DataMismatchException("No samples found in any lanes");
-		for (RunPositionData pos : positions) {
-			buildLaneString(pos);
-			determineBasesMask(pos);
-		}
-		return new RunData(limsRun, swRun, positions);
-	}
-	
-	/**
-	 * Retrieves and combines all the necessary IUS data from LIMS and SeqWare for a lane, matching LIMS samples to SeqWare IUS 
-	 * by barcode
-	 * 
-	 * @param swLane lane from SeqWare
-	 * @param pos lane from LIMS
-	 * @return all of the IusData for a lane
-	 * @throws HttpResponseException if there is an error retrieving data from LIMS
-	 * @throws DataMismatchException if there is an error matching LIMS data with SeqWare data
-	 */
-	private Collection<IusData> buildIusData(Lane swLane, RunDtoPosition pos) throws HttpResponseException, DataMismatchException {
-		Collection<IusData> iusDataList = new ArrayList<>();
-		Log.debug("Getting all IUS for lane " + pos.getPosition() + " with SWID " + swLane.getSwAccession() + " from SeqWare");
-		List<IUS> swLaneIuss = metadata.getIUSFrom(swLane.getSwAccession());;
-		
-		for (RunDtoSample laneSample : pos.getSamples()) {
-			Log.debug("Getting sample id " + laneSample.getId() + " from lane " + pos.getPosition() + " from LIMS");
-			SampleDto limsSample = pinery.getSample().byId(laneSample.getId());
-			checkSampleType(limsSample);
-			IUS swIus = null;
-			
-			String limsBarcode = getLimsBarcode(laneSample);
-			if (limsBarcode == null || limsBarcode.isEmpty()) {
-				if (pos.getSamples().size() == 1 && swLaneIuss.size() == 1) {
-					swIus = swLaneIuss.get(0);
-					swIus.setTag(noIndex);
-				}
-				else {
-					throw new DataMismatchException("Failed to match LIMS sample with SeqWare IUS");
-				}
-				
-			}
-			else {
-				for (IUS swLaneIus : swLaneIuss) {
-					if (limsBarcode.equals(swLaneIus.getTag())) {
-						swIus = swLaneIus;
-						break;
-					}
-				}
-				
-				if (swIus == null) {
-					throw new DataMismatchException("Could not find IUS in SeqWare with barcode " + limsBarcode + 
-							" to match LIMS sample " + limsSample.getName() + " in lane " + pos.getPosition());
-				}
-			}
-			
-			iusDataList.add(new IusData(swIus, limsSample));
-		}
-		
-		return iusDataList;
-	}
-	
-	private void checkSampleType(SampleDto sample) throws DataMismatchException {
-		String sampleType = sample.getSampleType();
-		if (sampleType == null || !sampleType.matches("^Illumina .+ Library Seq$")) {
-			throw new DataMismatchException("Invalid sample type. All samples must be of type 'Illumina Library Seq' but sample " + 
-					sample.getName() + " has type " + (sampleType == null ? "null" : sampleType));
-		}
-	}
-	
-	/**
-	 * Gets the barcode(s) from a LIMS run sample - either the single barcode, or dual barcode joined by a hyphen
-	 * 
-	 * @param runSample
-	 * @return the sample's barcode in either format "AAAAAAAA" or "AAAAAAAA-CCCCCCCC"
-	 */
-	private String getLimsBarcode(RunDtoSample runSample) {
-		if (runSample.getBarcodeTwo() != null && !runSample.getBarcodeTwo().isEmpty()) {
-			return runSample.getBarcode() + "-" + runSample.getBarcodeTwo();
-		}
-		else {
-			return runSample.getBarcode();
-		}
-	}
-	
-	/**
-	 * Builds the ini lanes String
-	 * 
-	 * @param lane data structure containing all lane data from LIMS and SeqWare including lane, ius, and samples
-	 * @return lanes String in the format: {@code <lane#>,<lane-swid>:<barcode>,<ius-swid>,<sample-name>+<more-barcodes>...}
-	 */
-	private void buildLaneString(RunPositionData lane) {
-		StringBuilder sb = new StringBuilder();
-		
-		sb.append(lane.getPositionNumber())
-		.append(",")
-		.append(lane.getSwLane().getSwAccession())
-		.append(":");
-		for (IusData ius : lane.getIus()) {
-			sb.append(ius.getSwIus().getTag())
-				.append(",")
-				.append(ius.getSwIus().getSwAccession())
-				.append(",")
-				.append(ius.getLimsSample().getName())
-				.append("+");
-		}
-		sb.deleteCharAt(sb.length()-1);
-		
-		lane.setLaneString(sb.toString());
-	}
-	
-	private void findAllIus(RunData runData) {
-		iusAccessions = new HashSet<>();
-		laneAccessions = new HashSet<>();
-		for (RunPositionData posData : runData.getPositions()) {
-			laneAccessions.add(posData.getSwLane().getSwAccession());
-			for (IusData iusData : posData.getIus()) {
-				iusAccessions.add(iusData.getSwIus().getSwAccession());
-			}
-		}
-	}
-	
-	/**
-	 * Sets the base mask for a lane based on contained barcodes
-	 * 
-	 * @param pos lane data
-	 * @throws DataMismatchException
-	 */
-	private void determineBasesMask(RunPositionData pos) throws DataMismatchException {
-		boolean dualBarcodes = false;
-		int barLength = 0;
-		for (IusData ius : pos.getIus()) {
-			String tag = ius.getSwIus().getTag();
-			if (noIndex.equals(tag)) {
-				if (pos.getIus().size() > 1) throw new DataMismatchException("Sample " + ius.getLimsSample().getName() + 
-						" in multiplexed lane " + pos.getPositionNumber() + " has no barcode");
-				break;
-			}
-			if (barLength == 0) {
-				dualBarcodes = tag.contains("-");
-				barLength = tag.length();
-			}
-			if (tag.length() != barLength) {
-				throw new DataMismatchException("Barcodes in lane " + pos.getPositionNumber() + " have different lengths");
-			}
-		}
-		
-		if (dualBarcodes) pos.setBasesMask("y*,I*,I*,y*");
-		else if (barLength > 0) pos.setBasesMask("y*,I" + barLength + "n*,y*");
-		else pos.setBasesMask(null);
-	}
-	
-	/**
-	 * Writes the workflow ini file
-	 * 
-	 * @param iniParameters map of parameters generated by this decider run
-	 * @return path of output ini file, or null if there is an IO error writing the INI file
-	 */
-	private String createIniFile(Map<String, String> iniParameters) {
-		// Note: private method copied over (slightly modified) from BasicDecider
-        String iniPath = "";
+/**
+ *
+ * @author mlaszloffy
+ */
+public class Bcl2fastqDecider {
 
-        Map<String, String> iniFileMap = new TreeMap<>();
-        
-        // Include defaults from workflow INI
-        SortedSet<WorkflowParam> defaultIniParams = metadata.getWorkflowParams(workflowAccession);
-        for (WorkflowParam param : defaultIniParams) {
-            iniFileMap.put(param.getKey(), param.getDefaultValue());
+    private final Logger log = LogManager.getLogger(Bcl2fastqDecider.class);
+    private final List<Bcl2FastqHandler> handlers = new ArrayList<>();
+
+    private ExtendedProvenanceClient provenanceClient;
+    private Metadata metadata;
+    private Map<String, String> config;
+    private Workflow workflow;
+    private Integer launchMax = 10;
+    private Set<String> workflowAccessionsToCheck = Collections.EMPTY_SET;
+    private String host;
+
+    private Boolean isDryRunMode = false;
+    private Boolean doMetadataWriteback = true;
+    private Boolean doCreateIusLimsKeys = true;
+    private Boolean doScheduleWorkflowRuns = true;
+    private Boolean ignorePreviousAnalysisMode = false;
+    private Boolean ignorePreviousLimsKeysMode = false;
+    private Boolean disableRunCompleteCheck = false;
+
+    private String outputPath = "./";
+    private String outputFolder = "seqware-results";
+    private StudyToOutputPathConfig studyToOutputPathConfig;
+
+    private Boolean replaceNullCreatedDate = false;
+    private DateTime afterDateFilter = null;
+    private DateTime beforeDateFilter = null;
+    private Set<String> includeInstrumentNameFilter;
+    private Set<String> excludeInstrumentNameFilter;
+    private EnumMap<FileProvenanceFilter, Set<String>> includeFilters = new EnumMap<>(FileProvenanceFilter.class);
+    private EnumMap<FileProvenanceFilter, Set<String>> excludeFilters = new EnumMap<>(FileProvenanceFilter.class);
+
+    private List<String> overrides;
+
+    public Bcl2fastqDecider() {
+        //add workflow handlers
+        handlers.add(new Bcl2Fastq1Handler()); //CASAVA 2.7 handler
+        handlers.add(new Bcl2Fastq2Handler()); //CASAVA 2.8+ handler
+    }
+
+    public static Set<FileProvenanceFilter> getSupportedFilters() {
+        return ImmutableSet.of(
+                FileProvenanceFilter.lane,
+                FileProvenanceFilter.sequencer_run,
+                FileProvenanceFilter.study,
+                FileProvenanceFilter.sequencer_run_platform_model
+        );
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public Boolean getIsDryRunMode() {
+        return isDryRunMode;
+    }
+
+    public void setIsDryRunMode(Boolean isDryRunMode) {
+        this.isDryRunMode = isDryRunMode;
+    }
+
+    public Boolean getDoMetadataWriteback() {
+        return doMetadataWriteback;
+    }
+
+    public void setDoMetadataWriteback(Boolean doMetadataWriteback) {
+        this.doMetadataWriteback = doMetadataWriteback;
+    }
+
+    public Boolean getDoCreateIusLimsKeys() {
+        return doCreateIusLimsKeys;
+    }
+
+    public void setDoCreateIusLimsKeys(Boolean doCreateIusLimsKeys) {
+        this.doCreateIusLimsKeys = doCreateIusLimsKeys;
+    }
+
+    public Boolean getDoScheduleWorkflowRuns() {
+        return doScheduleWorkflowRuns;
+    }
+
+    public void setDoScheduleWorkflowRuns(Boolean doScheduleWorkflowRuns) {
+        this.doScheduleWorkflowRuns = doScheduleWorkflowRuns;
+    }
+
+    public Set<String> getWorkflowAccessionsToCheck() {
+        return workflowAccessionsToCheck;
+    }
+
+    public void setWorkflowAccessionsToCheck(Set<String> workflowAccessionsToCheck) {
+        this.workflowAccessionsToCheck = workflowAccessionsToCheck;
+    }
+
+    public Integer getLaunchMax() {
+        return launchMax;
+    }
+
+    public void setLaunchMax(Integer launchMax) {
+        this.launchMax = launchMax;
+    }
+
+    public boolean isIgnorePreviousAnalysisMode() {
+        return ignorePreviousAnalysisMode;
+    }
+
+    public void setIgnorePreviousAnalysisMode(boolean ignorePreviousAnalysisMode) {
+        this.ignorePreviousAnalysisMode = ignorePreviousAnalysisMode;
+    }
+
+    public boolean isIgnorePreviousLimsKeysMode() {
+        return ignorePreviousLimsKeysMode;
+    }
+
+    public void setIgnorePreviousLimsKeysMode(boolean ignorePreviousLimsKeysMode) {
+        this.ignorePreviousLimsKeysMode = ignorePreviousLimsKeysMode;
+    }
+
+    public boolean isDisableRunCompleteCheck() {
+        return disableRunCompleteCheck;
+    }
+
+    public void setDisableRunCompleteCheck(boolean disableRunCompleteCheck) {
+        this.disableRunCompleteCheck = disableRunCompleteCheck;
+    }
+
+    public String getOutputPath() {
+        return outputPath;
+    }
+
+    public void setOutputPath(String outputPath) {
+        this.outputPath = outputPath;
+    }
+
+    public String getOutputFolder() {
+        return outputFolder;
+    }
+
+    public void setOutputFolder(String outputFolder) {
+        this.outputFolder = outputFolder;
+    }
+
+    public StudyToOutputPathConfig getStudyToOutputPathConfig() {
+        return studyToOutputPathConfig;
+    }
+
+    public void setStudyToOutputPathConfig(StudyToOutputPathConfig studyToOutputPathConfig) {
+        this.studyToOutputPathConfig = studyToOutputPathConfig;
+    }
+
+    public boolean isReplaceNullCreatedDate() {
+        return replaceNullCreatedDate;
+    }
+
+    public void setReplaceNullCreatedDate(boolean replaceNullCreatedDate) {
+        this.replaceNullCreatedDate = replaceNullCreatedDate;
+    }
+
+    public DateTime getAfterDateFilter() {
+        return afterDateFilter;
+    }
+
+    public void setAfterDateFilter(DateTime afterDateFilter) {
+        this.afterDateFilter = afterDateFilter;
+    }
+
+    public DateTime getBeforeDateFilter() {
+        return beforeDateFilter;
+    }
+
+    public void setBeforeDateFilter(DateTime beforeDateFilter) {
+        this.beforeDateFilter = beforeDateFilter;
+    }
+
+    public Set<String> getIncludeInstrumentNameFilter() {
+        return includeInstrumentNameFilter;
+    }
+
+    public void setIncludeInstrumentNameFilter(Set<String> includeInstrumentNameFilter) {
+        this.includeInstrumentNameFilter = includeInstrumentNameFilter;
+    }
+
+    public Set<String> getExcludeInstrumentNameFilter() {
+        return excludeInstrumentNameFilter;
+    }
+
+    public void setExcludeInstrumentNameFilter(Set<String> excludeInstrumentNameFilter) {
+        this.excludeInstrumentNameFilter = excludeInstrumentNameFilter;
+    }
+
+    public List<String> getOverrides() {
+        return overrides;
+    }
+
+    public void setOverrides(List<String> overrides) {
+        this.overrides = overrides;
+    }
+
+    public Metadata getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Metadata metadata) {
+        this.metadata = metadata;
+    }
+
+    public EnumMap<FileProvenanceFilter, Set<String>> getIncludeFilters() {
+        return includeFilters;
+    }
+
+    public void setIncludeFilters(EnumMap<FileProvenanceFilter, Set<String>> includeFilters) {
+        this.includeFilters = includeFilters;
+    }
+
+    public EnumMap<FileProvenanceFilter, Set<String>> getExcludeFilters() {
+        return excludeFilters;
+    }
+
+    public void setExcludeFilters(EnumMap<FileProvenanceFilter, Set<String>> excludeFilters) {
+        this.excludeFilters = excludeFilters;
+    }
+
+    public void setProvenanceClient(ExtendedProvenanceClient provenanceClient) {
+        this.provenanceClient = provenanceClient;
+    }
+
+    public void setWorkflow(Workflow workflow) {
+        this.workflow = workflow;
+    }
+
+    public Map<String, String> getConfig() {
+        return config;
+    }
+
+    public void setConfig(Map<String, String> config) {
+        this.config = config;
+    }
+
+    public List<WorkflowRun> run() {
+        checkNotNull(workflow);
+
+        //get workflow handler
+        String workflowName = workflow.getName();
+        String workflowVersion = workflow.getVersion();
+        if (!hasHandler(workflowName, workflowVersion)) {
+            throw new RuntimeException("Workflow [" + workflowName + "-" + workflowVersion + "] is not supported");
         }
-        
-        // Insert decider-modified values
-        for (String param : iniParameters.keySet()) {
-            iniFileMap.put(param, iniParameters.get(param));
+        Bcl2FastqHandler handler = getHandler(workflowName, workflowVersion);
+
+        // provenance data structures
+        ListMultimap<String, ProvenanceWithProvider<LaneProvenance>> laneNameToLaneProvenance = ArrayListMultimap.create();
+        Map<String, String> providerAndIdToLaneName = new HashMap<>();
+
+        // get all lane provenance from providers specified in provenance settings
+        Map<String, Collection<LaneProvenance>> laneProvenanceByProvider = provenanceClient.getLaneProvenanceByProvider(Collections.EMPTY_MAP); //filters);
+        for (Map.Entry<String, Collection<LaneProvenance>> e : laneProvenanceByProvider.entrySet()) {
+            String provider = e.getKey();
+            for (LaneProvenance lp : e.getValue()) {
+                String laneName = lp.getSequencerRunName() + "_lane_" + lp.getLaneNumber();
+                providerAndIdToLaneName.put(provider + lp.getProvenanceId(), laneName);
+
+                if (lp.getSkip()) {
+                    log.debug("Lane = [{}] is skipped", laneName);
+                    continue;
+                }
+
+                DateTime createdDate;
+                if (replaceNullCreatedDate && lp.getCreatedDate() == null) { //ignore created date it is null
+                    createdDate = lp.getLastModified();
+                } else {
+                    createdDate = lp.getCreatedDate();
+                }
+
+                if (createdDate == null) {
+                    log.warn("Lane = [{}] has a null created date - treating lane as incomplete", laneName);
+                    continue;
+                }
+
+                if (afterDateFilter != null && createdDate.isBefore(afterDateFilter)) {
+                    continue;
+                }
+
+                if (beforeDateFilter != null && createdDate.isAfter(beforeDateFilter)) {
+                    continue;
+                }
+
+                if (includeFilters.containsKey(FileProvenanceFilter.sequencer_run)
+                        && !includeFilters.get(FileProvenanceFilter.sequencer_run).contains(lp.getSequencerRunName())) {
+                    continue;
+                }
+
+                if (includeFilters.containsKey(FileProvenanceFilter.lane)
+                        && !includeFilters.get(FileProvenanceFilter.lane).contains(laneName)) {
+                    continue;
+                }
+
+                if (includeFilters.containsKey(FileProvenanceFilter.sequencer_run_platform_model)
+                        && !includeFilters.get(FileProvenanceFilter.sequencer_run_platform_model).contains(lp.getSequencerRunPlatformModel())) {
+                    continue;
+                }
+
+                if (includeInstrumentNameFilter != null
+                        && !CollectionUtils.containsAny(includeInstrumentNameFilter, lp.getSequencerRunAttributes().get("instrument_name"))) {
+                    continue;
+                }
+
+                if (excludeFilters.containsKey(FileProvenanceFilter.sequencer_run)
+                        && excludeFilters.get(FileProvenanceFilter.sequencer_run).contains(lp.getSequencerRunName())) {
+                    continue;
+                }
+
+                if (excludeFilters.containsKey(FileProvenanceFilter.lane)
+                        && excludeFilters.get(FileProvenanceFilter.lane).contains(laneName)) {
+                    continue;
+                }
+
+                if (excludeFilters.containsKey(FileProvenanceFilter.sequencer_run_platform_model)
+                        && excludeFilters.get(FileProvenanceFilter.sequencer_run_platform_model).contains(lp.getSequencerRunPlatformModel())) {
+                    continue;
+                }
+
+                if (excludeInstrumentNameFilter != null
+                        && CollectionUtils.containsAny(excludeInstrumentNameFilter, lp.getSequencerRunAttributes().get("instrument_name"))) {
+                    continue;
+                }
+
+                laneNameToLaneProvenance.put(laneName, new ProvenanceWithProvider<>(provider, lp));
+            }
         }
-        
-        File file = null;
-        Random random = new Random(System.currentTimeMillis());
-        try {
-			file = File.createTempFile("" + random.nextInt(), ".ini");
-		} catch (IOException ex) {
-			Log.fatal("Failed to create ini file.", ex);
-            return null;
-		}
-        
-        try (FileWriter fw = new FileWriter(file);
-        		PrintWriter writer = new PrintWriter(fw, true)) {
-            for (String key : iniFileMap.keySet()) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(key).append("=").append(iniFileMap.get(key));
-                writer.println(sb.toString());
+
+        // get all sample provenance from providers specified in provenance settings
+        ListMultimap<String, ProvenanceWithProvider<SampleProvenance>> laneNameToSampleProvenance = ArrayListMultimap.create();
+        SetMultimap<String, String> laneNameToStudyNames = HashMultimap.create();
+        Map<String, Collection<SampleProvenance>> sampleProvenanceByProvider = provenanceClient.getSampleProvenanceByProvider(Collections.EMPTY_MAP);
+        for (Map.Entry<String, Collection<SampleProvenance>> e : sampleProvenanceByProvider.entrySet()) {
+            String provider = e.getKey();
+            for (SampleProvenance sp : e.getValue()) {
+                String laneName = sp.getSequencerRunName() + "_lane_" + sp.getLaneNumber();
+                providerAndIdToLaneName.put(provider + sp.getProvenanceId(), laneName);
+
+                if (sp.getSkip()) {
+                    log.debug("Sample = [{}] in lane = [{}] is skipped", sp.getSampleName(), laneName);
+                    continue;
+                }
+
+                laneNameToStudyNames.put(laneName, sp.getStudyTitle());
+                laneNameToSampleProvenance.put(laneName, new ProvenanceWithProvider<>(provider, sp));
+            }
+        }
+
+        if (includeFilters.containsKey(FileProvenanceFilter.study)) {
+            Set<String> lanesToRemove = new HashSet<>();
+            Set<String> includeStudies = includeFilters.get(FileProvenanceFilter.study);
+
+            for (Entry<String, Set<String>> e : Multimaps.asMap(laneNameToStudyNames).entrySet()) {
+                String laneName = e.getKey();
+                Set<String> laneStudies = e.getValue();
+
+                //the set of studies in the lane that are not in the include studies list
+                Set<String> additionalStudiesInLane = Sets.difference(laneStudies, includeStudies);
+
+                if (additionalStudiesInLane.isEmpty()) {
+                    //lane passed study filter
+                } else {
+                    log.debug("Lane = [{}] with studies = [{}] removed due to study filter", laneName, Joiner.on(",").join(laneStudies));
+                    lanesToRemove.add(e.getKey());
+                }
+            }
+            laneNameToLaneProvenance.keySet().removeAll(lanesToRemove);
+        }
+
+        if (excludeFilters.containsKey(FileProvenanceFilter.study)) {
+            Set<String> lanesToRemove = new HashSet<>();
+            Set<String> excludeStudies = excludeFilters.get(FileProvenanceFilter.study);
+
+            for (Entry<String, Set<String>> e : Multimaps.asMap(laneNameToStudyNames).entrySet()) {
+                String laneName = e.getKey();
+                Set<String> laneStudies = e.getValue();
+
+                //the set of studies in the lane that are in the exclude studies list
+                Set<String> matches = Sets.intersection(laneStudies, excludeStudies);
+
+                if (matches.isEmpty()) {
+                    //lane passed study filter
+                } else {
+                    log.debug("Lane = [{}] with studies = [{}] removed due to study filter", laneName, Joiner.on(",").join(laneStudies));
+                    lanesToRemove.add(e.getKey());
+                }
+            }
+            laneNameToLaneProvenance.keySet().removeAll(lanesToRemove);
+        }
+
+        //get previous analysis
+        Map<FileProvenanceFilter, Set<String>> analysisFilters = new HashMap<>();
+        //TODO: seqware currently does not support retrieving FP with null workflow swids
+        //Set<String> workflowSwidsToCheck = new HashSet<>();
+        //workflowSwidsToCheck.add(getWorkflowAccession());
+        //workflowSwidsToCheck.add(null);
+        //workflowSwidsToCheck.addAll(getWorkflowAccessionsToCheck());
+        //analysisFilters.put(FileProvenanceFilter.workflow, workflowSwidsToCheck);
+
+        //the set of all lanes that have been analyzed using the current workflow or a workflow in the set of "check workflows"
+        Set<String> analyzedLanes = new HashSet<>();
+
+        //calculate the set of lanes that do not have associated workflow information but are linked in seqware
+        Set<String> blockedLanes = new HashSet<>();
+
+        Collection<FileProvenance> fps = provenanceClient.getFileProvenance(analysisFilters);
+        for (FileProvenance fp : fps) {
+            if (fp.getWorkflowSWID() != null) { //analysis provenance for a worklow run
+                if (getWorkflowAccessionsToCheck().contains(fp.getWorkflowSWID().toString())
+                        || workflow.getSwAccession().equals(fp.getWorkflowSWID())) {
+                    analyzedLanes.addAll(fp.getLaneNames());
+                }
+            } else { //analysis provenance for an ius
+                //include this record, it may be an IUS that is used for skipping a lane or sample
+                blockedLanes.addAll(fp.getLaneNames());
+            }
+        }
+
+        //calculate the set of all lanes that are known by the set of lane provenance providers
+        Set<String> knownLanes = laneNameToLaneProvenance.keySet();
+
+        //calculate the set of all lanes that are known and valid
+        Set<String> allowedLanes = Sets.difference(knownLanes, blockedLanes);
+
+        //calculate the set of lanes that have not been processed
+        Set<String> unprocessedLanes = Sets.difference(allowedLanes, analyzedLanes);
+
+        //filter candidate lanes into lanes to analyze
+        Set<String> candidateLanesToAnalyze = new HashSet<>();
+        if (ignorePreviousLimsKeysMode) {
+            candidateLanesToAnalyze.addAll(knownLanes);
+        } else if (ignorePreviousAnalysisMode) {
+            candidateLanesToAnalyze.addAll(allowedLanes);
+        } else {
+            candidateLanesToAnalyze.addAll(unprocessedLanes);
+        }
+
+        //lane validation before scheduling workflow run
+        Set<String> invalidLanes = new HashSet<>();
+        for (String laneName : candidateLanesToAnalyze) {
+            List<String> errors = new ArrayList<>();
+
+            //expect one and only one lane provenance per lane name
+            List<ProvenanceWithProvider<LaneProvenance>> lps = laneNameToLaneProvenance.get(laneName);
+            if (lps.size() != 1) {
+                invalidLanes.add(laneName);
+                errors.add(String.format("Lane provenance count = [%s], expected 1.", lps.size()));
             }
 
-        } catch (IOException ex) {
-            Log.fatal("Failed writing to ini file.", ex);
-            return null;
+            //expect one or more sample provenance per lane name
+            List<ProvenanceWithProvider<SampleProvenance>> sps = laneNameToSampleProvenance.get(laneName);
+            if (sps.isEmpty()) {
+                invalidLanes.add(laneName);
+                errors.add(String.format("Sample provenance count = [%s], expected 1 or more.", sps.size()));
+            }
+
+            //check that 0 or 1 group ids for all samples
+            for (ProvenanceWithProvider<SampleProvenance> p : sps) {
+                SampleProvenance sp = p.getProvenance();
+                Set<String> groupIds = sp.getSampleAttributes().get(Lims.GROUP_ID.getAttributeTitle());
+                if (groupIds != null && groupIds.size() > 1) {
+                    errors.add(String.format("Sample = [%s] has multiple group ids - expected 0 or 1.", sp.getSampleName()));
+                }
+            }
+
+            if (!disableRunCompleteCheck) {
+                if (lps.size() == 1) {
+                    Set<String> runDirs = Iterables.getOnlyElement(lps).getProvenance().getSequencerRunAttributes().get("run_dir");
+                    if (runDirs != null && runDirs.size() == 1) {
+                        Path runDirPath = Paths.get(Iterables.getOnlyElement(Iterables.getOnlyElement(lps).getProvenance().getSequencerRunAttributes().get("run_dir")));
+                        File runDir = runDirPath.toFile();
+                        if (runDir.exists() && runDir.isDirectory() && runDir.canRead()) {
+                            File oicrRunCompleteTouchFile = runDirPath.resolve("oicr_run_complete").toFile();
+                            if (oicrRunCompleteTouchFile.exists()) {
+                                //run is complete
+                            } else {
+                                errors.add(String.format("Lane has not completed sequencing ([%s] is missing).", oicrRunCompleteTouchFile.getAbsolutePath()));
+                            }
+                        } else {
+                            errors.add(String.format("Lane run_dir = [%s] is not accessible or does not exist.", runDir.getAbsolutePath()));
+                        }
+                    } else {
+                        errors.add(String.format("Lane run_dir = [%s].", (runDirs == null ? "" : Joiner.on(",").join(runDirs))));
+                    }
+                }
+            }
+
+            if (!errors.isEmpty()) {
+                invalidLanes.add(laneName);
+                log.warn("Lane = [{}] can not be processed due to the following reasons:\n"
+                        + "{}\n"
+                        + "Lane provenance: [{}]\n"
+                        + "Sample provenance: [{}]",
+                        laneName, Joiner.on("\n").join(errors), Joiner.on(";").join(lps), Joiner.on(";").join(sps));
+            }
         }
-        
-        if (file != null) {
-            iniPath = file.getAbsolutePath();
+
+        //remove invalid lanes from lanes to analyze set
+        Set<String> lanesToAnalyze = Sets.difference(candidateLanesToAnalyze, invalidLanes);
+
+        //collect required workflow run data - create IUS-LimsKey records in seqware that will be linked to the workflow run
+        List<WorkflowRun> workflowRuns = new ArrayList<>();
+        List<WorkflowRun> invalidWorkflowRuns = new ArrayList<>();
+        for (String laneName : lanesToAnalyze) {
+
+            if (launchMax != null && workflowRuns.size() >= launchMax) {
+                log.info("Launch max [{}] reached.", launchMax);
+                break;
+            }
+
+            ProvenanceWithProvider<LaneProvenance> lane = Iterables.getOnlyElement(laneNameToLaneProvenance.get(laneName));
+            IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> linkedLane = createIusToProvenanceLink(lane, getDoCreateIusLimsKeys() && !getIsDryRunMode());
+            LaneProvenance lp = lane.getProvenance();
+
+            List<ProvenanceWithProvider<SampleProvenance>> samples = laneNameToSampleProvenance.get(laneName);
+            List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> linkedSamples = new ArrayList<>();
+            for (ProvenanceWithProvider<SampleProvenance> provenanceWithProvider : samples) {
+                linkedSamples.add(createIusToProvenanceLink(provenanceWithProvider, getDoCreateIusLimsKeys() && !getIsDryRunMode()));
+            }
+            List<SampleProvenance> sps = new ArrayList<>();
+            for (ProvenanceWithProvider<SampleProvenance> spWithProvider : samples) {
+                sps.add(spWithProvider.getProvenance());
+            }
+
+            List<Integer> iusSwidsToLinkWorkflowRunTo = new ArrayList<>();
+            iusSwidsToLinkWorkflowRunTo.add(linkedLane.getIusSwid());
+            for (IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> linkedSample : linkedSamples) {
+                iusSwidsToLinkWorkflowRunTo.add(linkedSample.getIusSwid());
+            }
+
+            Bcl2FastqData data = new Bcl2FastqData();
+            data.setIusSwidsToLinkWorkflowRunTo(iusSwidsToLinkWorkflowRunTo);
+            data.setLinkedLane(linkedLane);
+            data.setLinkedSamples(linkedSamples);
+            data.setLp(lp);
+            data.setSps(sps);
+            data.setProperties(ImmutableMap.of("output_prefix", outputPath, "output_dir", outputFolder));
+            data.setMetadataWriteback(getDoMetadataWriteback());
+            data.setStudyToOutputPathConfig(studyToOutputPathConfig);
+
+            WorkflowRunV2 wr = handler.getWorkflowRun(data);
+            if (wr.getErrors().isEmpty()) {
+                workflowRuns.add(wr);
+            } else {
+                invalidWorkflowRuns.add(wr);
+                log.error("Error while generating workflow run for lane = [{}], errors:\n{}", laneName, Joiner.on("\n").join(wr.getErrors()));
+            }
         }
-        
-        Log.debug("INI File written to "+iniPath);
-        return iniPath;
+
+        //list invalid workflow runs
+        for (WorkflowRun wr : invalidWorkflowRuns) {
+            log.info("Invalid workflow run:\n" + debugWorkflowRun(wr));
+        }
+
+        //schedule workflow runs
+        List<WorkflowRun> scheduledWorkflowRuns = new ArrayList<>();
+        for (WorkflowRun wr : workflowRuns) {
+            if (getDoScheduleWorkflowRuns() && !getIsDryRunMode()) {
+                log.info("Scheduled workflow run:\n" + scheduleWorkflowRun(wr));
+                scheduledWorkflowRuns.add(wr);
+            } else {
+                log.info("Dry run mode enabled - not scheduling:\n" + debugWorkflowRun(wr));
+            }
+        }
+
+        log.info("Lane summary: fetched={} analyzed={} blocked={} allowed={} unprocessed={}",
+                knownLanes.size(), analyzedLanes.size(), blockedLanes.size(), allowedLanes.size(), unprocessedLanes.size());
+        log.info("Requested summary: requested={} invalid={} valid={}",
+                candidateLanesToAnalyze.size(), invalidLanes.size(), lanesToAnalyze.size());
+        log.info("Workflow run summary: candidate={} invalid={} valid={} scheduled={}",
+                lanesToAnalyze.size(), invalidWorkflowRuns.size(), workflowRuns.size(), scheduledWorkflowRuns.size());
+
+        return scheduledWorkflowRuns;
     }
-	
-	/**
-	 * Put all parameters in a map to be written to the ini file
-	 * 
-	 * @return map of all parameters
-	 */
-	private Map<String, String> getIniParameters(RunPositionData lane) {
-		WorkflowRun run = new WorkflowRun(null, null);
-		
-		run.addProperty("java", "/.mounts/labs/seqprodbio/private/seqware/java/default/bin/java");
-		run.addProperty("perl", "/usr/bin/perl");
-		run.addProperty("tile", "0");
-		run.addProperty("threads", "8");
-		run.addProperty("memory", "16384");
-		
-		run.addProperty("flowcell", this.runName);
-		run.addProperty("intensity_folder", this.runDir + "Data/Intensities");
-		run.addProperty("called_bases", this.runDir + "Data/Intensities/BaseCalls/");
-		
-		run.addProperty("do_olb", this.offlineBcl ? "1" : "0");
-		run.addProperty("ignore_missing_bcl", String.valueOf(this.ignoreMissingBcl));
-		run.addProperty("ignore_missing_stats", String.valueOf(this.ignoreMissingStats));
-		if (lane.getBasesMask() != null) run.addProperty("use_bases_mask", lane.getBasesMask());
-		
-		run.addProperty("output_prefix", this.outPath, "./");
-		run.addProperty("output_dir", this.outFolder, "seqware-results");
-		run.setManualOutput(this.manualOutput);
-		
-		run.addProperty("lanes", lane.getLaneString());
-		run.addProperty("read_ends", String.valueOf(this.readEnds));
-		
-		return run.getIniFile();
-	}
-	
-	/**
-	 * Launches the workflow using the provided ini file. If the test option was provided, the 
-	 * workflow will not actually be launched
-	 * 
-	 * @param iniFile ini file containing workflow parameters
-	 */
-	private void launchWorkflow(String iniFile) {
-		Log.debug("Launching workflow for run "+this.runName+" with INI: "+iniFile);
-		
-		ArrayList<String> runArgs = new ArrayList<>();
-		runArgs.add("--plugin");
-		runArgs.add("io.seqware.pipeline.plugins.WorkflowScheduler");
-		runArgs.add("--");
-		runArgs.add("--workflow-accession");
-		runArgs.add(workflowAccession);
-		runArgs.add("--ini-files");
-		runArgs.add(iniFile);
-		if (!metadataWriteback) {
-			runArgs.add("--no-metadata");
-		}
-		runArgs.add("--host");
-		runArgs.add(localhost);
-		
-		runArgs.add("--link-workflow-run-to-parents");
-		runArgs.add(commaSeparate(laneAccessions));
-		
-		runArgs.add("--link-workflow-run-to-parents");
-		runArgs.add(commaSeparate(iusAccessions));
-		
-		StringBuilder sb = new StringBuilder();
-		for (String a : runArgs) {
-			sb.append(a).append(" ");
-		}
-		Log.debug("PluginRunner params: " + sb.toString());
-		
-		if (testing) {
-			Log.stdout("Test mode: not launching workflow");
-		}
-		else {
-			Log.stdout("Scheduling workflow run.");
-	        PluginRunner.main(runArgs.toArray(new String[runArgs.size()]));
-		}
-	}
-	
-	/**
-	 * Combines a collection of IDs into a comma-separated String
-	 * 
-	 * @param things
-	 * @return A comma-separated String of integers. e.g. {@code "123,456,789"}
-	 */
-	private String commaSeparate(Collection<Integer> things) {
-		if (things == null || things.isEmpty()) return "";
-		StringBuilder sb = new StringBuilder();
-		for (Integer i : things) {
-			sb.append(i).append(",");
-		}
-		sb.deleteCharAt(sb.length()-1);
-		return sb.toString();
-	}
 
-	public static void main(String args[]){
+    private String scheduleWorkflowRun(WorkflowRun wr) {
+        return scheduleWorkflowRun(wr, true);
+    }
 
-		List<String> params = new ArrayList<String>();
-		params.add("--plugin");
-		params.add(Bcl2fastqDecider.class.getCanonicalName());
-		params.add("--");
-		params.addAll(Arrays.asList(args));
-		System.out.println("Parameters: " + Arrays.deepToString(params.toArray()));
-		net.sourceforge.seqware.pipeline.runner.PluginRunner.main(params.toArray(new String[params.size()]));
+    private String debugWorkflowRun(WorkflowRun wr) {
+        return scheduleWorkflowRun(wr, false);
+    }
 
-	}
+    private String scheduleWorkflowRun(WorkflowRun wr, boolean doScheduling) {
+        //write ini properties to file
+        Path iniFilePath = writeWorkflowRunIniPropertiesToFile(wr);
 
-	@Override
-	public ReturnValue do_test() {
-		return new ReturnValue(ReturnValue.NOTIMPLEMENTED);
-	}
+        WorkflowSchedulerCommandBuilder cmdBuilder = new WorkflowSchedulerCommandBuilder(workflow.getSwAccession());
+        cmdBuilder.setIniFile(iniFilePath);
+        cmdBuilder.setMetadataWriteback(getDoMetadataWriteback());
+        cmdBuilder.setHost(host);
+        cmdBuilder.setIusSwidsToLinkWorkflowRunTo(wr.getIusSwidsToLinkWorkflowRunTo());
+        cmdBuilder.setOverrideArgs(overrides);
+        List<String> runArgs = cmdBuilder.build();
 
-	@Override
-	public ReturnValue clean_up() {
-		pinery.close();
-		return new ReturnValue(ReturnValue.SUCCESS);
-	}
+        if (doScheduling) {
+            PluginRunner pluginRunner = new PluginRunner();
+            pluginRunner.setConfig(config);
+            pluginRunner.run(runArgs.toArray(new String[runArgs.size()]));
+        }
+
+        return "Command: " + "java -jar seqware-distribution.jar " + Joiner.on(" ").join(runArgs) + "\n"
+                + "Ini:\n" + Joiner.on("\n").withKeyValueSeparator("=").join(wr.getIniFile());
+    }
+
+    private boolean hasHandler(String workflowName, String workflowVersion) {
+        for (Handler h : handlers) {
+            if (h.isHandlerFor(workflowName, workflowVersion)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private <T extends Handler> T getHandler(String workflowName, String workflowVersion) {
+        T handler = null;
+        for (Handler h : handlers) {
+            if (h.isHandlerFor(workflowName, workflowVersion)) {
+                if (handler == null) {
+                    handler = (T) h;
+                } else {
+                    throw new RuntimeException("Multiple handlers for workflow = [" + workflowName + "-" + workflowVersion + "]");
+                }
+            }
+        }
+        if (handler == null) {
+            throw new RuntimeException("No handlers for workflow = [" + workflowName + "-" + workflowVersion + "]");
+        }
+        return handler;
+    }
+
+    private <T extends LimsProvenance> IusWithProvenance<ProvenanceWithProvider<T>> createIusToProvenanceLink(ProvenanceWithProvider<T> p, boolean doMetadataWriteback) {
+        Integer iusSwid;
+        if (doMetadataWriteback) {
+            LimsKey lk = p.getLimsKey();
+            Integer limsKeySwid = metadata.addLimsKey(p.getProvider(), lk.getId(), lk.getVersion(), lk.getLastModified());
+            iusSwid = metadata.addIUS(limsKeySwid, false);
+        } else {
+            iusSwid = 0;
+        }
+
+        return new IusWithProvenance<>(iusSwid, p);
+    }
+
+    private Path writeWorkflowRunIniPropertiesToFile(WorkflowRun wr) {
+        try {
+            Path iniFilePath = Files.createTempFile("bcl2fastq", ".ini");
+            for (Map.Entry<String, String> e : wr.getIniFile().entrySet()) {
+                String iniRecord = e.getKey() + "=" + e.getValue() + "\n";
+                FileUtils.writeStringToFile(iniFilePath.toFile(), iniRecord, Charsets.UTF_8, true);
+            }
+            return iniFilePath;
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 }

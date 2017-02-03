@@ -1,47 +1,123 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>ca.on.oicr.pde.config</groupId>
-		<artifactId>deciders</artifactId>
-		<version>3</version>
-	</parent>
+    <parent>
+        <groupId>ca.on.oicr.gsi</groupId>
+        <artifactId>pipedev-decider-parent</artifactId>
+        <version>2.0</version>
+        <relativePath/>
+    </parent>
 
-	<groupId>ca.on.oicr.pde.deciders</groupId>
-	<artifactId>BCL2FastQ</artifactId>
-	<version>1.0</version>
-	<packaging>jar</packaging>
+    <groupId>ca.on.oicr.pde.deciders</groupId>
+    <artifactId>BCL2FastQ</artifactId>
+    <version>1.0</version>
+    <packaging>jar</packaging>
 
-	<name>${display-name}</name>
+    <name>${display-name}</name>
 
-	<properties>
-		<main-class>ca.on.oicr.pde.deciders.Bcl2fastqDecider</main-class>
-		<workflow-version>2.7</workflow-version>
-		<pinery-version>2.0-SNAPSHOT</pinery-version>
-	</properties>
+    <properties>
+        <main-class>ca.on.oicr.pde.deciders.Bcl2fastqDeciderCli</main-class>
+        <final-name>Decider_BCL2FastQ_${project.version}_SeqWare_${seqware-version}</final-name>
+    </properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>ca.on.oicr.pde.workflows</groupId>
-			<artifactId>CASAVA</artifactId>
-			<version>${workflow-version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>com.github.seqware</groupId>
-					<artifactId>seqware-distribution</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.github.seqware</groupId>
-					<artifactId>seqware-pipeline</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>ca.on.oicr</groupId>
-			<artifactId>pinery-client</artifactId>
-			<version>${pinery-version}</version>
-		</dependency>
-	</dependencies>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <version>1.6.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>1.10.19</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.10</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.9.3</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.18.1</version>
+                <configuration>
+                    <parallel>methods</parallel>
+                    <threadCount>20</threadCount>
+                    <skip>${skipITs}</skip>
+                    <systemPropertyVariables>
+                        <dbHost>${dbHost}</dbHost>
+                        <dbPort>${dbPort}</dbPort>
+                        <dbUser>${dbUser}</dbUser>
+                        <dbPassword>${dbPassword}</dbPassword>
+                        <seqwareWar>${seqwareWar}</seqwareWar>
+                        <deciderJar>${project.build.directory}/${final-name}.jar</deciderJar>
+                        <deciderClass>${main-class}</deciderClass>
+                        <deciderName>${project.artifactId}</deciderName>
+                        <deciderVersion>${project.version}</deciderVersion>
+                        
+                        <!-- required to create seqware settings -->
+                        <seqwareDistribution>${seqwareDistribution}</seqwareDistribution>
+                        <workingDirectory>${workingDirectory}</workingDirectory>
+                        <webserviceUrl>${webserviceUrl}</webserviceUrl>
+                        <schedulingSystem>${schedulingSystem}</schedulingSystem>
+                        <schedulingHost>${schedulingHost}</schedulingHost>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>run-test</id>
+                        <phase/>
+                    </execution>
+                    <execution>
+                        <id>integration tests</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>**/**IT.java</include>
+                            </includes>
+                            <excludes>
+                                <exclude>**/**OicrDataIT.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>oicr-data-integration-tests</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <threadCount>1</threadCount>
+                            <includes>
+                                <include>**/**OicrDataIT.java</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

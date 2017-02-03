@@ -1,0 +1,27 @@
+{
+  "workflowRunCount" : 1,
+  "studies" : [ "LCMTesting" ],
+  "sequencerRuns" : [ "130404_SN802_0108_AC1TUBACXX" ],
+  "lanes" : [ "130404_SN802_0108_AC1TUBACXX_lane_4" ],
+  "samples" : [ "LCM_0016_Pa_P_PE_580_WG" ],
+  "workflows" : [ ],
+  "processingAlgorithms" : [ ],
+  "fileMetaTypes" : [ ],
+  "maxInputFiles" : 0,
+  "minInputFiles" : 0,
+  "totalInputFiles" : 0,
+  "workflowRuns" : [ {
+    "workflowIni" : {
+      "called_bases" : "/oicr/data/archive/h802/130404_SN802_0108_AC1TUBACXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "130404_SN802_0108_AC1TUBACXX",
+      "intensity_folder" : "/oicr/data/archive/h802/130404_SN802_0108_AC1TUBACXX/Data/Intensities/",
+      "lanes" : "4,LANE_IUS_SWID:NoIndex,SAMPLE_IUS_SWID,LCM_0016_Pa_P_PE_580_WG,2",
+      "manual_output" : "false",
+      "memory" : "16384",
+      "metadata" : "metadata",
+      "output_dir" : "seqware-results",
+      "output_prefix" : "./"
+    },
+    "files" : [ ]
+  } ]
+}
