@@ -415,11 +415,11 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
 
-//        //correct the barcode and schedule
-//        sp.iusTag("TTTTTTTT");
-//        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
-//        assertEquals(bcl2fastqDecider.run().size(), 1);
-//        assertEquals(getFpsForCurrentWorkflow().size(), 5);
+        //correct the barcode and schedule
+        sp.iusTag("TTTTTTTT");
+        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(getFpsForCurrentWorkflow().size(), 5);
     }
 
     private Collection<FileProvenance> getFpsForCurrentWorkflow() {
