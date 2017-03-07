@@ -4,8 +4,6 @@ import ca.on.oicr.gsi.provenance.ExtendedProvenanceClient;
 import ca.on.oicr.gsi.provenance.FileProvenanceFilter;
 import ca.on.oicr.gsi.provenance.model.FileProvenance;
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
-import ca.on.oicr.gsi.provenance.model.LimsKey;
-import ca.on.oicr.gsi.provenance.model.LimsProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
 import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq1Handler;
@@ -569,37 +567,14 @@ public class Bcl2fastqDecider {
                 break;
             }
 
-            ProvenanceWithProvider<LaneProvenance> lane = Iterables.getOnlyElement(laneNameToLaneProvenance.get(laneName));
-            IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> linkedLane = createIusToProvenanceLink(lane, getDoCreateIusLimsKeys() && !getIsDryRunMode());
-            LaneProvenance lp = lane.getProvenance();
-
-            List<ProvenanceWithProvider<SampleProvenance>> samples = laneNameToSampleProvenance.get(laneName);
-            List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> linkedSamples = new ArrayList<>();
-            for (ProvenanceWithProvider<SampleProvenance> provenanceWithProvider : samples) {
-                linkedSamples.add(createIusToProvenanceLink(provenanceWithProvider, getDoCreateIusLimsKeys() && !getIsDryRunMode()));
-            }
-            List<SampleProvenance> sps = new ArrayList<>();
-            for (ProvenanceWithProvider<SampleProvenance> spWithProvider : samples) {
-                sps.add(spWithProvider.getProvenance());
-            }
-
-            List<Integer> iusSwidsToLinkWorkflowRunTo = new ArrayList<>();
-            iusSwidsToLinkWorkflowRunTo.add(linkedLane.getIusSwid());
-            for (IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> linkedSample : linkedSamples) {
-                iusSwidsToLinkWorkflowRunTo.add(linkedSample.getIusSwid());
-            }
-
-            Bcl2FastqData data = new Bcl2FastqData();
-            data.setIusSwidsToLinkWorkflowRunTo(iusSwidsToLinkWorkflowRunTo);
-            data.setLinkedLane(linkedLane);
-            data.setLinkedSamples(linkedSamples);
-            data.setLp(lp);
-            data.setSps(sps);
+            Bcl2FastqData data = new Bcl2FastqData(
+                    Iterables.getOnlyElement(laneNameToLaneProvenance.get(laneName)),
+                    laneNameToSampleProvenance.get(laneName));
             data.setProperties(ImmutableMap.of("output_prefix", outputPath, "output_dir", outputFolder));
             data.setMetadataWriteback(getDoMetadataWriteback());
             data.setStudyToOutputPathConfig(studyToOutputPathConfig);
 
-            WorkflowRunV2 wr = handler.getWorkflowRun(data);
+            WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode());
             if (wr.getErrors().isEmpty()) {
                 workflowRuns.add(wr);
             } else {
@@ -688,19 +663,6 @@ public class Bcl2fastqDecider {
             throw new RuntimeException("No handlers for workflow = [" + workflowName + "-" + workflowVersion + "]");
         }
         return handler;
-    }
-
-    private <T extends LimsProvenance> IusWithProvenance<ProvenanceWithProvider<T>> createIusToProvenanceLink(ProvenanceWithProvider<T> p, boolean doMetadataWriteback) {
-        Integer iusSwid;
-        if (doMetadataWriteback) {
-            LimsKey lk = p.getLimsKey();
-            Integer limsKeySwid = metadata.addLimsKey(p.getProvider(), lk.getId(), lk.getVersion(), lk.getLastModified());
-            iusSwid = metadata.addIUS(limsKeySwid, false);
-        } else {
-            iusSwid = 0;
-        }
-
-        return new IusWithProvenance<>(iusSwid, p);
     }
 
     private Path writeWorkflowRunIniPropertiesToFile(WorkflowRun wr) {

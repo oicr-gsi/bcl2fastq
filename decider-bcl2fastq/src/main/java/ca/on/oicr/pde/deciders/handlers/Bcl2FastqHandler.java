@@ -1,6 +1,8 @@
 package ca.on.oicr.pde.deciders.handlers;
 
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
+import ca.on.oicr.gsi.provenance.model.LimsKey;
+import ca.on.oicr.gsi.provenance.model.LimsProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.DataMismatchException;
 import ca.on.oicr.pde.deciders.IusWithProvenance;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import net.sourceforge.seqware.common.metadata.Metadata;
 
 /**
  *
@@ -29,18 +32,9 @@ public abstract class Bcl2FastqHandler implements Handler {
 
     public abstract WorkflowRunV2 modifyWorkflowRun(Bcl2FastqData data, WorkflowRunV2 workflowRun);
 
-    public WorkflowRunV2 getWorkflowRun(Bcl2FastqData data) {
+    public WorkflowRunV2 getWorkflowRun(Metadata metadata, Bcl2FastqData data, boolean createLimsKeys) {
         WorkflowRunV2 wr = new WorkflowRunV2(null, null);
         wr.addProperty(data.getProperties());
-
-        wr.setIusSwidsToLinkWorkflowRunTo(data.getIusSwidsToLinkWorkflowRunTo());
-
-        try {
-            wr.addProperty("lanes", generateLinkingString(data.getLinkedLane(), data.getLinkedSamples()));
-        } catch (DataMismatchException dme) {
-            wr.addError(dme.toString());
-            wr.addProperty("lanes", "ERROR");
-        }
 
         List<String> barcodes = new ArrayList<>();
         for (SampleProvenance sp : data.getSps()) {
@@ -114,7 +108,36 @@ public abstract class Bcl2FastqHandler implements Handler {
             wr.addProperty("output_prefix", outputPrefix);
         }
 
+        //complete any additional workflow run construction
         wr = modifyWorkflowRun(data, wr);
+
+        //create IUS-LimsKeys and generate the workflow run "lanes" ini property
+        if (wr.getErrors().isEmpty()) {
+            try {
+                List<Integer> iusSwidsToLinkWorkflowRunTo = new ArrayList<>();
+
+                //create IUS-LimsKey for the lane
+                IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> linkedLane = createIusToProvenanceLink(metadata, data.getLane(), createLimsKeys);
+                iusSwidsToLinkWorkflowRunTo.add(linkedLane.getIusSwid());
+
+                //create IUS-LimsKeys for the samples
+                List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> linkedSamples = new ArrayList<>();
+                for (ProvenanceWithProvider<SampleProvenance> provenanceWithProvider : data.getSamples()) {
+                    IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> linkedSample = createIusToProvenanceLink(metadata, provenanceWithProvider, createLimsKeys);
+                    linkedSamples.add(linkedSample);
+                    iusSwidsToLinkWorkflowRunTo.add(linkedSample.getIusSwid());
+                }
+
+                wr.addProperty("lanes", generateLinkingString(linkedLane, linkedSamples));
+
+                wr.setIusSwidsToLinkWorkflowRunTo(iusSwidsToLinkWorkflowRunTo);
+            } catch (DataMismatchException dme) {
+                wr.addError(dme.toString());
+                wr.addProperty("lanes", "ERROR");
+            }
+        } else {
+            wr.addProperty("lanes", "ERROR");
+        }
 
         return wr;
     }
@@ -232,4 +255,16 @@ public abstract class Bcl2FastqHandler implements Handler {
         return generateSampleString(barcode, sample.getIusSwid().toString(), sp.getSampleName(), groupId);
     }
 
+    private <T extends LimsProvenance> IusWithProvenance<ProvenanceWithProvider<T>> createIusToProvenanceLink(Metadata metadata, ProvenanceWithProvider<T> p, boolean doMetadataWriteback) {
+        Integer iusSwid;
+        if (doMetadataWriteback) {
+            LimsKey lk = p.getLimsKey();
+            Integer limsKeySwid = metadata.addLimsKey(p.getProvider(), lk.getId(), lk.getVersion(), lk.getLastModified());
+            iusSwid = metadata.addIUS(limsKeySwid, false);
+        } else {
+            iusSwid = 0;
+        }
+
+        return new IusWithProvenance<>(iusSwid, p);
+    }
 }

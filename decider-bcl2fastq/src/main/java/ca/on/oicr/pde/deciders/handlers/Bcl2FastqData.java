@@ -2,9 +2,10 @@ package ca.on.oicr.pde.deciders.handlers;
 
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
-import ca.on.oicr.pde.deciders.IusWithProvenance;
 import ca.on.oicr.pde.deciders.ProvenanceWithProvider;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
 
@@ -15,25 +16,14 @@ import java.util.Map;
 public class Bcl2FastqData {
 
     private Map<String, String> properties;
-    private List<Integer> iusSwidsToLinkWorkflowRunTo;
-    private List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> linkedSamples;
-    private IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> linkedLane;
-    private List<SampleProvenance> sps;
-    private LaneProvenance lp;
+    private final ProvenanceWithProvider<LaneProvenance> lane;
+    private final List<ProvenanceWithProvider<SampleProvenance>> samples;
     private Boolean metadataWriteback;
     private StudyToOutputPathConfig studyToOutputPathConfig;
 
-    public Bcl2FastqData() {
-
-    }
-
-    public Bcl2FastqData(Map<String, String> properties, List<Integer> iusSwidsToLinkWorkflowRunTo, List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> linkedSamples, IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> linkedLane, List<SampleProvenance> sps, LaneProvenance lp) {
-        this.properties = properties;
-        this.iusSwidsToLinkWorkflowRunTo = iusSwidsToLinkWorkflowRunTo;
-        this.linkedSamples = linkedSamples;
-        this.linkedLane = linkedLane;
-        this.sps = sps;
-        this.lp = lp;
+    public Bcl2FastqData(ProvenanceWithProvider<LaneProvenance> lane, List<ProvenanceWithProvider<SampleProvenance>> samples) {
+        this.lane = lane;
+        this.samples = samples;
     }
 
     public Map<String, String> getProperties() {
@@ -44,44 +34,25 @@ public class Bcl2FastqData {
         this.properties = properties;
     }
 
-    public List<Integer> getIusSwidsToLinkWorkflowRunTo() {
-        return iusSwidsToLinkWorkflowRunTo;
+    public ProvenanceWithProvider<LaneProvenance> getLane() {
+        return lane;
     }
 
-    public void setIusSwidsToLinkWorkflowRunTo(List<Integer> iusSwidsToLinkWorkflowRunTo) {
-        this.iusSwidsToLinkWorkflowRunTo = iusSwidsToLinkWorkflowRunTo;
-    }
-
-    public List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> getLinkedSamples() {
-        return linkedSamples;
-    }
-
-    public void setLinkedSamples(List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> linkedSamples) {
-        this.linkedSamples = linkedSamples;
-    }
-
-    public IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> getLinkedLane() {
-        return linkedLane;
-    }
-
-    public void setLinkedLane(IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> linkedLane) {
-        this.linkedLane = linkedLane;
+    public List<ProvenanceWithProvider<SampleProvenance>> getSamples() {
+        return samples;
     }
 
     public List<SampleProvenance> getSps() {
-        return sps;
-    }
-
-    public void setSps(List<SampleProvenance> sps) {
-        this.sps = sps;
+        return Lists.transform(samples, new Function<ProvenanceWithProvider<SampleProvenance>, SampleProvenance>() {
+            @Override
+            public SampleProvenance apply(ProvenanceWithProvider<SampleProvenance> input) {
+                return input.getProvenance();
+            }
+        });
     }
 
     public LaneProvenance getLp() {
-        return lp;
-    }
-
-    public void setLp(LaneProvenance lp) {
-        this.lp = lp;
+        return lane.getProvenance();
     }
 
     public Boolean getMetadataWriteback() {
