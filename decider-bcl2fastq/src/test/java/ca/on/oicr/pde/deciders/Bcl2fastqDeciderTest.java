@@ -14,6 +14,8 @@ import ca.on.oicr.pde.client.SeqwareClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Table;
 import com.google.common.io.Files;
 import java.io.File;
@@ -22,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -38,6 +41,7 @@ import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
 import org.powermock.reflect.Whitebox;
 import static org.testng.Assert.assertEquals;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -109,6 +113,8 @@ public class Bcl2fastqDeciderTest {
                 .sequencerRunPlatformModel("HiSeq")
                 .createdDate(expectedDate)
                 .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAAAAA")
                 .sampleAttributes(sp1Attrs)
                 .skip(false)
                 .provenanceId("1")
@@ -135,6 +141,8 @@ public class Bcl2fastqDeciderTest {
                 .sequencerRunPlatformModel("NextSeq")
                 .createdDate(expectedDate)
                 .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAAAAA")
                 .sampleAttributes(sp2Attrs)
                 .skip(false)
                 .provenanceId("2")
@@ -144,6 +152,11 @@ public class Bcl2fastqDeciderTest {
 
         when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sp1, sp2));
         when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lp1, lp2));
+    }
+
+    @AfterMethod
+    public void destroySeqware() {
+        Whitebox.<Table>getInternalState(MetadataInMemory.class, "STORE").clear();
     }
 
     @Test
@@ -377,6 +390,36 @@ public class Bcl2fastqDeciderTest {
 
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
+    }
+
+    @Test
+    public void duplicateBarcodeTest() {
+        SampleProvenanceImpl.SampleProvenanceImplBuilder sp = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0002")
+                .studyTitle("TEST_STUDY_2")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0003")
+                .sampleName("TEST_0003_001")
+                .iusTag("AAAAAAAA")
+                .sampleAttributes(sp2Attrs)
+                .skip(false)
+                .provenanceId("9")
+                .version("1")
+                .lastModified(expectedDate);
+
+        List<SampleProvenance> currentList = Lists.newArrayList(spp.getSampleProvenance());
+        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
+
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2);
+
+        //correct the barcode and schedule
+        sp.iusTag("TTTTTTTT");
+        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(getFpsForCurrentWorkflow().size(), 5);
     }
 
     private Collection<FileProvenance> getFpsForCurrentWorkflow() {

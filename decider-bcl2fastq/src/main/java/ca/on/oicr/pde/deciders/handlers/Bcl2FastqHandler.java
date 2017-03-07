@@ -49,6 +49,19 @@ public abstract class Bcl2FastqHandler implements Handler {
             barcodes = Lists.newArrayList("NoIndex");
         }
 
+        //check that there are no duplicate barcodes
+        Set<String> uniqueBarcodes = Sets.newHashSet(barcodes);
+        if (barcodes.size() != uniqueBarcodes.size()) {
+            Set<String> barcodesTmp = new HashSet<>();
+            Set<String> duplicates = new TreeSet<>();
+            for (String barcode : barcodes) {
+                if (!barcodesTmp.add(barcode)) {
+                    duplicates.add(barcode);
+                }
+            }
+            wr.addError("Duplicate barcodes detected = [" + Joiner.on(",").join(duplicates) + "]");
+        }
+
         String basesMask;
         try {
             basesMask = calculateBasesMask(barcodes);
