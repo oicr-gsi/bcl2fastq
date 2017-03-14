@@ -108,6 +108,19 @@ public abstract class Bcl2FastqHandler implements Handler {
             wr.addProperty("output_prefix", outputPrefix);
         }
 
+        //dry-run creating the "lane string" before actually creating IUS-LimsKeys
+        try {
+            IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> linkedLane = createIusToProvenanceLink(metadata, data.getLane(), false);
+            List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> linkedSamples = new ArrayList<>();
+            for (ProvenanceWithProvider<SampleProvenance> provenanceWithProvider : data.getSamples()) {
+                IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> linkedSample = createIusToProvenanceLink(metadata, provenanceWithProvider, false);
+                linkedSamples.add(linkedSample);
+            }
+            generateLinkingString(linkedLane, linkedSamples);
+        } catch (DataMismatchException dme) {
+            wr.addError(dme.toString());
+        }
+
         //complete any additional workflow run construction
         wr = modifyWorkflowRun(data, wr);
 

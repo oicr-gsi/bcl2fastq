@@ -534,15 +534,6 @@ public class Bcl2fastqDecider {
                 errors.add(String.format("Sample provenance count = [%s], expected 1 or more.", sps.size()));
             }
 
-            //check that 0 or 1 group ids for all samples
-            for (ProvenanceWithProvider<SampleProvenance> p : sps) {
-                SampleProvenance sp = p.getProvenance();
-                Set<String> groupIds = sp.getSampleAttributes().get(Lims.GROUP_ID.getAttributeTitle());
-                if (groupIds != null && groupIds.size() > 1) {
-                    errors.add(String.format("Sample = [%s] has multiple group ids - expected 0 or 1.", sp.getSampleName()));
-                }
-            }
-
             if (!disableRunCompleteCheck) {
                 if (lps.size() == 1) {
                     Set<String> runDirs = Iterables.getOnlyElement(lps).getProvenance().getSequencerRunAttributes().get("run_dir");
