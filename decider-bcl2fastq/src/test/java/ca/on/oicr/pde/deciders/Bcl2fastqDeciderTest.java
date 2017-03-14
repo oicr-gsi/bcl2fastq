@@ -163,20 +163,32 @@ public class Bcl2fastqDeciderTest {
     public void all() throws IOException {
         //run on all lanes
         assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
 
         //all lanes have been scheduled - no new bcl2fastqWorkflow runs expected
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
 
         //rerun everything
         bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
         assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 8);
 
         //all should be blocked again
         bcl2fastqDecider.setIgnorePreviousAnalysisMode(false);
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 8);
     }
 
@@ -184,10 +196,16 @@ public class Bcl2fastqDeciderTest {
     public void beforeDateFilter() {
         bcl2fastqDecider.setBeforeDateFilter(expectedDate.minusDays(1));
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         bcl2fastqDecider.setBeforeDateFilter(expectedDate.plusDays(1));
         assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
     }
 
@@ -195,10 +213,16 @@ public class Bcl2fastqDeciderTest {
     public void afterDateFilter() {
         bcl2fastqDecider.setAfterDateFilter(expectedDate.plusDays(1));
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         bcl2fastqDecider.setAfterDateFilter(expectedDate.minusDays(1));
         assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
     }
 
@@ -206,10 +230,16 @@ public class Bcl2fastqDeciderTest {
     public void includeInstrumentFilter() {
         bcl2fastqDecider.setIncludeInstrumentNameFilter(ImmutableSet.of("does not exist"));
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         bcl2fastqDecider.setIncludeInstrumentNameFilter(ImmutableSet.of("h001"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0001"));
@@ -220,6 +250,9 @@ public class Bcl2fastqDeciderTest {
     public void excludeInstrumentFilter() {
         bcl2fastqDecider.setExcludeInstrumentNameFilter(ImmutableSet.of("h001"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0002"));
@@ -232,10 +265,16 @@ public class Bcl2fastqDeciderTest {
         filters.put(FileProvenanceFilter.sequencer_run, ImmutableSet.of("does not exist"));
         bcl2fastqDecider.setIncludeFilters(filters);
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         filters.put(FileProvenanceFilter.sequencer_run, ImmutableSet.of("RUN_0001"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0001"));
@@ -248,6 +287,9 @@ public class Bcl2fastqDeciderTest {
         filters.put(FileProvenanceFilter.sequencer_run, ImmutableSet.of("RUN_0001"));
         bcl2fastqDecider.setExcludeFilters(filters);
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0002"));
@@ -260,10 +302,16 @@ public class Bcl2fastqDeciderTest {
         filters.put(FileProvenanceFilter.lane, ImmutableSet.of("does not exist"));
         bcl2fastqDecider.setIncludeFilters(filters);
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0001"));
@@ -276,6 +324,9 @@ public class Bcl2fastqDeciderTest {
         filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
         bcl2fastqDecider.setExcludeFilters(filters);
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0002"));
@@ -288,10 +339,16 @@ public class Bcl2fastqDeciderTest {
         filters.put(FileProvenanceFilter.sequencer_run_platform_model, ImmutableSet.of("does not exist"));
         bcl2fastqDecider.setIncludeFilters(filters);
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         filters.put(FileProvenanceFilter.sequencer_run_platform_model, ImmutableSet.of("HiSeq"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0001"));
@@ -304,6 +361,9 @@ public class Bcl2fastqDeciderTest {
         filters.put(FileProvenanceFilter.sequencer_run_platform_model, ImmutableSet.of("HiSeq"));
         bcl2fastqDecider.setExcludeFilters(filters);
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0002"));
@@ -316,10 +376,16 @@ public class Bcl2fastqDeciderTest {
         filters.put(FileProvenanceFilter.study, ImmutableSet.of("does not exist"));
         bcl2fastqDecider.setIncludeFilters(filters);
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         filters.put(FileProvenanceFilter.study, ImmutableSet.of("TEST_STUDY_1"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0001"));
@@ -332,6 +398,9 @@ public class Bcl2fastqDeciderTest {
         filters.put(FileProvenanceFilter.study, ImmutableSet.of("TEST_STUDY_1"));
         bcl2fastqDecider.setExcludeFilters(filters);
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0002"));
@@ -348,22 +417,34 @@ public class Bcl2fastqDeciderTest {
         bcl2fastqDecider.setDoCreateIusLimsKeys(true);
         bcl2fastqDecider.setDoScheduleWorkflowRuns(true);
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
 
         bcl2fastqDecider.setIsDryRunMode(false);
         bcl2fastqDecider.setDoCreateIusLimsKeys(true);
         bcl2fastqDecider.setDoScheduleWorkflowRuns(false);
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
 
         bcl2fastqDecider.setIsDryRunMode(false);
         bcl2fastqDecider.setDoCreateIusLimsKeys(true);
         bcl2fastqDecider.setDoScheduleWorkflowRuns(true);
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
 
         bcl2fastqDecider.setIsDryRunMode(false);
         bcl2fastqDecider.setDoCreateIusLimsKeys(true);
         bcl2fastqDecider.setDoScheduleWorkflowRuns(true);
         bcl2fastqDecider.setIgnorePreviousLimsKeysMode(true);
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
 
         Collection<FileProvenance> fps = getFpsForCurrentWorkflow();
         assertEquals(fps.size(), 2);
@@ -382,6 +463,9 @@ public class Bcl2fastqDeciderTest {
 
         //sp2 has two group ids, can not be run
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
 
         //correct the group ids
@@ -389,6 +473,9 @@ public class Bcl2fastqDeciderTest {
         sp2Attrs.put(Lims.GROUP_ID.getAttributeTitle(), ImmutableSortedSet.of("group2"));
 
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
     }
 
@@ -413,13 +500,19 @@ public class Bcl2fastqDeciderTest {
         when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
 
         assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
 
-//        //correct the barcode and schedule
-//        sp.iusTag("TTTTTTTT");
-//        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
-//        assertEquals(bcl2fastqDecider.run().size(), 1);
-//        assertEquals(getFpsForCurrentWorkflow().size(), 5);
+        //correct the barcode and schedule
+        sp.iusTag("TTTTTTTT");
+        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 5);
     }
 
     private Collection<FileProvenance> getFpsForCurrentWorkflow() {
