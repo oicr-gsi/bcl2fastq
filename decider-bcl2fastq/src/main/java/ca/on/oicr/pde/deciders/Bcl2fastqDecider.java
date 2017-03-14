@@ -86,6 +86,10 @@ public class Bcl2fastqDecider {
 
     private List<String> overrides;
 
+    private final List<WorkflowRun> validWorkflowRuns = new ArrayList<>();
+    private final List<WorkflowRun> invalidWorkflowRuns = new ArrayList<>();
+    private final List<WorkflowRun> scheduledWorkflowRuns = new ArrayList<>();
+
     public Bcl2fastqDecider() {
         //add workflow handlers
         handlers.add(new Bcl2Fastq1Handler()); //CASAVA 2.7 handler
@@ -293,6 +297,18 @@ public class Bcl2fastqDecider {
         this.config = config;
     }
 
+    public List<WorkflowRun> getValidWorkflowRuns() {
+        return validWorkflowRuns;
+    }
+
+    public List<WorkflowRun> getInvalidWorkflowRuns() {
+        return invalidWorkflowRuns;
+    }
+
+    public List<WorkflowRun> getScheduledWorkflowRuns() {
+        return scheduledWorkflowRuns;
+    }
+
     public List<WorkflowRun> run() {
         checkNotNull(workflow);
 
@@ -303,6 +319,11 @@ public class Bcl2fastqDecider {
             throw new RuntimeException("Workflow [" + workflowName + "-" + workflowVersion + "] is not supported");
         }
         Bcl2FastqHandler handler = getHandler(workflowName, workflowVersion);
+
+        //reset workflow run collections
+        validWorkflowRuns.clear();
+        invalidWorkflowRuns.clear();
+        scheduledWorkflowRuns.clear();
 
         // provenance data structures
         ListMultimap<String, ProvenanceWithProvider<LaneProvenance>> laneNameToLaneProvenance = ArrayListMultimap.create();
@@ -558,11 +579,9 @@ public class Bcl2fastqDecider {
         Set<String> lanesToAnalyze = Sets.difference(candidateLanesToAnalyze, invalidLanes);
 
         //collect required workflow run data - create IUS-LimsKey records in seqware that will be linked to the workflow run
-        List<WorkflowRun> workflowRuns = new ArrayList<>();
-        List<WorkflowRun> invalidWorkflowRuns = new ArrayList<>();
         for (String laneName : lanesToAnalyze) {
 
-            if (launchMax != null && workflowRuns.size() >= launchMax) {
+            if (launchMax != null && validWorkflowRuns.size() >= launchMax) {
                 log.info("Launch max [{}] reached.", launchMax);
                 break;
             }
@@ -576,7 +595,7 @@ public class Bcl2fastqDecider {
 
             WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode());
             if (wr.getErrors().isEmpty()) {
-                workflowRuns.add(wr);
+                validWorkflowRuns.add(wr);
             } else {
                 invalidWorkflowRuns.add(wr);
                 log.error("Error while generating workflow run for lane = [{}], errors:\n{}", laneName, Joiner.on("\n").join(wr.getErrors()));
@@ -589,8 +608,7 @@ public class Bcl2fastqDecider {
         }
 
         //schedule workflow runs
-        List<WorkflowRun> scheduledWorkflowRuns = new ArrayList<>();
-        for (WorkflowRun wr : workflowRuns) {
+        for (WorkflowRun wr : validWorkflowRuns) {
             if (getDoScheduleWorkflowRuns() && !getIsDryRunMode()) {
                 log.info("Scheduled workflow run:\n" + scheduleWorkflowRun(wr));
                 scheduledWorkflowRuns.add(wr);
@@ -604,7 +622,7 @@ public class Bcl2fastqDecider {
         log.info("Requested summary: requested={} invalid={} valid={}",
                 candidateLanesToAnalyze.size(), invalidLanes.size(), lanesToAnalyze.size());
         log.info("Workflow run summary: candidate={} invalid={} valid={} scheduled={}",
-                lanesToAnalyze.size(), invalidWorkflowRuns.size(), workflowRuns.size(), scheduledWorkflowRuns.size());
+                lanesToAnalyze.size(), invalidWorkflowRuns.size(), validWorkflowRuns.size(), scheduledWorkflowRuns.size());
 
         return scheduledWorkflowRuns;
     }

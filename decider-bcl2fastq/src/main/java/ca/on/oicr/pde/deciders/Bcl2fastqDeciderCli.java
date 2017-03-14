@@ -339,8 +339,24 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
 
     @Override
     public ReturnValue do_run() {
-        decider.run();
-        return new ReturnValue(ReturnValue.ExitStatus.SUCCESS);
+        //run the decider
+        try {
+            decider.run();
+        } catch (Exception e) {
+            log.error(e);
+            return new ReturnValue(ReturnValue.ExitStatus.RUNNERERR);
+        }
+
+        //calculate exit code
+        if (!decider.getInvalidWorkflowRuns().isEmpty()) {
+            //return exit code 91
+            return new ReturnValue(ReturnValue.ExitStatus.RUNNERERR);
+        } else if (!decider.getValidWorkflowRuns().isEmpty() && decider.getValidWorkflowRuns().size() < decider.getScheduledWorkflowRuns().size()) {
+            //return exit code 101
+            return new ReturnValue(ReturnValue.ExitStatus.QUEUED);
+        } else {
+            return new ReturnValue(ReturnValue.ExitStatus.SUCCESS);
+        }
     }
 
     @Override
