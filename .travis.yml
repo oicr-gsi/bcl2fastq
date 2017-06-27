@@ -6,8 +6,11 @@ addons:
   apt:
     packages:
       - oracle-java8-installer
- jdk:
-   - oraclejdk8
+jdk:
+  - oraclejdk8
+
+before_script:
+  - export MAVEN_OPTS='-Xms1g -Xmx2g'
 
 cache:
   directories:
