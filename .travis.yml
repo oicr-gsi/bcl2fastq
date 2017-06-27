@@ -1,0 +1,14 @@
+language: java
+git:
+  depth: 3
+sudo: required
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer
+ jdk:
+   - oraclejdk8
+
+cache:
+  directories:
+    - $HOME/.m2
