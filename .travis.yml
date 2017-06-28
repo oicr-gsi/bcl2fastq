@@ -2,10 +2,10 @@ language: java
 git:
   depth: 3
 sudo: required
-env:
-  - MAVEN_SETTINGS="${TRAVIS_BUILD_DIR}/gsi-config"
-  - MAVEN_OPTS='-Xms1g -Xmx2g'
-  - SEQWARE_SETTINGS="${TRAVIS_BUILD_DIR}/seqware_settings"
+env: >
+    MAVEN_SETTINGS="${TRAVIS_BUILD_DIR}/gsi-config" 
+    MAVEN_OPTS='-Xms1g -Xmx2g' 
+    SEQWARE_SETTINGS="${TRAVIS_BUILD_DIR}/seqware_settings"
 
 jdk:
   - oraclejdk7
