@@ -22,31 +22,6 @@
         <final-name>Decider_BCL2FastQ_${project.version}_SeqWare_${seqware-version}</final-name>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>release.gsi</id>
-            <name>GSI Releases Maven Repository</name>
-            <url>https://artifacts.oicr.on.ca/artifactory/gsi-release</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>snapshots.gsi</id>
-            <name>GSI Snapshots Maven Snapshot Repository</name>
-            <url>https://artifacts.oicr.on.ca/artifactory/gsi-snapshots</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
