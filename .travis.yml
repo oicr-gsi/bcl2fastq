@@ -2,23 +2,20 @@ language: java
 git:
   depth: 3
 sudo: required
+env:
+  - MAVEN_SETTINGS="${TRAVIS_BUILD_DIR}/gsi-config"
+  - MAVEN_OPTS='-Xms1g -Xmx2g'
+  - SEQWARE_SETTINGS="${TRAVIS_BUILD_DIR}/seqware_settings"
+
 jdk:
   - oraclejdk7
 
 before_install:
-  - export MVN_SETTINGS="${TRAVIS_BUILD_DIR}/gsi-config"
-  - git clone https://github.com/oicr-gsi/gsi-config.git ${MVN_SETTINGS}
-
-install:
-  - mvn install -s "${MVN_SETTINGS}/settings.xml" -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+  - git clone https://github.com/oicr-gsi/gsi-config.git ${MAVEN_SETTINGS}
+  - cp "${MVN_SETTINGS}/settings.xml" "${HOME}/.m2/settings.xml"
 
 before_script:
-  - export MAVEN_OPTS='-Xms1g -Xmx2g'
-  - export SEQWARE_SETTINGS="${TRAVIS_BUILD_DIR}/seqware_settings"
   - touch "${SEQWARE_SETTINGS}"
-
-script:
-  - mvn -s "${MVN_SETTINGS}/settings.xml" test -B
 
 cache:
   directories:
