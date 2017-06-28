@@ -7,7 +7,8 @@ jdk:
 
 before_script:
   - export MAVEN_OPTS='-Xms1g -Xmx2g'
-
+  - export SEQWARE_SETTINGS="${TRAVIS_BUILD_DIR}/settings"
+  - touch "${SEQWARE_SETTINGS}"
 cache:
   directories:
     - $HOME/.m2
