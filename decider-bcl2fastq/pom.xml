@@ -22,6 +22,7 @@
         <final-name>Decider_BCL2FastQ_${project.version}_SeqWare_${seqware-version}</final-name>
     </properties>
 
+
     <dependencies>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
