@@ -104,7 +104,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         dryRunOpt = parser.acceptsAll(Arrays.asList("dry-run", "test"),
                 "Dry-run/test mode. Prints the INI files to standard out and does not submit the workflow.")
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
-        demultiplexSingleSampleModeOpt = parser.acceptsAll(Arrays.asList("enable-demultiplex-single-sample-mode"),
+        demultiplexSingleSampleModeOpt = parser.acceptsAll(Arrays.asList("demux-single-sample"),
                 "Demultiplex single sample rather than OICR default of NoIndex mode.")
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
         createIusLimsKeysOpt = parser.acceptsAll(Arrays.asList("create-ius-lims-keys"),

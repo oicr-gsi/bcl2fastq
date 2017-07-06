@@ -75,7 +75,7 @@ public class Bcl2fastqDeciderCliTest {
         args.add("--provenance-settings");
         args.add(provenanceSettings.getAbsolutePath());
         args.add("--all");
-        args.add("--enable-demultiplex-single-sample-mode");
+        args.add("--demux-single-sample");
 
         Bcl2fastqDecider decider = getDecider(args);
         assertTrue(decider.getIsDryRunMode());
