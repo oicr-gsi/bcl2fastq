@@ -32,7 +32,7 @@ public abstract class Bcl2FastqHandler implements Handler {
 
     public abstract WorkflowRunV2 modifyWorkflowRun(Bcl2FastqData data, WorkflowRunV2 workflowRun);
 
-    public WorkflowRunV2 getWorkflowRun(Metadata metadata, Bcl2FastqData data, boolean createLimsKeys) {
+    public WorkflowRunV2 getWorkflowRun(Metadata metadata, Bcl2FastqData data, boolean createLimsKeys, boolean enableDemultiplexSingleSample) {
         WorkflowRunV2 wr = new WorkflowRunV2(null, null);
         wr.addProperty(data.getProperties());
 
@@ -40,9 +40,14 @@ public abstract class Bcl2FastqHandler implements Handler {
         for (SampleProvenance sp : data.getSps()) {
             barcodes.add(sp.getIusTag());
         }
-        if (barcodes.size() == 1) {
+
+        if (enableDemultiplexSingleSample) {
+            // do not do anything to barcode
+        } else if (barcodes.size() == 1) {
             // do not do demultiplexing if there is only one sample in the lane https://jira.oicr.on.ca/browse/GR-261
             barcodes = Lists.newArrayList("NoIndex");
+        } else {
+            // multiple barcodes in lane
         }
 
         //check that there are no duplicate barcodes
@@ -116,7 +121,7 @@ public abstract class Bcl2FastqHandler implements Handler {
                 IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> linkedSample = createIusToProvenanceLink(metadata, provenanceWithProvider, false);
                 linkedSamples.add(linkedSample);
             }
-            generateLinkingString(linkedLane, linkedSamples);
+            generateLinkingString(linkedLane, linkedSamples, enableDemultiplexSingleSample);
         } catch (DataMismatchException dme) {
             wr.addError(dme.toString());
         }
@@ -141,7 +146,7 @@ public abstract class Bcl2FastqHandler implements Handler {
                     iusSwidsToLinkWorkflowRunTo.add(linkedSample.getIusSwid());
                 }
 
-                wr.addProperty("lanes", generateLinkingString(linkedLane, linkedSamples));
+                wr.addProperty("lanes", generateLinkingString(linkedLane, linkedSamples, enableDemultiplexSingleSample));
 
                 wr.setIusSwidsToLinkWorkflowRunTo(iusSwidsToLinkWorkflowRunTo);
             } catch (DataMismatchException dme) {
@@ -207,7 +212,7 @@ public abstract class Bcl2FastqHandler implements Handler {
         }
     }
 
-    private String generateLinkingString(IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> lane, List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> sps) throws DataMismatchException {
+    private String generateLinkingString(IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> lane, List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> sps, boolean enableDemultiplexSingleSample) throws DataMismatchException {
         List<String> sampleStringEntries = new ArrayList<>();
         Collections.sort(sps, new Comparator<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>>() {
             @Override
@@ -215,9 +220,14 @@ public abstract class Bcl2FastqHandler implements Handler {
                 return o1.getProvenanceWithProvider().getProvenance().getSampleName().compareTo(o2.getProvenanceWithProvider().getProvenance().getSampleName());
             }
         });
+
         if (sps.size() == 1) {
-            // do not do demultiplexing if there is only one sample in the lane https://jira.oicr.on.ca/browse/GR-261
-            sampleStringEntries.add(generateSampleString(Iterables.getOnlyElement(sps), "NoIndex"));
+            if (enableDemultiplexSingleSample) {
+                sampleStringEntries.add(generateSampleString(Iterables.getOnlyElement(sps), null));
+            } else {
+                // do not do demultiplexing if there is only one sample in the lane https://jira.oicr.on.ca/browse/GR-261
+                sampleStringEntries.add(generateSampleString(Iterables.getOnlyElement(sps), "NoIndex"));
+            }
         } else {
             for (IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> s : sps) {
                 sampleStringEntries.add(generateSampleString(s, null));

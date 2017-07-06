@@ -547,6 +547,7 @@ public class Bcl2fastqDeciderTest {
 
         filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_0001_001"));
         bcl2fastqDecider.setIncludeFilters(filters);
+        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
@@ -556,6 +557,7 @@ public class Bcl2fastqDeciderTest {
         filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_9999_001"));
         bcl2fastqDecider.setIncludeFilters(filters);
         bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
+        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
@@ -609,6 +611,7 @@ public class Bcl2fastqDeciderTest {
 
         filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_9999_001"));
         bcl2fastqDecider.setIncludeFilters(filters);
+        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
