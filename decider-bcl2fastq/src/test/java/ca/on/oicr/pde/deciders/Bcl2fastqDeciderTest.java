@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -513,6 +514,127 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 5);
+    }
+
+    @Test
+    public void barcodeLengthMismatchTest1() {
+        SampleProvenanceImpl.SampleProvenanceImplBuilder sp = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("HiSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_9999")
+                .sampleName("TEST_9999_001")
+                .iusTag("AAAAAAAA-TTTTTTTT")
+                .sampleAttributes(sp1Attrs)
+                .skip(false)
+                .provenanceId("99999")
+                .version("version")
+                .lastModified(expectedDate);
+
+        List<SampleProvenance> currentList = Lists.newArrayList(spp.getSampleProvenance());
+        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
+
+        EnumMap<FileProvenanceFilter, Set<String>> filters = new EnumMap<>(FileProvenanceFilter.class);
+        filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
+        bcl2fastqDecider.setIncludeFilters(filters);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
+        assertEquals(getFpsForCurrentWorkflow().size(), 0);
+
+        filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_0001_001"));
+        bcl2fastqDecider.setIncludeFilters(filters);
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2);
+
+        filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_9999_001"));
+        bcl2fastqDecider.setIncludeFilters(filters);
+        bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 4);
+    }
+
+    @Test
+    public void barcodeLengthMismatchTest2() {
+        SampleProvenanceImpl.SampleProvenanceImplBuilder sp1 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("HiSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_9998")
+                .sampleName("TEST_9998_001")
+                .iusTag("AAAAAAAT")
+                .sampleAttributes(sp1Attrs)
+                .skip(false)
+                .provenanceId("99998")
+                .version("version")
+                .lastModified(expectedDate);
+
+        SampleProvenanceImpl.SampleProvenanceImplBuilder sp2 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("HiSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_9999")
+                .sampleName("TEST_9999_001")
+                .iusTag("AAAAAAAA-TTTTTTTT")
+                .sampleAttributes(sp1Attrs)
+                .skip(false)
+                .provenanceId("99999")
+                .version("version")
+                .lastModified(expectedDate);
+
+        List<SampleProvenance> currentList = Lists.newArrayList(spp.getSampleProvenance());
+        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp1.build(), sp2.build()))));
+
+        EnumMap<FileProvenanceFilter, Set<String>> filters = new EnumMap<>(FileProvenanceFilter.class);
+        filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
+        bcl2fastqDecider.setIncludeFilters(filters);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
+        assertEquals(getFpsForCurrentWorkflow().size(), 0);
+
+        filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_9999_001"));
+        bcl2fastqDecider.setIncludeFilters(filters);
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2);
+
+        filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_0001_001", "TEST_9998_001"));
+        bcl2fastqDecider.setIncludeFilters(filters);
+        bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 5); //2+3
+
+        filters.remove(FileProvenanceFilter.sample);
+        EnumMap<FileProvenanceFilter, Set<String>> excludeFilters = new EnumMap<>(FileProvenanceFilter.class);
+        excludeFilters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_9999_001"));
+        bcl2fastqDecider.setIncludeFilters(filters);
+        bcl2fastqDecider.setExcludeFilters(excludeFilters); //exclude TEST_9999_001
+        bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 8); //2+3+3
     }
 
     private Collection<FileProvenance> getFpsForCurrentWorkflow() {

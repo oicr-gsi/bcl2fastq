@@ -287,7 +287,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         }
         decider.setExcludeFilters(excludeFilters);
 
-        if (!(options.has(allOpt) ^ !includeFilters.isEmpty() ^ !excludeFilters.isEmpty())) {
+        if (!(options.has(allOpt) ^ (!includeFilters.isEmpty() || !excludeFilters.isEmpty()))) {
             log.error("--all or a combination the following include/exclude filters should be specified [{}]",
                     Joiner.on(",").join(Bcl2fastqDecider.getSupportedFilters()));
             rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);

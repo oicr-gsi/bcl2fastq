@@ -34,7 +34,7 @@ public class ProvenanceWithProvider<T extends LimsProvenance> {
         lk.setId(provenance.getProvenanceId());
         lk.setLastModified(provenance.getLastModified());
         lk.setVersion(provenance.getVersion());
-        return lk;
+        return (LimsKey) lk;
     }
 
     @Override

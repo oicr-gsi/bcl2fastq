@@ -101,7 +101,8 @@ public class Bcl2fastqDecider {
                 FileProvenanceFilter.lane,
                 FileProvenanceFilter.sequencer_run,
                 FileProvenanceFilter.study,
-                FileProvenanceFilter.sequencer_run_platform_model
+                FileProvenanceFilter.sequencer_run_platform_model,
+                FileProvenanceFilter.sample
         );
     }
 
@@ -418,6 +419,16 @@ public class Bcl2fastqDecider {
 
                 if (sp.getSkip()) {
                     log.debug("Sample = [{}] in lane = [{}] is skipped", sp.getSampleName(), laneName);
+                    continue;
+                }
+
+                if (includeFilters.containsKey(FileProvenanceFilter.sample)
+                        && !includeFilters.get(FileProvenanceFilter.sample).contains(sp.getSampleName())) {
+                    continue;
+                }
+
+                if (excludeFilters.containsKey(FileProvenanceFilter.sample)
+                        && excludeFilters.get(FileProvenanceFilter.sample).contains(sp.getSampleName())) {
                     continue;
                 }
 
