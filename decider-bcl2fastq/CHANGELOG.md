@@ -1,3 +1,6 @@
+## 1.1.1 - 2017-07-05
+- [GP-1224](https://jira.oicr.on.ca/browse/GP-1224) - Filter by sample name + demultiplex single sample mode
+- Update to pipedev 2.2
 ## 1.1 - 2017-03-15
 - Update to pipedev 2.1 (provenance-client 1.1)
 - [GP-1022](https://jira.oicr.on.ca/browse/GP-1022) - Validate barcodes before scheduling
