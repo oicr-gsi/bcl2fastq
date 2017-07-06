@@ -1,6 +1,6 @@
 ##BCL2FastQ Decider
 
-Version 1.0, SeqWare version 1.1.1-gsi
+Version 1.1.1, SeqWare version 1.1.1-gsi
 
 ###Overview
 
@@ -86,11 +86,13 @@ include-lane                             | String  | Include only lanes with lan
 include-sequencer-run                    | String  | Include only lanes with sequencer run name
 include-sequencer-run-platform-model     | String  | Include only lanes with sequencer run platform model
 include-study                            | String  | Include only lanes with study (determined by associated samples)
+include-sample                           | String  | Include only samples with sample name in the workflow run
 exclude-instrument                       | String  | Exclude lanes with sequencer run attribute "instrument name
 exclude-lane                             | String  | Exclude lanes with lane name
 exclude-sequencer-run                    | String  | Exclude lanes with sequencer run name
 exclude-sequencer-run-platform-model     | String  | Exclude lanes with sequencer run platform model
 exclude-study                            | String  | Exclude lanes with study (determined by associated samples)
+exclude-sample                           | String  | Exclude samples with sample name from being included in the workflow run
 all                                      | none    | Operate on all lanes defined in the provenance-settings json
 
 Additional optional parameters include:
@@ -102,6 +104,8 @@ verbose                                  | Boolean | Log verbose output
 host                                     | String  | Used only in combination with --schedule to schedule onto a specific host. If 
                                                      not provided, the default is the local host [local hostname]
 dry-run or test                          | Boolean | Dry-run/test mode. Prints the INI files to standard out and does not submit the workflow [false]
+demux-single-sample                      | Boolean | Enable demultiplexing if there is only a single sample in the workflow run (default behaviour is to 
+                                                     run single samples with "NoIndex") [false]
 no-meta-db or no-metadata                | Boolean | Prevents metadata writeback (which is done by default) by the Decider and that is subsequently passed 
                                                      to the called workflow which can use it to determine if they should write metadata at runtime on the cluster [false]
 disable-run-complete-check               | Boolean | Disable checking that the file "oicr_run_complete" is present in the "run_dir" [false]
