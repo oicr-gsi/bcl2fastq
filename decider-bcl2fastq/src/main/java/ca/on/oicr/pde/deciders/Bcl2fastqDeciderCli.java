@@ -46,6 +46,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<Boolean> noNullCreatedDateOpt;
     private final OptionSpec<Boolean> disableRunCompleteCheckOpt;
     private final OptionSpec<Boolean> dryRunOpt;
+    private final OptionSpec<Boolean> demultiplexSingleSampleModeOpt;
     private final OptionSpec<Boolean> createIusLimsKeysOpt;
     private final OptionSpec<Boolean> scheduleWorkflowRunsOpt;
     private final OptionSpec<Boolean> noMetadataOpt;
@@ -102,6 +103,9 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         //options that modify the operation of the decider
         dryRunOpt = parser.acceptsAll(Arrays.asList("dry-run", "test"),
                 "Dry-run/test mode. Prints the INI files to standard out and does not submit the workflow.")
+                .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
+        demultiplexSingleSampleModeOpt = parser.acceptsAll(Arrays.asList("demux-single-sample"),
+                "Demultiplex single sample rather than OICR default of NoIndex mode.")
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
         createIusLimsKeysOpt = parser.acceptsAll(Arrays.asList("create-ius-lims-keys"),
                 "Enable or disable the creation of IUS-LimsKeys objects in the SeqWare db (--dry-run/--test overrides this option).")
@@ -249,6 +253,9 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             decider.setIsDryRunMode(false);
         }
 
+        //allow user to disable NoIndex mode, incase a single sample from a multi-sample lane is being run
+        decider.setIsDemultiplexSingleSampleMode(getBooleanFlagOrArgValue(demultiplexSingleSampleModeOpt));
+
         decider.setIgnorePreviousAnalysisMode(getBooleanFlagOrArgValue(ignorePreviousRunsOpt));
         decider.setIgnorePreviousLimsKeysMode(getBooleanFlagOrArgValue(ignorePreviousLimsKeysOpt));
         decider.setDisableRunCompleteCheck(getBooleanFlagOrArgValue(disableRunCompleteCheckOpt));
@@ -287,8 +294,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         }
         decider.setExcludeFilters(excludeFilters);
 
-        if (!(options.has(allOpt) ^ !includeFilters.isEmpty() ^ !excludeFilters.isEmpty())) {
-            log.error("--all or a combination the following include/exclude filters should be specified [{}]",
+        if (!(options.has(allOpt) ^ (!includeFilters.isEmpty() || !excludeFilters.isEmpty()))) {
+            log.error("--all or a combination of the following include/exclude filters should be specified [{}]",
                     Joiner.on(",").join(Bcl2fastqDecider.getSupportedFilters()));
             rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);
         }

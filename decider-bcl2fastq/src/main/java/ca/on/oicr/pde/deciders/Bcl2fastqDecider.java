@@ -71,6 +71,7 @@ public class Bcl2fastqDecider {
     private Boolean ignorePreviousAnalysisMode = false;
     private Boolean ignorePreviousLimsKeysMode = false;
     private Boolean disableRunCompleteCheck = false;
+    private Boolean isDemultiplexSingleSampleMode = false;
 
     private String outputPath = "./";
     private String outputFolder = "seqware-results";
@@ -101,7 +102,8 @@ public class Bcl2fastqDecider {
                 FileProvenanceFilter.lane,
                 FileProvenanceFilter.sequencer_run,
                 FileProvenanceFilter.study,
-                FileProvenanceFilter.sequencer_run_platform_model
+                FileProvenanceFilter.sequencer_run_platform_model,
+                FileProvenanceFilter.sample
         );
     }
 
@@ -119,6 +121,14 @@ public class Bcl2fastqDecider {
 
     public void setIsDryRunMode(Boolean isDryRunMode) {
         this.isDryRunMode = isDryRunMode;
+    }
+
+    public Boolean getIsDemultiplexSingleSampleMode() {
+        return isDemultiplexSingleSampleMode;
+    }
+
+    public void setIsDemultiplexSingleSampleMode(Boolean isDemultiplexSingleSampleMode) {
+        this.isDemultiplexSingleSampleMode = isDemultiplexSingleSampleMode;
     }
 
     public Boolean getDoMetadataWriteback() {
@@ -421,6 +431,16 @@ public class Bcl2fastqDecider {
                     continue;
                 }
 
+                if (includeFilters.containsKey(FileProvenanceFilter.sample)
+                        && !includeFilters.get(FileProvenanceFilter.sample).contains(sp.getSampleName())) {
+                    continue;
+                }
+
+                if (excludeFilters.containsKey(FileProvenanceFilter.sample)
+                        && excludeFilters.get(FileProvenanceFilter.sample).contains(sp.getSampleName())) {
+                    continue;
+                }
+
                 laneNameToStudyNames.put(laneName, sp.getStudyTitle());
                 laneNameToSampleProvenance.put(laneName, new ProvenanceWithProvider<>(provider, sp));
             }
@@ -584,7 +604,7 @@ public class Bcl2fastqDecider {
             data.setMetadataWriteback(getDoMetadataWriteback());
             data.setStudyToOutputPathConfig(studyToOutputPathConfig);
 
-            WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode());
+            WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode(), getIsDemultiplexSingleSampleMode());
             if (wr.getErrors().isEmpty()) {
                 validWorkflowRuns.add(wr);
             } else {
