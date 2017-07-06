@@ -63,6 +63,26 @@ public class Bcl2fastqDeciderCliTest {
         assertFalse(decider.getDoMetadataWriteback());
         assertFalse(decider.getDoCreateIusLimsKeys());
         assertFalse(decider.getDoScheduleWorkflowRuns());
+        assertFalse(decider.getIsDemultiplexSingleSampleMode());
+    }
+
+    @Test
+    public void singleSampleModeTest() throws IOException {
+        List<String> args = new ArrayList<>();
+        args.add("--dry-run");
+        args.add("--wf-accession");
+        args.add(bcl2fastqWorkflow.getSwAccession().toString());
+        args.add("--provenance-settings");
+        args.add(provenanceSettings.getAbsolutePath());
+        args.add("--all");
+        args.add("--enable-demultiplex-single-sample-mode");
+
+        Bcl2fastqDecider decider = getDecider(args);
+        assertTrue(decider.getIsDryRunMode());
+        assertFalse(decider.getDoMetadataWriteback());
+        assertFalse(decider.getDoCreateIusLimsKeys());
+        assertFalse(decider.getDoScheduleWorkflowRuns());
+        assertTrue(decider.getIsDemultiplexSingleSampleMode());
     }
 
     private Bcl2fastqDecider getDecider(List<String> args) {

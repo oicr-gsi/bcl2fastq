@@ -106,7 +106,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
         demultiplexSingleSampleModeOpt = parser.acceptsAll(Arrays.asList("enable-demultiplex-single-sample-mode"),
                 "Demultiplex single sample rather than OICR default of NoIndex mode.")
-                .withRequiredArg().ofType(Boolean.class).defaultsTo(false);
+                .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
         createIusLimsKeysOpt = parser.acceptsAll(Arrays.asList("create-ius-lims-keys"),
                 "Enable or disable the creation of IUS-LimsKeys objects in the SeqWare db (--dry-run/--test overrides this option).")
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(true);
