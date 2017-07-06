@@ -1,0 +1,40 @@
+{
+    "defaults": {
+        "description": "Bcl2fastq decider test",
+        "metricsResources": "/expected_output/development/",
+        "parameters": {
+            "--disable-run-complete-check": "",
+            "--no-null-created-date": ""
+        },
+        "properties": {
+            "memory": "16384"
+        },
+        "iniExclusions": ["parent-accessions", "workflow_run_accession", "workflow-run-accession",
+            "unique_string", "parent_accessions", "parent_accession", "input_file", "input_files", "workflow_bundle_dir"],
+        "iniStringSubstitutions": {
+            ",\\d+,": ",SAMPLE_IUS_SWID,",
+            ",\\d+:": ",LANE_IUS_SWID:"
+        }
+    },
+    "tests": [
+        {
+            "id": "Mixed barcode length exclude sample test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "170627_D00343_0178_ACB0F2ANXX_lane_8",
+                "--exclude-sample": "GCONT_0004_Li_C_PE_264_TS"
+            }
+        },
+        {
+            "id": "Mixed barcode length include sample test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "170627_D00343_0178_ACB0F2ANXX_lane_8",
+                "--include-sample": "GCONT_0004_Li_C_PE_264_TS",
+                "--enable-demultiplex-single-sample-mode": ""
+            }
+        }
+    ]
+}
