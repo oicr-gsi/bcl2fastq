@@ -3,6 +3,14 @@ git:
   depth: 3
 sudo: required
 env: ' MAVEN_SETTINGS="${TRAVIS_BUILD_DIR}/gsi-config"  MAVEN_OPTS=''-Xms1g -Xmx2g''  SEQWARE_SETTINGS="${TRAVIS_BUILD_DIR}/seqware_settings" '
+
+addons:
+  sonarcloud:
+    organization: "oicr-gsi"
+    token: 
+      secure: "Oy9FmBHP4VqRHBIHLdN2kwWJvWdctRHn6pDYJhqCuxP9f80RCAOFkiaq3jJEUhm3HH2vx96QuHApXDTl3jSbtxIYEJ4+A5Ufgki3cGgWi2C5ucze4VfFM/YddF3EzR7I50rDRqQdcTqPFkqwv/md5jF7xTQ7SotSYQKqV3SscPtZV0ySXuDK4nojuIKVM0+h5Qx2fBxoFcgGewmxFr/UL872TNJwsoffHG2a0tNkGm09PseaDXc1QWr46VwRBP8xOUIDJeBwIb5C3Ok50Y5un5zsq7aTOFBXHICfJkSSzzcp/E8ZZIZnSgPy6pQ1pyMKr74F48o8LkuOvsxRQb8x/jFwb/bbHyQzETWRd4bplPIkfHEZ+ykStobAmDMYxQgG3W7qIkBiwW1c4vWTnr8VTKGLgj6Skyl74OwJSoKoc1ilxEYqShkPJlLnp+akIFTVqOhUX/qMn81HgOeXD5nEdRUwtc8CFEZCVfe28SfIcgOnJv2uBTrLCI495GCw/FDtIcf284iwyVBkPEREIwCpvjkEWKVLh3kvEd0/jT/RGoci2GkPHvnIVoj3ttV6p8qvHTMT06/FPGEkY5Vjl6EwemWVIiJye7QJVDhnjmcf7LPxD5tO/Bx4RebFQzxlrdo6WuAsxCiT3Im1nnyBDRGLyO5ThVyAyaxwaQkqGTm3Af8="
+    github_token:
+      secure: "Z/xG9AOBYu3geIRTGcSPcPLuiCtXHPoSSSIPsuK/Kr45JoM1p4KssoeulAwSDY+1gcYIfqF8nEowjnlhcH6LdFRuLYV5iHW2YPl1tHEBCuAHonpfWNWf4piMO+OxtjCTcOvNmj8x4hYP7FS+0QeiZ+AJYjPrlrg2Y1SzZZVbiB4="
 jdk:
 - oraclejdk7
 before_install:
@@ -10,6 +18,12 @@ before_install:
 - cp "${MAVEN_SETTINGS}/settings.xml" "${HOME}/.m2/settings.xml"
 before_script:
 - touch "${SEQWARE_SETTINGS}"
+
+
+script:
+- mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar
+
 cache:
   directories:
   - "$HOME/.m2"
+  - "$HOME/.sonar/cache"
