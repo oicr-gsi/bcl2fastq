@@ -340,9 +340,8 @@ public class WorkflowClient extends OicrWorkflow {
 
 
     public void makeAJunkMethod(String totallyUnusedVariable) throws Exception {
-        if (Boolean.true == true) {
+        if (true) {
             throw new Exception("This is total junk");
         }
-
     }
 }
