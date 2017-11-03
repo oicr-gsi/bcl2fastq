@@ -1,8 +1,8 @@
-##BCL2FastQ Decider
+## BCL2FastQ Decider
 
 Version 1.1.1, SeqWare version 1.1.1-gsi
 
-###Overview
+### Overview
 
 This decider launches the [BCL2FastQ (AKA Casava) Workflow](../workflow-casava) to demultiplex and convert BCL files from an Illumina sequencer run to FASTQ format. This decider assumes paired-end reads, so if this is not the case, the read-ends parameter must be used.
 
@@ -13,13 +13,13 @@ The decider operates as follows:
 - creates a SeqWare IUS-LimsKey (a SeqWare object that is used to link LIMS data from provenance providers such as Pinery and SeqWare to SeqWare workflow runs) for each lane and a SeqWare IUS-LimsKey for each sample in the associated lane
 - schedules a separate SeqWare workflow run for each lane and links the workflow run to the appropriate SeqWare IUS-LimsKey(s)
 
-###Compile
+### Compile
 
 ```
 mvn clean install
 ```
 
-###Testing
+### Testing
 
 ```
 mvn clean verify \
@@ -34,6 +34,7 @@ mvn clean verify \
 ```
 
 An example provenance settings file:
+
 ```
 [ {
   "type" : "ca.on.oicr.gsi.provenance.SeqwareMetadataLimsMetadataProvenanceProvider",
@@ -57,11 +58,11 @@ An example provenance settings file:
 
 ```
 
-###Usage
+### Usage
 
 java -jar Decider.jar --wf-accession \<bcl2fastq-workflow-accession\> --provenance-settings /path/to/provenance-settings.json
 
-###Options
+### Options
 
 **Required**
 
@@ -76,9 +77,7 @@ Parameters to filter/select the set of lanes to operate on:
 
 Parameter | Type | Description \[default\]
 ----------|------|-------------------------
-check-wf-accessions                      | String  | The comma-separated, no spaces, workflow accessions of the workflow that      
-                                                     perform the same function (e.g. older versions). Any files that have been   
-                                                     processed with these workflows will be skipped.
+check-wf-accessions                      | String  | The comma-separated, no spaces, workflow accessions of the workflow that perform the same function (e.g. older versions). Any files that have been processed with these workflows will be skipped.
 after-date                               | String  | Include only lanes created after the specified date
 before-date                              | String  | Include only lanes created before the specified date
 include-instrument                       | String  | Include only lanes with sequencer run attribute "instrument name"  
@@ -101,13 +100,10 @@ Parameter | Type | Description \[default\]
 ----------|------|-------------------------
 help                                     | none    | Display help
 verbose                                  | Boolean | Log verbose output
-host                                     | String  | Used only in combination with --schedule to schedule onto a specific host. If 
-                                                     not provided, the default is the local host [local hostname]
+host                                     | String  | Used only in combination with --schedule to schedule onto a specific host. If not provided, the default is the local host [local hostname]
 dry-run or test                          | Boolean | Dry-run/test mode. Prints the INI files to standard out and does not submit the workflow [false]
-demux-single-sample                      | Boolean | Enable demultiplexing if there is only a single sample in the workflow run (default behaviour is to 
-                                                     run single samples with "NoIndex") [false]
-no-meta-db or no-metadata                | Boolean | Prevents metadata writeback (which is done by default) by the Decider and that is subsequently passed 
-                                                     to the called workflow which can use it to determine if they should write metadata at runtime on the cluster [false]
+demux-single-sample                      | Boolean | Enable demultiplexing if there is only a single sample in the workflow run (default behaviour is to run single samples with "NoIndex") [false]
+no-meta-db or no-metadata                | Boolean | Prevents metadata writeback (which is done by default) by the Decider and that is subsequently passed to the called workflow which can use it to determine if they should write metadata at runtime on the cluster [false]
 disable-run-complete-check               | Boolean | Disable checking that the file "oicr_run_complete" is present in the "run_dir" [false]
 no-null-created-date                     | Boolean | Set the filter comparison date to "last modified" date if "created date" is null [false]
 force-run-all or ignore-previous-runs    | Boolean | (WARNING: use with caution) Forces the decider to run all matches regardless of whether they've been run before or not [false]
