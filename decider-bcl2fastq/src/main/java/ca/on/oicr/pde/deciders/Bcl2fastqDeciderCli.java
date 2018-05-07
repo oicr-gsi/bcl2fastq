@@ -13,8 +13,9 @@ import com.google.common.collect.Sets;
 import io.seqware.pipeline.plugins.WorkflowScheduler;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -36,7 +37,6 @@ import org.apache.log4j.PatternLayout;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.joda.time.DateTime;
 
 public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
 
@@ -300,20 +300,20 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);
         }
 
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         if (options.has(afterDateOpt)) {
             try {
-                decider.setAfterDateFilter(new DateTime(format.parse(options.valueOf(afterDateOpt))));
-            } catch (ParseException e) {
-                log.error("After Date should be in the format: " + format.toPattern(), e);
+                decider.setAfterDateFilter(ZonedDateTime.parse(options.valueOf(afterDateOpt), format));
+            } catch (DateTimeParseException e) {
+                log.error("After Date should be in the format: " + format.toString(), e);
                 rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);
             }
         }
         if (options.has(beforeDateOpt)) {
             try {
-                decider.setBeforeDateFilter(new DateTime(format.parse(options.valueOf(beforeDateOpt))));
-            } catch (ParseException e) {
-                log.error("Before Date should be in the format: " + format.toPattern(), e);
+                decider.setBeforeDateFilter(ZonedDateTime.parse(options.valueOf(beforeDateOpt), format));
+            } catch (DateTimeParseException e) {
+                log.error("Before Date should be in the format: " + format.toString(), e);
                 rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);
             }
         }

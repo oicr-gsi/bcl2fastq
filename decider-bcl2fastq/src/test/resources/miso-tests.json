@@ -4,7 +4,8 @@
         "metricsResources": "/expected_output/development/",
         "parameters": {
             "--disable-run-complete-check": "",
-            "--no-null-created-date": ""
+            "--no-null-created-date": "",
+            "--ignore-previous-lims-keys": "true"
         },
         "properties": {
             "memory": "16384"

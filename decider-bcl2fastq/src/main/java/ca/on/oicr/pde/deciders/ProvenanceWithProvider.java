@@ -8,7 +8,7 @@ import net.sourceforge.seqware.common.dto.LimsKeyDto;
  * Used to store provenance object with its provider.
  *
  * @author mlaszloffy
- * @param <T extends LimsProvenance>
+ * @param <T>
  */
 public class ProvenanceWithProvider<T extends LimsProvenance> {
 

@@ -20,9 +20,9 @@ import com.google.common.collect.Table;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +37,6 @@ import lombok.Value;
 import net.sourceforge.seqware.common.metadata.Metadata;
 import net.sourceforge.seqware.common.metadata.MetadataInMemory;
 import net.sourceforge.seqware.common.model.Workflow;
-import org.joda.time.DateTime;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
 import org.powermock.reflect.Whitebox;
@@ -57,7 +56,7 @@ public class Bcl2fastqDeciderTest {
     private ProvenanceClient provenanceClient;
     private Bcl2fastqDecider bcl2fastqDecider;
     private Workflow bcl2fastqWorkflow;
-    private DateTime expectedDate = DateTime.parse("2016-01-01T00:00:00Z");
+    private ZonedDateTime expectedDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
 
     private SortedMap<String, SortedSet<String>> sp1Attrs = new TreeMap<>();
     private SortedMap<String, SortedSet<String>> sp2Attrs = new TreeMap<>();
@@ -657,11 +656,11 @@ public class Bcl2fastqDeciderTest {
         private String laneNumber;
         private SortedMap<String, SortedSet<String>> laneAttributes = new TreeMap<>();
         private Boolean skip;
-        private DateTime createdDate;
+        private ZonedDateTime createdDate;
         private String laneProvenanceId;
         private String provenanceId;
         private String version;
-        private DateTime lastModified;
+        private ZonedDateTime lastModified;
     }
 
     @Builder
@@ -681,10 +680,10 @@ public class Bcl2fastqDeciderTest {
         private SortedMap<String, SortedSet<String>> laneAttributes = new TreeMap<>();
         private String iusTag;
         private Boolean skip;
-        private DateTime createdDate;
+        private ZonedDateTime createdDate;
         private String sampleProvenanceId;
         private String provenanceId;
         private String version;
-        private DateTime lastModified;
+        private ZonedDateTime lastModified;
     }
 }

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,7 +46,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.joda.time.DateTime;
 
 /**
  *
@@ -78,8 +78,8 @@ public class Bcl2fastqDecider {
     private StudyToOutputPathConfig studyToOutputPathConfig;
 
     private Boolean replaceNullCreatedDate = false;
-    private DateTime afterDateFilter = null;
-    private DateTime beforeDateFilter = null;
+    private ZonedDateTime afterDateFilter = null;
+    private ZonedDateTime beforeDateFilter = null;
     private Set<String> includeInstrumentNameFilter;
     private Set<String> excludeInstrumentNameFilter;
     private EnumMap<FileProvenanceFilter, Set<String>> includeFilters = new EnumMap<>(FileProvenanceFilter.class);
@@ -227,19 +227,19 @@ public class Bcl2fastqDecider {
         this.replaceNullCreatedDate = replaceNullCreatedDate;
     }
 
-    public DateTime getAfterDateFilter() {
+    public ZonedDateTime getAfterDateFilter() {
         return afterDateFilter;
     }
 
-    public void setAfterDateFilter(DateTime afterDateFilter) {
+    public void setAfterDateFilter(ZonedDateTime afterDateFilter) {
         this.afterDateFilter = afterDateFilter;
     }
 
-    public DateTime getBeforeDateFilter() {
+    public ZonedDateTime getBeforeDateFilter() {
         return beforeDateFilter;
     }
 
-    public void setBeforeDateFilter(DateTime beforeDateFilter) {
+    public void setBeforeDateFilter(ZonedDateTime beforeDateFilter) {
         this.beforeDateFilter = beforeDateFilter;
     }
 
@@ -352,7 +352,7 @@ public class Bcl2fastqDecider {
                     continue;
                 }
 
-                DateTime createdDate;
+                ZonedDateTime createdDate;
                 if (replaceNullCreatedDate && lp.getCreatedDate() == null) { //ignore created date it is null
                     createdDate = lp.getLastModified();
                 } else {
