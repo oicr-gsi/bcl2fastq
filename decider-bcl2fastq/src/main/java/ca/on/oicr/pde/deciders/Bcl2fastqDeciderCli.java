@@ -201,7 +201,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             logger.addAppender(new ConsoleAppender(new PatternLayout("%p [%d{yyyy/MM/dd HH:mm:ss}] | %m%n")));
 
             //log4j2 logging configuration
-            Configurator.setRootLevel(org.apache.logging.log4j.Level.DEBUG);
+            Configurator.setRootLevel(org.apache.logging.log4j.Level.INFO);
+            Configurator.setLevel("ca.on.oicr", org.apache.logging.log4j.Level.DEBUG);
         }
 
         if (options.has(helpOpt)) {
