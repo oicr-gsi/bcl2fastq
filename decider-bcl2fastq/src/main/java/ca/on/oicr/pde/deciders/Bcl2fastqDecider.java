@@ -503,16 +503,20 @@ public class Bcl2fastqDecider {
         //calculate the set of lanes that do not have associated workflow information but are linked in seqware
         Set<String> blockedLanes = new HashSet<>();
 
-        Collection<FileProvenance> fps = provenanceClient.getFileProvenance(analysisFilters);
-        for (FileProvenance fp : fps) {
-            if (fp.getWorkflowSWID() != null) { //analysis provenance for a worklow run
-                if (getWorkflowAccessionsToCheck().contains(fp.getWorkflowSWID().toString())
-                        || workflow.getSwAccession().equals(fp.getWorkflowSWID())) {
-                    analyzedLanes.addAll(fp.getLaneNames());
+        if (ignorePreviousLimsKeysMode) {
+            // ignorePreviousLimsKeysMode enabled, no need to download any analysis as all known lanes are candidate lanes for analysis
+        } else {
+            Collection<FileProvenance> fps = provenanceClient.getFileProvenance(analysisFilters);
+            for (FileProvenance fp : fps) {
+                if (fp.getWorkflowSWID() != null) { //analysis provenance for a worklow run
+                    if (getWorkflowAccessionsToCheck().contains(fp.getWorkflowSWID().toString())
+                            || workflow.getSwAccession().equals(fp.getWorkflowSWID())) {
+                        analyzedLanes.addAll(fp.getLaneNames());
+                    }
+                } else { //analysis provenance for an ius
+                    //include this record, it may be an IUS that is used for skipping a lane or sample
+                    blockedLanes.addAll(fp.getLaneNames());
                 }
-            } else { //analysis provenance for an ius
-                //include this record, it may be an IUS that is used for skipping a lane or sample
-                blockedLanes.addAll(fp.getLaneNames());
             }
         }
 
