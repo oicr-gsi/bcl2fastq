@@ -1,4 +1,4 @@
-package ca.on.oicr.pde.deciders;
+package ca.on.oicr.pde.deciders.exceptions;
 
 /**
  * Exception to represent errors in data that doesn't exist or match expectations

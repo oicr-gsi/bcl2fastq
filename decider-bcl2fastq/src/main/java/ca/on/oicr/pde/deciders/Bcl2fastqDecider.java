@@ -1,5 +1,8 @@
 package ca.on.oicr.pde.deciders;
 
+import ca.on.oicr.pde.deciders.exceptions.DataMismatchException;
+import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
+import ca.on.oicr.pde.deciders.data.ProvenanceWithProvider;
 import ca.on.oicr.gsi.provenance.ExtendedProvenanceClient;
 import ca.on.oicr.gsi.provenance.FileProvenanceFilter;
 import ca.on.oicr.gsi.provenance.model.FileProvenance;
@@ -8,7 +11,7 @@ import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
 import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq1Handler;
 import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq2Handler;
-import ca.on.oicr.pde.deciders.handlers.Bcl2FastqData;
+import ca.on.oicr.pde.deciders.data.Bcl2FastqData;
 import ca.on.oicr.pde.deciders.handlers.Bcl2FastqHandler;
 import ca.on.oicr.pde.deciders.handlers.Handler;
 import com.google.common.base.Charsets;

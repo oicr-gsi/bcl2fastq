@@ -1,4 +1,4 @@
-package ca.on.oicr.pde.deciders;
+package ca.on.oicr.pde.deciders.data;
 
 import ca.on.oicr.gsi.provenance.model.LimsKey;
 import ca.on.oicr.gsi.provenance.model.LimsProvenance;

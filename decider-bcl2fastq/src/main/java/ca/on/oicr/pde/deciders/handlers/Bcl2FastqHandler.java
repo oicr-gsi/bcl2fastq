@@ -1,14 +1,15 @@
 package ca.on.oicr.pde.deciders.handlers;
 
+import ca.on.oicr.pde.deciders.data.Bcl2FastqData;
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.LimsKey;
 import ca.on.oicr.gsi.provenance.model.LimsProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
-import ca.on.oicr.pde.deciders.DataMismatchException;
-import ca.on.oicr.pde.deciders.IusWithProvenance;
+import ca.on.oicr.pde.deciders.exceptions.DataMismatchException;
+import ca.on.oicr.pde.deciders.data.IusWithProvenance;
 import ca.on.oicr.pde.deciders.Lims;
-import ca.on.oicr.pde.deciders.ProvenanceWithProvider;
-import ca.on.oicr.pde.deciders.WorkflowRunV2;
+import ca.on.oicr.pde.deciders.data.ProvenanceWithProvider;
+import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;

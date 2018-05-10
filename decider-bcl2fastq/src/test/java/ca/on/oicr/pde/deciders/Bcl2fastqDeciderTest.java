@@ -644,46 +644,4 @@ public class Bcl2fastqDeciderTest {
                 ImmutableMap.<FileProvenanceFilter, Set<String>>of(FileProvenanceFilter.workflow, ImmutableSet.of(bcl2fastqWorkflow.getSwAccession().toString())));
     }
 
-    @Builder
-    @Value
-    private static class LaneProvenanceImpl implements LaneProvenance {
-
-        private String sequencerRunName;
-
-        @Singular
-        private SortedMap<String, SortedSet<String>> sequencerRunAttributes;
-        private String sequencerRunPlatformModel;
-        private String laneNumber;
-        private SortedMap<String, SortedSet<String>> laneAttributes = new TreeMap<>();
-        private Boolean skip;
-        private ZonedDateTime createdDate;
-        private String laneProvenanceId;
-        private String provenanceId;
-        private String version;
-        private ZonedDateTime lastModified;
-    }
-
-    @Builder
-    @Value
-    private static class SampleProvenanceImpl implements SampleProvenance {
-
-        private String studyTitle;
-        private SortedMap<String, SortedSet<String>> studyAttributes = new TreeMap<>();
-        private String rootSampleName;
-        private String parentSampleName;
-        private String sampleName;
-        private SortedMap<String, SortedSet<String>> sampleAttributes;
-        private String sequencerRunName;
-        private SortedMap<String, SortedSet<String>> sequencerRunAttributes = new TreeMap<>();
-        private String sequencerRunPlatformModel;
-        private String laneNumber;
-        private SortedMap<String, SortedSet<String>> laneAttributes = new TreeMap<>();
-        private String iusTag;
-        private Boolean skip;
-        private ZonedDateTime createdDate;
-        private String sampleProvenanceId;
-        private String provenanceId;
-        private String version;
-        private ZonedDateTime lastModified;
-    }
 }

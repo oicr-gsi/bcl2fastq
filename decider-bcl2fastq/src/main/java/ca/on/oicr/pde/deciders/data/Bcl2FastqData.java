@@ -1,8 +1,7 @@
-package ca.on.oicr.pde.deciders.handlers;
+package ca.on.oicr.pde.deciders.data;
 
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
-import ca.on.oicr.pde.deciders.ProvenanceWithProvider;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;

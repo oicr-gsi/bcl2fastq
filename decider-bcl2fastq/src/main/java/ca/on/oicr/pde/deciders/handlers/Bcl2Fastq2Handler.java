@@ -1,6 +1,7 @@
 package ca.on.oicr.pde.deciders.handlers;
 
-import ca.on.oicr.pde.deciders.WorkflowRunV2;
+import ca.on.oicr.pde.deciders.data.Bcl2FastqData;
+import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
 import com.google.common.collect.Iterables;
 import java.util.Arrays;
 import java.util.SortedSet;
