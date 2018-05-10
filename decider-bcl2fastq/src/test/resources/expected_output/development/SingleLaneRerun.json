@@ -1,28 +1,28 @@
 {
-  "workflowRunCount" : 1,
-  "studies" : [ "PCSI" ],
-  "sequencerRuns" : [ "160615_D00331_0195_AC93ACANXX" ],
-  "lanes" : [ "160615_D00331_0195_AC93ACANXX_lane_5" ],
-  "samples" : [ "PCSI_0602_Pa_X_PE_317_MR", "PCSI_0602_Pa_X_PE_318_MR", "PCSI_0633_Pa_P_PE_317_MR", "PCSI_0659_Si_P_PE_317_MR" ],
-  "workflows" : [ ],
-  "processingAlgorithms" : [ ],
-  "fileMetaTypes" : [ ],
-  "maxInputFiles" : 0,
-  "minInputFiles" : 0,
-  "totalInputFiles" : 0,
-  "workflowRuns" : [ {
-    "workflowIni" : {
-      "called_bases" : "/oicr/data/archive/D00331/160615_D00331_0195_AC93ACANXX/Data/Intensities/BaseCalls/",
-      "flowcell" : "160615_D00331_0195_AC93ACANXX",
-      "intensity_folder" : "/oicr/data/archive/D00331/160615_D00331_0195_AC93ACANXX/Data/Intensities/",
-      "lanes" : "5,LANE_IUS_SWID:ACAGTG,SAMPLE_IUS_SWID,PCSI_0602_Pa_X_PE_317_MR,526+GCCAAT,SAMPLE_IUS_SWID,PCSI_0602_Pa_X_PE_318_MR,5267+CTTGTA,SAMPLE_IUS_SWID,PCSI_0633_Pa_P_PE_317_MR,526+GTGAAA,SAMPLE_IUS_SWID,PCSI_0659_Si_P_PE_317_MR,526",
-      "manual_output" : "false",
-      "memory" : "16384",
-      "metadata" : "metadata",
-      "output_dir" : "seqware-results",
-      "output_prefix" : "./",
-      "use_bases_mask" : "y*,I6n*,y*"
-    },
-    "files" : [ ]
-  } ]
+    "workflowRunCount": 1,
+    "studies": ["PCSI"],
+    "sequencerRuns": ["160615_D00331_0195_AC93ACANXX"],
+    "lanes": ["160615_D00331_0195_AC93ACANXX_lane_5"],
+    "samples": ["PCSI_0602_Pa_X_PE_317_MR", "PCSI_0602_Pa_X_PE_318_MR", "PCSI_0633_Pa_P_PE_317_MR", "PCSI_0659_Si_P_PE_317_MR"],
+    "workflows": [],
+    "processingAlgorithms": [],
+    "fileMetaTypes": [],
+    "maxInputFiles": 0,
+    "minInputFiles": 0,
+    "totalInputFiles": 0,
+    "workflowRuns": [{
+            "workflowIni": {
+                "called_bases": "/oicr/data/archive/D00331/160615_D00331_0195_AC93ACANXX/Data/Intensities/BaseCalls/",
+                "flowcell": "160615_D00331_0195_AC93ACANXX",
+                "intensity_folder": "/oicr/data/archive/D00331/160615_D00331_0195_AC93ACANXX/Data/Intensities/",
+                "lanes": "5,LANE_IUS_SWID:ACAGTG,SAMPLE_IUS_SWID,PCSI_0602_Pa_X_PE_317_MR,526+GCCAAT,SAMPLE_IUS_SWID,PCSI_0602_Pa_X_PE_318_MR,5267+CTTGTA,SAMPLE_IUS_SWID,PCSI_0633_Pa_P_PE_317_MR,526+GTGAAA,SAMPLE_IUS_SWID,PCSI_0659_Si_P_PE_317_MR,526",
+                "manual_output": "false",
+                "memory": "16384",
+                "metadata": "metadata",
+                "output_dir": "seqware-results",
+                "output_prefix": "./",
+                "use_bases_mask": "y*,I6n*,y*"
+            },
+            "files": []
+        }]
 }

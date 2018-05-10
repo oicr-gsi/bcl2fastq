@@ -1,28 +1,28 @@
 {
-  "workflowRunCount" : 1,
-  "studies" : [ "PCSI" ],
-  "sequencerRuns" : [ "150727_M00753_0023_000000000-AGR8E" ],
-  "lanes" : [ "150727_M00753_0023_000000000-AGR8E_lane_1" ],
-  "samples" : [ "PCSI_0486_Lv_X_PE_491_WG", "PCSI_0486_Lv_X_PE_640_WG" ],
-  "workflows" : [ ],
-  "processingAlgorithms" : [ ],
-  "fileMetaTypes" : [ ],
-  "maxInputFiles" : 0,
-  "minInputFiles" : 0,
-  "totalInputFiles" : 0,
-  "workflowRuns" : [ {
-    "workflowIni" : {
-      "called_bases" : "/oicr/data/archive/m753/150727_M00753_0023_000000000-AGR8E/Data/Intensities/BaseCalls/",
-      "flowcell" : "150727_M00753_0023_000000000-AGR8E",
-      "intensity_folder" : "/oicr/data/archive/m753/150727_M00753_0023_000000000-AGR8E/Data/Intensities/",
-      "lanes" : "1,LANE_IUS_SWID:GCCAAT,SAMPLE_IUS_SWID,PCSI_0486_Lv_X_PE_491_WG,526+ACAGTG,SAMPLE_IUS_SWID,PCSI_0486_Lv_X_PE_640_WG,526",
-      "manual_output" : "false",
-      "memory" : "16384",
-      "metadata" : "metadata",
-      "output_dir" : "seqware-results",
-      "output_prefix" : "./",
-      "use_bases_mask" : "y*,I6n*,y*"
-    },
-    "files" : [ ]
-  } ]
+    "workflowRunCount": 1,
+    "studies": ["PCSI"],
+    "sequencerRuns": ["150727_M00753_0023_000000000-AGR8E"],
+    "lanes": ["150727_M00753_0023_000000000-AGR8E_lane_1"],
+    "samples": ["PCSI_0486_Lv_X_PE_491_WG", "PCSI_0486_Lv_X_PE_640_WG"],
+    "workflows": [],
+    "processingAlgorithms": [],
+    "fileMetaTypes": [],
+    "maxInputFiles": 0,
+    "minInputFiles": 0,
+    "totalInputFiles": 0,
+    "workflowRuns": [{
+            "workflowIni": {
+                "called_bases": "/oicr/data/archive/m753/150727_M00753_0023_000000000-AGR8E/Data/Intensities/BaseCalls/",
+                "flowcell": "150727_M00753_0023_000000000-AGR8E",
+                "intensity_folder": "/oicr/data/archive/m753/150727_M00753_0023_000000000-AGR8E/Data/Intensities/",
+                "lanes": "1,LANE_IUS_SWID:GCCAAT,SAMPLE_IUS_SWID,PCSI_0486_Lv_X_PE_491_WG,526+ACAGTG,SAMPLE_IUS_SWID,PCSI_0486_Lv_X_PE_640_WG,526",
+                "manual_output": "false",
+                "memory": "16384",
+                "metadata": "metadata",
+                "output_dir": "seqware-results",
+                "output_prefix": "./",
+                "use_bases_mask": "y*,I6n*,y*"
+            },
+            "files": []
+        }]
 }

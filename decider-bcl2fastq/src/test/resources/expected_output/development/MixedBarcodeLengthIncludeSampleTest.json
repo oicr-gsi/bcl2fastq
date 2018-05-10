@@ -1,28 +1,28 @@
 {
-  "workflowRunCount" : 1,
-  "studies" : [ "GCONT" ],
-  "sequencerRuns" : [ "170627_D00343_0178_ACB0F2ANXX" ],
-  "lanes" : [ "170627_D00343_0178_ACB0F2ANXX_lane_8" ],
-  "samples" : [ "GCONT_0004_Li_C_PE_264_TS" ],
-  "workflows" : [ ],
-  "processingAlgorithms" : [ ],
-  "fileMetaTypes" : [ ],
-  "maxInputFiles" : 0,
-  "minInputFiles" : 0,
-  "totalInputFiles" : 0,
-  "workflowRuns" : [ {
-    "workflowIni" : {
-      "called_bases" : "/oicr/data/archive/D00343/170627_D00343_0178_ACB0F2ANXX/Data/Intensities/BaseCalls/",
-      "flowcell" : "170627_D00343_0178_ACB0F2ANXX",
-      "intensity_folder" : "/oicr/data/archive/D00343/170627_D00343_0178_ACB0F2ANXX/Data/Intensities/",
-      "lanes" : "8,LANE_IUS_SWID:CTTCTTCAGCAA,SAMPLE_IUS_SWID,GCONT_0004_Li_C_PE_264_TS",
-      "manual_output" : "false",
-      "memory" : "16384",
-      "metadata" : "metadata",
-      "output_dir" : "seqware-results",
-      "output_prefix" : "./",
-      "use_bases_mask" : "y*,I12n*,y*"
-    },
-    "files" : [ ]
-  } ]
+    "workflowRunCount": 1,
+    "studies": ["GCONT"],
+    "sequencerRuns": ["170627_D00343_0178_ACB0F2ANXX"],
+    "lanes": ["170627_D00343_0178_ACB0F2ANXX_lane_8"],
+    "samples": ["GCONT_0004_Li_C_PE_264_TS"],
+    "workflows": [],
+    "processingAlgorithms": [],
+    "fileMetaTypes": [],
+    "maxInputFiles": 0,
+    "minInputFiles": 0,
+    "totalInputFiles": 0,
+    "workflowRuns": [{
+            "workflowIni": {
+                "called_bases": "/oicr/data/archive/D00343/170627_D00343_0178_ACB0F2ANXX/Data/Intensities/BaseCalls/",
+                "flowcell": "170627_D00343_0178_ACB0F2ANXX",
+                "intensity_folder": "/oicr/data/archive/D00343/170627_D00343_0178_ACB0F2ANXX/Data/Intensities/",
+                "lanes": "8,LANE_IUS_SWID:CTTCTTCAGCAA,SAMPLE_IUS_SWID,GCONT_0004_Li_C_PE_264_TS",
+                "manual_output": "false",
+                "memory": "16384",
+                "metadata": "metadata",
+                "output_dir": "seqware-results",
+                "output_prefix": "./",
+                "use_bases_mask": "y*,I12n*,y*"
+            },
+            "files": []
+        }]
 }
