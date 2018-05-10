@@ -1,30 +1,30 @@
-##bcl2fastq workflow
+## bcl2fastq workflow
 
 Version 2.9
 
-###Overview
+### Overview
 
 Uses [Illumina](http://www.illumina.com/) run folders to produce fastq files using [SeqWare](http://seqware.github.io/) and [bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v2-18.html). The "CASAVA" name is a misnomer since bcl2fastq is used exclusively, but is maintained for historical purposes.
 
 ![bcl2fastq flowchart](docs/CASAVA_spec.png)
 
-###Dependencies
+### Dependencies
 
 This workflow requires:
 
 * [SeqWare](http://seqware.github.io/)
 * [Bcl2fastq](http://support.illumina.com/downloads/bcl2fastq-conversion-software-v2-18.html) 2.18.0.12
 
-###Compile
+### Compile
 When compiling, you most likely will need to add the -Dbcl2fastq-bin flags in order to configure it properly. An example is below.
 ```
 mvn clean install -Dbcl2fastq-bin=/path/to/bcl2fastq
 ```
 
-###Usage
+### Usage
 After compilation, [test](http://seqware.github.io/docs/3-getting-started/developer-tutorial/#testing-the-workflow), [bundle](http://seqware.github.io/docs/3-getting-started/developer-tutorial/#packaging-the-workflow-into-a-workflow-bundle) and [install](http://seqware.github.io/docs/3-getting-started/admin-tutorial/#how-to-install-a-workflow) the workflow using the techniques described in the SeqWare documentation.
 
-####Options
+#### Options
 These parameters can be overridden either in the INI file on on the command line using `--override` when [directly scheduling workflow runs](http://seqware.github.io/docs/3-getting-started/user-tutorial/#listing-available-workflows-and-their-parameters) (not using a decider). Defaults are in [square brackets].
 
 Required:
@@ -64,7 +64,7 @@ Optional:
     memory                    int         Amount of memory given to the node on the cluster,
                                           in MB [4000]
 
-####Lanes
+#### Lanes
 The `lanes` parameter defines the lanes and barcodes for the sequencer run. Only entities mentioned in this string will be split into fastq files. All other reads will end up in the Undetermined_indices folder.
 
 Format: `<lane_number_[1-8]>,<lane_sw_accession>:<barcode|NoIndex>,<sw_accession_for_parent>,<sample_name>[,<group_id>]+<barcode|NoIndex>,<sw_accession_for_parent>,<sample_name>[,<group_id>]|...`
@@ -80,7 +80,7 @@ Example: `1,8291:NoIndex,192939,PCSI_0106_Ly_R_PE_190_WG+ACGT,198594,PCSI_0106_L
 
 The accessions are required because they link the fastq files with a lane, IUS and sample so that subsequent analysis can be automated for the named samples.
 
-###Output files
+### Output files
 **fastq.gz files** : Produces filenames with the format: SWID_9858_PCSI_0106_Ly_R_PE_190_WG_NoGroup_110916_SN804_0064_AD04TBACXX_NoIndex_L001_R1_001.fastq.gz
 * SWID_9858 : IUS SeqWare accesssion
 * PCSI_0106_Ly_R_PE_190_WG : library name
@@ -98,5 +98,5 @@ The accessions are required because they link the fastq files with a lane, IUS a
 
 **Undetermined_indices.zip** :  if in a particular lane there is no 'NoIndex', a R1 and R2 fastq.gz file will also be produced containing any reads that were not allocated to one of the fastq files
 
-###Support
+### Support
 For support, please file an issue on the [Github project](https://github.com/oicr-gsi) or send an email to gsi@oicr.on.ca .

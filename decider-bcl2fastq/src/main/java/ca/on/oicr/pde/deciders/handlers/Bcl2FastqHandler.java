@@ -34,7 +34,7 @@ public abstract class Bcl2FastqHandler implements Handler {
     public abstract WorkflowRunV2 modifyWorkflowRun(Bcl2FastqData data, WorkflowRunV2 workflowRun);
 
     public WorkflowRunV2 getWorkflowRun(Metadata metadata, Bcl2FastqData data, boolean createLimsKeys, boolean enableDemultiplexSingleSample) {
-        WorkflowRunV2 wr = new WorkflowRunV2(null, null);
+        WorkflowRunV2 wr = new WorkflowRunV2(null, null, data);
         wr.addProperty(data.getProperties());
 
         List<String> barcodes = new ArrayList<>();

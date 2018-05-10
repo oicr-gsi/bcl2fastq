@@ -1,8 +1,8 @@
-##BCL2FastQ Decider
+## BCL2FastQ Decider
 
-Version 1.1.1, SeqWare version 1.1.1-gsi
+Version 1.2
 
-###Overview
+### Overview
 
 This decider launches the [BCL2FastQ (AKA Casava) Workflow](../workflow-casava) to demultiplex and convert BCL files from an Illumina sequencer run to FASTQ format. This decider assumes paired-end reads, so if this is not the case, the read-ends parameter must be used.
 
@@ -13,20 +13,20 @@ The decider operates as follows:
 - creates a SeqWare IUS-LimsKey (a SeqWare object that is used to link LIMS data from provenance providers such as Pinery and SeqWare to SeqWare workflow runs) for each lane and a SeqWare IUS-LimsKey for each sample in the associated lane
 - schedules a separate SeqWare workflow run for each lane and links the workflow run to the appropriate SeqWare IUS-LimsKey(s)
 
-###Compile
+### Compile
 
 ```
 mvn clean install
 ```
 
-###Testing
+### Testing
 
 ```
 mvn clean verify \
 -DskipITs=false \
 -DworkingDirectory=/path/to/tmp/ \
 -DschedulingHost=oozie-node \
--DwebserviceUrl=http://test-seqware-webservice:8080/seqware-webservice-1.1.1-gsi \
+-DwebserviceUrl=http://test-seqware-webservice:8080/seqware-webservice \
 -DprovenanceSettingsPath=/path/to/test-provenance-settings.json \
 -DdbHost=localhost \
 -DdbPort=5432 \
@@ -40,7 +40,7 @@ An example provenance settings file:
   "provider" : "seqware",
   "providerSettings" : {
     "SW_METADATA_METHOD" : "webservice",
-    "SW_REST_URL" : "http://test-seqware-webservice:8080/seqware-webservice-1.1.1-gsi",
+    "SW_REST_URL" : "http://test-seqware-webservice:8080/seqware-webservice",
     "SW_REST_USER" : "user",
     "SW_REST_PASS" : "password"
   }
@@ -49,7 +49,7 @@ An example provenance settings file:
   "provider" : "seqware",
   "providerSettings" : {
     "SW_METADATA_METHOD" : "webservice",
-    "SW_REST_URL" : "http://test-seqware-webservice:8080/seqware-webservice-1.1.1-gsi",
+    "SW_REST_URL" : "http://test-seqware-webservice:8080/seqware-webservice",
     "SW_REST_USER" : "user",
     "SW_REST_PASS" : "password"
   }
@@ -57,11 +57,11 @@ An example provenance settings file:
 
 ```
 
-###Usage
+### Usage
 
 java -jar Decider.jar --wf-accession \<bcl2fastq-workflow-accession\> --provenance-settings /path/to/provenance-settings.json
 
-###Options
+### Options
 
 **Required**
 
@@ -116,6 +116,7 @@ launch-max                               | Integer | The maximum number of workf
 study-to-output-path-csv                 | String (path) | The absolulte path to the "Study To Output Path" CSV file that defines the workflow "output-prefix"
 output-path                              | String (path) | Absolute path of directory to put the final files
 output-folder                            | String (path) | Path to put the final files, relative to output-path
+override-bases-mask              | String              | Override the bases-mask and truncate barcodes to the specified index length. (e.g. 'y\*,i6,y\*')
 
 
 **Note**
@@ -124,7 +125,7 @@ All of the [workflow properties](../workflow-casava) can be overridden by provid
 java -jar /path/to/decider.jar --wf-accession 000000 --provenance-settings /path/to/provenance-settings.json -- --property1 value1 --property2 value2
 ```
 
-##Support
+## Support
 
 For support, please file an issue on the [Github project](https://github.com/oicr-gsi) or send an email to gsi@oicr.on.ca .
 

@@ -14,6 +14,8 @@ import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq2Handler;
 import ca.on.oicr.pde.deciders.data.Bcl2FastqData;
 import ca.on.oicr.pde.deciders.handlers.Bcl2FastqHandler;
 import ca.on.oicr.pde.deciders.handlers.Handler;
+import ca.on.oicr.pde.deciders.data.BasesMask;
+import ca.on.oicr.pde.deciders.data.SampleProvenanceWithCustomBarcode;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -31,8 +33,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -88,11 +92,15 @@ public class Bcl2fastqDecider {
     private EnumMap<FileProvenanceFilter, Set<String>> includeFilters = new EnumMap<>(FileProvenanceFilter.class);
     private EnumMap<FileProvenanceFilter, Set<String>> excludeFilters = new EnumMap<>(FileProvenanceFilter.class);
 
+    private BasesMask overrideBasesMask;
+
     private List<String> overrides;
 
     private final List<WorkflowRun> validWorkflowRuns = new ArrayList<>();
     private final List<WorkflowRun> invalidWorkflowRuns = new ArrayList<>();
     private final List<WorkflowRun> scheduledWorkflowRuns = new ArrayList<>();
+
+    private final List<String> errors = new ArrayList<>();
 
     public Bcl2fastqDecider() {
         //add workflow handlers
@@ -294,6 +302,14 @@ public class Bcl2fastqDecider {
         this.excludeFilters = excludeFilters;
     }
 
+    public BasesMask getOverrideBasesMask() {
+        return this.overrideBasesMask;
+    }
+
+    public void setOverrideBasesMask(BasesMask basesMask) {
+        this.overrideBasesMask = basesMask;
+    }
+
     public void setProvenanceClient(ExtendedProvenanceClient provenanceClient) {
         this.provenanceClient = provenanceClient;
     }
@@ -320,6 +336,10 @@ public class Bcl2fastqDecider {
 
     public List<WorkflowRun> getScheduledWorkflowRuns() {
         return scheduledWorkflowRuns;
+    }
+
+    public List<String> getErrors() {
+        return errors;
     }
 
     public List<WorkflowRun> run() {
@@ -604,9 +624,23 @@ public class Bcl2fastqDecider {
                 break;
             }
 
+            List<ProvenanceWithProvider<SampleProvenance>> samples;
+            if (overrideBasesMask != null) {
+                try {
+                    samples = applyBasesMask(laneNameToSampleProvenance.get(laneName), overrideBasesMask);
+                } catch (DataMismatchException ex) {
+                    String error = MessageFormat.format("Error while generating workflow run for lane = [{0}], errors:\n{1}", laneName, ex);
+                    log.error(error);
+                    errors.add(error);
+                    continue;
+                }
+            } else {
+                samples = laneNameToSampleProvenance.get(laneName);
+            }
+
             Bcl2FastqData data = new Bcl2FastqData(
                     Iterables.getOnlyElement(laneNameToLaneProvenance.get(laneName)),
-                    laneNameToSampleProvenance.get(laneName));
+                    samples);
             data.setProperties(ImmutableMap.of("output_prefix", outputPath, "output_dir", outputFolder));
             data.setMetadataWriteback(getDoMetadataWriteback());
             data.setStudyToOutputPathConfig(studyToOutputPathConfig);
@@ -712,5 +746,40 @@ public class Bcl2fastqDecider {
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    private List<ProvenanceWithProvider<SampleProvenance>> applyBasesMask(List<ProvenanceWithProvider<SampleProvenance>> samples, BasesMask basesMask) throws DataMismatchException {
+        List<ProvenanceWithProvider<SampleProvenance>> samplesWithCustomBarcodes = new ArrayList<>();
+        for (ProvenanceWithProvider<SampleProvenance> pwp : samples) {
+            SampleProvenance sp = pwp.getProvenance();
+            List<String> barcodes = Arrays.asList(sp.getIusTag().split("-"));
+            String newBarcode;
+            if (barcodes.size() == 1) {
+                String barcode = barcodes.get(0);
+                Integer newBarcodeLength = basesMask.getIndexOneIncludeLength();
+                if (newBarcodeLength == null || newBarcodeLength > barcode.length()) {
+                    throw new DataMismatchException("Bases mask barcode length [" + newBarcodeLength + "] is longer than barcode [" + barcode + "]");
+                }
+                newBarcode = barcode.substring(0, newBarcodeLength);
+            } else if (barcodes.size() == 2) {
+                String barcodeOne = barcodes.get(0);
+                String barcodeTwo = barcodes.get(1);
+                Integer newBarcodeOneLength = basesMask.getIndexOneIncludeLength();
+                Integer newBarcodeTwoLength = basesMask.getIndexTwoIncludeLength();
+                if (newBarcodeOneLength == null || newBarcodeTwoLength == null || newBarcodeOneLength > barcodeOne.length() || newBarcodeTwoLength > barcodeTwo.length()) {
+                    throw new DataMismatchException("Bases mask barcode length [" + newBarcodeOneLength + "-" + newBarcodeTwoLength + "] is longer than barcode [" + barcodeOne + "-" + barcodeTwo + "]");
+                }
+                String newBarcodeOne = barcodeOne.substring(0, newBarcodeOneLength);
+                String newBarcodeTwo = barcodeTwo.substring(0, newBarcodeTwoLength);
+                newBarcode = newBarcodeOne + "-" + newBarcodeTwo;
+            } else {
+                throw new DataMismatchException("No barcode found for sample [" + sp.getSampleName() + "]");
+            }
+
+            SampleProvenanceWithCustomBarcode sampleProvenanceWithCustomBarcode = new SampleProvenanceWithCustomBarcode(sp, newBarcode);
+            ProvenanceWithProvider<SampleProvenance> newPwp = new ProvenanceWithProvider(pwp.getProvider(), sampleProvenanceWithCustomBarcode);
+            samplesWithCustomBarcodes.add(newPwp);
+        }
+        return samplesWithCustomBarcodes;
     }
 }

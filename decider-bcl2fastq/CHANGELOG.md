@@ -1,3 +1,6 @@
+## 1.2
+- [GP-1516](https://jira.oicr.on.ca/browse/GP-1516)
+  - Trim barcode when index was sequenced with less cycles
 ## 1.1.1 - 2017-07-05
 - [GP-1224](https://jira.oicr.on.ca/browse/GP-1224) - Filter by sample name + demultiplex single sample mode
 - Update to pipedev 2.2

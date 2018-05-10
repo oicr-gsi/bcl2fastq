@@ -7,6 +7,7 @@ import ca.on.oicr.gsi.provenance.MultiThreadedDefaultProvenanceClient;
 import ca.on.oicr.gsi.provenance.ProviderLoader;
 import ca.on.oicr.gsi.provenance.SampleProvenanceProvider;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
+import ca.on.oicr.pde.deciders.data.BasesMask;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -68,6 +69,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<String> beforeDateOpt;
     private final OptionSpec<String> includeInstrumentFilterOpt;
     private final OptionSpec<String> excludeInstrumentFilterOpt;
+    private final OptionSpec<String> overrideBasesMaskOpt;
     private final NonOptionArgumentSpec<String> nonOptionSpec;
     private final Bcl2fastqDecider decider;
 
@@ -170,6 +172,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             includeFilterOpts.put(filter, parser.accepts("include-" + filter.toString()).withRequiredArg().ofType(String.class));
             excludeFilterOpts.put(filter, parser.accepts("exclude-" + filter.toString()).withRequiredArg().ofType(String.class));
         }
+
+        overrideBasesMaskOpt = parser.accepts("override-bases-mask", "Override the bases-mask and truncate barcodes to the specified index length.").withRequiredArg();
 
         nonOptionSpec = parser.nonOptions(WorkflowScheduler.OVERRIDE_INI_DESC);
     }
@@ -325,6 +329,10 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             decider.setExcludeInstrumentNameFilter(ImmutableSet.copyOf(options.valuesOf(excludeInstrumentFilterOpt)));
         }
 
+        if (options.has(overrideBasesMaskOpt)) {
+            decider.setOverrideBasesMask(BasesMask.fromString(options.valueOf(overrideBasesMaskOpt)));
+        }
+
         decider.setOverrides(options.valuesOf(nonOptionSpec));
 
         return rv;
@@ -356,7 +364,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         }
 
         //calculate exit code
-        if (!decider.getInvalidWorkflowRuns().isEmpty()) {
+        if (!decider.getInvalidWorkflowRuns().isEmpty() || !decider.getErrors().isEmpty()) {
             //return exit code 91
             return new ReturnValue(ReturnValue.ExitStatus.RUNNERERR);
         } else if (!decider.getValidWorkflowRuns().isEmpty() && decider.getValidWorkflowRuns().size() < decider.getScheduledWorkflowRuns().size()) {

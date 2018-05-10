@@ -1,5 +1,6 @@
 package ca.on.oicr.pde.deciders;
 
+import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
 import ca.on.oicr.gsi.provenance.FileProvenanceFilter;
 import ca.on.oicr.gsi.provenance.LaneProvenanceProvider;
 import ca.on.oicr.gsi.provenance.MultiThreadedDefaultProvenanceClient;
@@ -11,6 +12,7 @@ import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.client.MetadataBackedSeqwareClient;
 import ca.on.oicr.pde.client.SeqwareClient;
+import ca.on.oicr.pde.deciders.data.BasesMask;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -31,9 +33,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
-import lombok.Builder;
-import lombok.Singular;
-import lombok.Value;
 import net.sourceforge.seqware.common.metadata.Metadata;
 import net.sourceforge.seqware.common.metadata.MetadataInMemory;
 import net.sourceforge.seqware.common.model.Workflow;
@@ -637,6 +636,89 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 8); //2+3+3
+    }
+
+    @Test
+    public void overrideBaseMaskTruncationTest() {
+        bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("Y*,I4,Y*"));
+        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
+
+        //run on all lanes
+        assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 4);
+
+        bcl2fastqDecider.getValidWorkflowRuns().stream().forEach(wr -> {
+            assertEquals(wr.getIniFile().get("use_bases_mask"), "y*,I4n*,y*");
+            ((WorkflowRunV2) wr).getBcl2FastqData().getSps().forEach((sp) -> {
+                assertEquals(sp.getIusTag().length(), 4);
+            });
+        });
+    }
+
+    @Test
+    public void overrideBaseMaskInvalidBasesMaskTest() {
+        bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("Y*,I9,Y*"));
+        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+    }
+
+    @Test
+    public void overrideBaseMaskDuplicateBarcodesTest() {
+        SampleProvenanceImpl.SampleProvenanceImplBuilder sp1 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("HiSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_9998")
+                .sampleName("TEST_9998_001")
+                .iusTag("AAAAAAAT")
+                .sampleAttributes(sp1Attrs)
+                .skip(false)
+                .provenanceId("2")
+                .version("version")
+                .lastModified(expectedDate);
+
+        SampleProvenanceImpl.SampleProvenanceImplBuilder sp2 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("HiSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_9999")
+                .sampleName("TEST_9999_001")
+                .iusTag("AAAAAAAG")
+                .sampleAttributes(sp1Attrs)
+                .skip(false)
+                .provenanceId("3")
+                .version("version")
+                .lastModified(expectedDate);
+
+        List<SampleProvenance> currentList = Lists.newArrayList(spp.getSampleProvenance());
+        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp1.build(), sp2.build()))));
+
+        EnumMap<FileProvenanceFilter, Set<String>> filters = new EnumMap<>(FileProvenanceFilter.class);
+        filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
+        bcl2fastqDecider.setIncludeFilters(filters);
+
+        //should produce invalid workflow run with duplicate barcode "AAAAAAA"
+        bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("Y*,I7,Y*"));
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
+
+        bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("Y*,I8,Y*"));
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
     }
 
     private Collection<FileProvenance> getFpsForCurrentWorkflow() {
