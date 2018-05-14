@@ -1,6 +1,5 @@
 package ca.on.oicr.pde.deciders;
 
-import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
 import ca.on.oicr.gsi.provenance.FileProvenanceFilter;
 import ca.on.oicr.gsi.provenance.LaneProvenanceProvider;
 import ca.on.oicr.gsi.provenance.MultiThreadedDefaultProvenanceClient;
@@ -13,6 +12,7 @@ import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.client.MetadataBackedSeqwareClient;
 import ca.on.oicr.pde.client.SeqwareClient;
 import ca.on.oicr.pde.deciders.data.BasesMask;
+import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -498,11 +498,12 @@ public class Bcl2fastqDeciderTest {
         List<SampleProvenance> currentList = Lists.newArrayList(spp.getSampleProvenance());
         when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
 
-        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.run().size(), 1);  //lane 2 is okay
+        assertEquals(bcl2fastqDecider.getErrors().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
-        assertEquals(getFpsForCurrentWorkflow().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2); //(1+1)
 
         //correct the barcode and schedule
         sp.iusTag("TTTTTTTT");
@@ -511,7 +512,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
-        assertEquals(getFpsForCurrentWorkflow().size(), 5);
+        assertEquals(getFpsForCurrentWorkflow().size(), 5); //2+(1+2)
     }
 
     @Test
@@ -536,29 +537,21 @@ public class Bcl2fastqDeciderTest {
 
         EnumMap<FileProvenanceFilter, Set<String>> filters = new EnumMap<>(FileProvenanceFilter.class);
         filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
+
+        //there is a collison in index 1, nothing should be scheduled
         bcl2fastqDecider.setIncludeFilters(filters);
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
-        filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_0001_001"));
-        bcl2fastqDecider.setIncludeFilters(filters);
-        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
-        assertEquals(bcl2fastqDecider.run().size(), 1);
-        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
-        assertEquals(getFpsForCurrentWorkflow().size(), 2);
-
-        filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_9999_001"));
-        bcl2fastqDecider.setIncludeFilters(filters);
-        bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
-        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
-        assertEquals(bcl2fastqDecider.run().size(), 1);
-        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        //fix the barcode
+        sp.iusTag("AAAAAAAT-TTTTTTTT");
+        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
+        assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
         assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
     }
@@ -602,11 +595,15 @@ public class Bcl2fastqDeciderTest {
         filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
         bcl2fastqDecider.setIncludeFilters(filters);
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getErrors().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
+        //correct collision (AAAAAAAA vs. AAAAAAAA-TTTTTTTT)
+        sp2.iusTag("AAAAAAAG-TTTTTTTT");
+        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp1.build(), sp2.build()))));
         filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_9999_001"));
         bcl2fastqDecider.setIncludeFilters(filters);
         bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
@@ -614,7 +611,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
-        assertEquals(getFpsForCurrentWorkflow().size(), 2);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2); //(1+1)
 
         filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_0001_001", "TEST_9998_001"));
         bcl2fastqDecider.setIncludeFilters(filters);
@@ -623,7 +620,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
-        assertEquals(getFpsForCurrentWorkflow().size(), 5); //2+3
+        assertEquals(getFpsForCurrentWorkflow().size(), 5); //2+(1+2)
 
         filters.remove(FileProvenanceFilter.sample);
         EnumMap<FileProvenanceFilter, Set<String>> excludeFilters = new EnumMap<>(FileProvenanceFilter.class);
@@ -635,7 +632,17 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
-        assertEquals(getFpsForCurrentWorkflow().size(), 8); //2+3+3
+        assertEquals(getFpsForCurrentWorkflow().size(), 8); //5+(1+2)
+
+        //force rerun everything together
+        bcl2fastqDecider.setIncludeFilters(filters);
+        bcl2fastqDecider.setExcludeFilters(new EnumMap<>(FileProvenanceFilter.class));
+        bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
+        assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 13); //8+(1+2)+(1+1)
     }
 
     @Test
@@ -662,10 +669,18 @@ public class Bcl2fastqDeciderTest {
     public void overrideBaseMaskInvalidBasesMaskTest() {
         bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("Y*,I9,Y*"));
         bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
-        assertEquals(bcl2fastqDecider.run().size(), 0);
-        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getErrors().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
         assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+
+        bcl2fastqDecider.getValidWorkflowRuns().stream().forEach(wr -> {
+            assertEquals(wr.getIniFile().get("use_bases_mask"), "y*,I8n*,y*");
+            ((WorkflowRunV2) wr).getBcl2FastqData().getSps().forEach((sp) -> {
+                assertEquals(sp.getIusTag().length(), 8);
+            });
+        });
     }
 
     @Test
@@ -710,15 +725,85 @@ public class Bcl2fastqDeciderTest {
         //should produce invalid workflow run with duplicate barcode "AAAAAAA"
         bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("Y*,I7,Y*"));
         assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getErrors().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("Y*,I8,Y*"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 4); //(1+3)
+    }
+
+    @Test
+    public void singleSampleNoBarcodeTest() {
+        LaneProvenance lp1 = LaneProvenanceImpl.builder()
+                .sequencerRunName("RUN_0003")
+                .laneNumber("1")
+                .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run3/"))
+                .sequencerRunAttribute("instrument_name", ImmutableSortedSet.of("n001"))
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .skip(false)
+                .provenanceId("2_1")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        SampleProvenance sp1 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0003")
+                .studyTitle("TEST_STUDY_2")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("")
+                .sampleAttributes(sp2Attrs)
+                .skip(false)
+                .provenanceId("2")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sp1));
+        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lp1));
+
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getErrors().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2); // 1 + 1
+
+        SampleProvenance sp2 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0003")
+                .studyTitle("TEST_STUDY_2")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0002")
+                .sampleName("TEST_0002_001")
+                .iusTag("A")
+                .sampleAttributes(sp2Attrs)
+                .skip(false)
+                .provenanceId("3")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sp1, sp2));
+
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getErrors().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2); // 1 + 1
     }
 
     private Collection<FileProvenance> getFpsForCurrentWorkflow() {

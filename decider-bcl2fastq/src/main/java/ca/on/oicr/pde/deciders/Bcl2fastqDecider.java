@@ -9,6 +9,7 @@ import ca.on.oicr.gsi.provenance.model.FileProvenance;
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
+import ca.on.oicr.pde.deciders.data.Barcode;
 import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq1Handler;
 import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq2Handler;
 import ca.on.oicr.pde.deciders.data.Bcl2FastqData;
@@ -16,6 +17,7 @@ import ca.on.oicr.pde.deciders.handlers.Bcl2FastqHandler;
 import ca.on.oicr.pde.deciders.handlers.Handler;
 import ca.on.oicr.pde.deciders.data.BasesMask;
 import ca.on.oicr.pde.deciders.data.SampleProvenanceWithCustomBarcode;
+import ca.on.oicr.pde.deciders.utils.Barcodes;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -36,7 +38,6 @@ import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -46,11 +47,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 import net.sourceforge.seqware.common.metadata.Metadata;
 import net.sourceforge.seqware.common.model.Workflow;
 import net.sourceforge.seqware.pipeline.runner.PluginRunner;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -624,33 +627,79 @@ public class Bcl2fastqDecider {
                 break;
             }
 
-            List<ProvenanceWithProvider<SampleProvenance>> samples;
+            List<ProvenanceWithProvider<SampleProvenance>> samples = laneNameToSampleProvenance.get(laneName);
             if (overrideBasesMask != null) {
                 try {
-                    samples = applyBasesMask(laneNameToSampleProvenance.get(laneName), overrideBasesMask);
+                    samples = applyBasesMask(samples, overrideBasesMask);
                 } catch (DataMismatchException ex) {
-                    String error = MessageFormat.format("Error while generating workflow run for lane = [{0}], errors:\n{1}", laneName, ex);
-                    log.error(error);
-                    errors.add(error);
+                    addError("Error while generating workflow run for lane = [{0}], errors:\n{1}", laneName, ex.toString());
                     continue;
                 }
-            } else {
-                samples = laneNameToSampleProvenance.get(laneName);
             }
 
-            Bcl2FastqData data = new Bcl2FastqData(
-                    Iterables.getOnlyElement(laneNameToLaneProvenance.get(laneName)),
-                    samples);
-            data.setProperties(ImmutableMap.of("output_prefix", outputPath, "output_dir", outputFolder));
-            data.setMetadataWriteback(getDoMetadataWriteback());
-            data.setStudyToOutputPathConfig(studyToOutputPathConfig);
+            //get all barcodes in lane
+            Set<String> unsupportedBarcodeStrings = new HashSet<>();
+            List<Barcode> laneBarcodes = samples.stream()
+                    .map(ProvenanceWithProvider::getProvenance)
+                    .map(SampleProvenance::getIusTag)
+                    .map(barcodeString -> {
+                        try {
+                            return Barcode.fromString(barcodeString);
+                        } catch (DataMismatchException ex) {
+                            unsupportedBarcodeStrings.add(barcodeString);
+                            return null;
+                        }
+                    })
+                    .collect(Collectors.toList());
+            if (!unsupportedBarcodeStrings.isEmpty()) {
+                addError("Error while generating workflow run for lane = [{0}], unsupported barcode(s):\n{1}", laneName, unsupportedBarcodeStrings.toString());
+                continue;
+            }
 
-            WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode(), getIsDemultiplexSingleSampleMode());
-            if (wr.getErrors().isEmpty()) {
-                validWorkflowRuns.add(wr);
-            } else {
-                invalidWorkflowRuns.add(wr);
-                log.error("Error while generating workflow run for lane = [{}], errors:\n{}", laneName, Joiner.on("\n").join(wr.getErrors()));
+            //check for barcode collisions
+            List<Pair<Barcode, Barcode>> collisions = Barcodes.getCollisions(laneBarcodes, 1);
+            if (collisions.size() > 0) {
+                addError("Error while generating workflow run for lane = [{0}], barcode collision(s):\n{1}", laneName, collisions.toString());
+                continue;
+            }
+
+            //more than one sample in the lane, demultiplexing must be done for all workflow runs scheduled for this lane
+            boolean doDemulitplexing = getIsDemultiplexSingleSampleMode();
+            if (samples.size() > 1) {
+                doDemulitplexing = true;
+            }
+
+            //todo, needs to support dual index of different length
+            Map<String, List<ProvenanceWithProvider<SampleProvenance>>> samplesGroupedByBarcodeLength = samples.stream()
+                    .collect(Collectors.groupingBy(s -> {
+                        try {
+                            return Barcode.fromString(s.getProvenance().getIusTag()).getLengthString();
+                        } catch (DataMismatchException ex) {
+                            //this error should have been handled already
+                            throw new RuntimeException(ex);
+                        }
+                    }));
+
+            for (Entry<String, List<ProvenanceWithProvider<SampleProvenance>>> e : samplesGroupedByBarcodeLength.entrySet()) {
+                log.info("Generating workflow run for {} barcode length = {}", laneName, e.getKey());
+
+                List<ProvenanceWithProvider<SampleProvenance>> samplesByBarcodeLength = e.getValue();
+
+                Bcl2FastqData data = new Bcl2FastqData(
+                        Iterables.getOnlyElement(laneNameToLaneProvenance.get(laneName)),
+                        samplesByBarcodeLength);
+                data.setProperties(ImmutableMap.of("output_prefix", outputPath, "output_dir", outputFolder));
+                data.setMetadataWriteback(getDoMetadataWriteback());
+                data.setStudyToOutputPathConfig(studyToOutputPathConfig);
+
+                WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode(), doDemulitplexing);
+
+                if (wr.getErrors().isEmpty()) {
+                    validWorkflowRuns.add(wr);
+                } else {
+                    invalidWorkflowRuns.add(wr);
+                    addError("Error while generating workflow run for lane = [{0}], errors:\n{1}", laneName, Joiner.on("\n").join(wr.getErrors()));
+                }
             }
         }
 
@@ -752,34 +801,18 @@ public class Bcl2fastqDecider {
         List<ProvenanceWithProvider<SampleProvenance>> samplesWithCustomBarcodes = new ArrayList<>();
         for (ProvenanceWithProvider<SampleProvenance> pwp : samples) {
             SampleProvenance sp = pwp.getProvenance();
-            List<String> barcodes = Arrays.asList(sp.getIusTag().split("-"));
-            String newBarcode;
-            if (barcodes.size() == 1) {
-                String barcode = barcodes.get(0);
-                Integer newBarcodeLength = basesMask.getIndexOneIncludeLength();
-                if (newBarcodeLength == null || newBarcodeLength > barcode.length()) {
-                    throw new DataMismatchException("Bases mask barcode length [" + newBarcodeLength + "] is longer than barcode [" + barcode + "]");
-                }
-                newBarcode = barcode.substring(0, newBarcodeLength);
-            } else if (barcodes.size() == 2) {
-                String barcodeOne = barcodes.get(0);
-                String barcodeTwo = barcodes.get(1);
-                Integer newBarcodeOneLength = basesMask.getIndexOneIncludeLength();
-                Integer newBarcodeTwoLength = basesMask.getIndexTwoIncludeLength();
-                if (newBarcodeOneLength == null || newBarcodeTwoLength == null || newBarcodeOneLength > barcodeOne.length() || newBarcodeTwoLength > barcodeTwo.length()) {
-                    throw new DataMismatchException("Bases mask barcode length [" + newBarcodeOneLength + "-" + newBarcodeTwoLength + "] is longer than barcode [" + barcodeOne + "-" + barcodeTwo + "]");
-                }
-                String newBarcodeOne = barcodeOne.substring(0, newBarcodeOneLength);
-                String newBarcodeTwo = barcodeTwo.substring(0, newBarcodeTwoLength);
-                newBarcode = newBarcodeOne + "-" + newBarcodeTwo;
-            } else {
-                throw new DataMismatchException("No barcode found for sample [" + sp.getSampleName() + "]");
-            }
-
-            SampleProvenanceWithCustomBarcode sampleProvenanceWithCustomBarcode = new SampleProvenanceWithCustomBarcode(sp, newBarcode);
+            Barcode newBarcode = Barcodes.applyBasesMask(Barcode.fromString(sp.getIusTag()), basesMask);
+            SampleProvenanceWithCustomBarcode sampleProvenanceWithCustomBarcode = new SampleProvenanceWithCustomBarcode(sp, newBarcode.toString());
             ProvenanceWithProvider<SampleProvenance> newPwp = new ProvenanceWithProvider(pwp.getProvider(), sampleProvenanceWithCustomBarcode);
             samplesWithCustomBarcodes.add(newPwp);
         }
         return samplesWithCustomBarcodes;
     }
+
+    private void addError(String message, String... args) {
+        String error = MessageFormat.format(message, (Object[]) args);
+        log.error(error);
+        errors.add(error);
+    }
+
 }

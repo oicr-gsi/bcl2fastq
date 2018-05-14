@@ -360,6 +360,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             decider.run();
         } catch (Exception e) {
             log.error(e);
+            e.printStackTrace();
             return new ReturnValue(ReturnValue.ExitStatus.RUNNERERR);
         }
 
