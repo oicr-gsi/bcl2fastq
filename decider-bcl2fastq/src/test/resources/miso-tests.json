@@ -45,6 +45,23 @@
                 "--include-lane": "180420_E00389_0182_AHKTJLCCXY_lane_1",
                 "--override-bases-mask": "y*,i8,y*"
             }
+        },
+        {
+            "id": "Mixed barcode length",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "170627_D00343_0178_ACB0F2ANXX_lane_8"
+            }
+        },
+        {
+            "id": "Mixed barcode length with override bases mask",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "170627_D00343_0178_ACB0F2ANXX_lane_8",
+                "--override-bases-mask": "y*,i8,y*"
+            }
         }
     ]
 }
