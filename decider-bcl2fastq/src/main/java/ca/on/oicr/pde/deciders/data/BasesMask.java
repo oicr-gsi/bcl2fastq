@@ -1,5 +1,6 @@
 package ca.on.oicr.pde.deciders.data;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
@@ -124,6 +125,59 @@ public class BasesMask {
         return sb.toString();
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 83 * hash + Objects.hashCode(this.readOneIncludeLength);
+        hash = 83 * hash + Objects.hashCode(this.readOneIgnoreLength);
+        hash = 83 * hash + Objects.hashCode(this.indexOneIncludeLength);
+        hash = 83 * hash + Objects.hashCode(this.indexOneIgnoreLength);
+        hash = 83 * hash + Objects.hashCode(this.indexTwoIncludeLength);
+        hash = 83 * hash + Objects.hashCode(this.indexTwoIgnoreLength);
+        hash = 83 * hash + Objects.hashCode(this.readTwoIncludeLength);
+        hash = 83 * hash + Objects.hashCode(this.readTwoIgnoreLength);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final BasesMask other = (BasesMask) obj;
+        if (!Objects.equals(this.readOneIncludeLength, other.readOneIncludeLength)) {
+            return false;
+        }
+        if (!Objects.equals(this.readOneIgnoreLength, other.readOneIgnoreLength)) {
+            return false;
+        }
+        if (!Objects.equals(this.indexOneIncludeLength, other.indexOneIncludeLength)) {
+            return false;
+        }
+        if (!Objects.equals(this.indexOneIgnoreLength, other.indexOneIgnoreLength)) {
+            return false;
+        }
+        if (!Objects.equals(this.indexTwoIncludeLength, other.indexTwoIncludeLength)) {
+            return false;
+        }
+        if (!Objects.equals(this.indexTwoIgnoreLength, other.indexTwoIgnoreLength)) {
+            return false;
+        }
+        if (!Objects.equals(this.readTwoIncludeLength, other.readTwoIncludeLength)) {
+            return false;
+        }
+        if (!Objects.equals(this.readTwoIgnoreLength, other.readTwoIgnoreLength)) {
+            return false;
+        }
+        return true;
+    }
+
     public static BasesMask fromString(String basesMaskString) {
         Pattern p;
 
@@ -149,6 +203,20 @@ public class BasesMask {
             return new BasesMask(m.group(1), null, m.group(2), null, m.group(3), null, m.group(4), null);
         }
 
+        p = Pattern.compile("y(\\*|\\d+),i(\\*|\\d+),n(\\*|\\d+),y(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
+        if (p.matcher(basesMaskString).matches()) {
+            Matcher m = p.matcher(basesMaskString);
+            m.find();
+            return new BasesMask(m.group(1), null, m.group(2), null, null, m.group(3), m.group(4), null);
+        }
+
+        p = Pattern.compile("y(\\*|\\d+),n(\\*|\\d+),i(\\*|\\d+),y(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
+        if (p.matcher(basesMaskString).matches()) {
+            Matcher m = p.matcher(basesMaskString);
+            m.find();
+            return new BasesMask(m.group(1), null, null, m.group(2), m.group(3), null, m.group(4), null);
+        }
+
         //single barcode patterns
         p = Pattern.compile("y(\\*|\\d+)n(\\*|\\d+),i(\\*|\\d+)n(\\*|\\d+),y(\\*|\\d+)n(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
         if (p.matcher(basesMaskString).matches()) {
@@ -172,6 +240,71 @@ public class BasesMask {
         }
 
         throw new IllegalArgumentException("Unsupported bases mask string [" + basesMaskString + "]");
+    }
+
+    public static class BasesMaskBuilder {
+
+        private Integer readOneIncludeLength = Integer.MAX_VALUE;
+        private Integer readOneIgnoreLength = null;
+        private Integer indexOneIncludeLength = Integer.MAX_VALUE;
+        private Integer indexOneIgnoreLength = Integer.MAX_VALUE;
+        private Integer indexTwoIncludeLength = null;
+        private Integer indexTwoIgnoreLength = null;
+        private Integer readTwoIncludeLength = Integer.MAX_VALUE;
+        private Integer readTwoIgnoreLength = null;
+
+        public BasesMaskBuilder() {
+        }
+
+        @Override
+        public String toString() {
+            return "BasesMaskBuilder{" + "readOneIncludeLength=" + readOneIncludeLength + ", readOneIgnoreLength=" + readOneIgnoreLength + ", indexOneIncludeLength=" + indexOneIncludeLength + ", indexOneIgnoreLength=" + indexOneIgnoreLength + ", indexTwoIncludeLength=" + indexTwoIncludeLength + ", indexTwoIgnoreLength=" + indexTwoIgnoreLength + ", readTwoIncludeLength=" + readTwoIncludeLength + ", readTwoIgnoreLength=" + readTwoIgnoreLength + '}';
+        }
+
+        public BasesMaskBuilder setReadOneIncludeLength(Integer readOneIncludeLength) {
+            this.readOneIncludeLength = readOneIncludeLength;
+            return this;
+        }
+
+        public BasesMaskBuilder setReadOneIgnoreLength(Integer readOneIgnoreLength) {
+            this.readOneIgnoreLength = readOneIgnoreLength;
+            return this;
+        }
+
+        public BasesMaskBuilder setIndexOneIncludeLength(Integer indexOneIncludeLength) {
+            this.indexOneIncludeLength = indexOneIncludeLength;
+            return this;
+        }
+
+        public BasesMaskBuilder setIndexOneIgnoreLength(Integer indexOneIgnoreLength) {
+            this.indexOneIgnoreLength = indexOneIgnoreLength;
+            return this;
+        }
+
+        public BasesMaskBuilder setIndexTwoIncludeLength(Integer indexTwoIncludeLength) {
+            this.indexTwoIncludeLength = indexTwoIncludeLength;
+            return this;
+        }
+
+        public BasesMaskBuilder setIndexTwoIgnoreLength(Integer indexTwoIgnoreLength) {
+            this.indexTwoIgnoreLength = indexTwoIgnoreLength;
+            return this;
+        }
+
+        public BasesMaskBuilder setReadTwoIncludeLength(Integer readTwoIncludeLength) {
+            this.readTwoIncludeLength = readTwoIncludeLength;
+            return this;
+        }
+
+        public BasesMaskBuilder setReadTwoIgnoreLength(Integer readTwoIgnoreLength) {
+            this.readTwoIgnoreLength = readTwoIgnoreLength;
+            return this;
+        }
+
+        public BasesMask createBasesMask() {
+            return new BasesMask(readOneIncludeLength, readOneIgnoreLength, indexOneIncludeLength, indexOneIgnoreLength, indexTwoIncludeLength, indexTwoIgnoreLength, readTwoIncludeLength, readTwoIgnoreLength);
+        }
+
     }
 
 }
