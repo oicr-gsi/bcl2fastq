@@ -70,6 +70,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<String> includeInstrumentFilterOpt;
     private final OptionSpec<String> excludeInstrumentFilterOpt;
     private final OptionSpec<String> overrideBasesMaskOpt;
+    private final OptionSpec<Integer> minAllowedEditDistance;
     private final NonOptionArgumentSpec<String> nonOptionSpec;
     private final Bcl2fastqDecider decider;
 
@@ -174,6 +175,9 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         }
 
         overrideBasesMaskOpt = parser.accepts("override-bases-mask", "Override the bases-mask and truncate barcodes to the specified index length.").withRequiredArg();
+
+        minAllowedEditDistance = parser.accepts("min-allowed-edit-distance",
+                "The minimum allowed barcode edit distance for sample barcodes within a lane (Default = " + decider.getMinAllowedEditDistance().toString() + ").").withRequiredArg().ofType(Integer.class);
 
         nonOptionSpec = parser.nonOptions(WorkflowScheduler.OVERRIDE_INI_DESC);
     }
@@ -365,7 +369,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         }
 
         //calculate exit code
-        if (!decider.getInvalidWorkflowRuns().isEmpty() || !decider.getErrors().isEmpty()) {
+        if (!decider.getInvalidLanes().isEmpty()) {
             //return exit code 91
             return new ReturnValue(ReturnValue.ExitStatus.RUNNERERR);
         } else if (!decider.getValidWorkflowRuns().isEmpty() && decider.getValidWorkflowRuns().size() < decider.getScheduledWorkflowRuns().size()) {

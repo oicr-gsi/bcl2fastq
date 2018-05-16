@@ -43,7 +43,7 @@ public class Barcode {
 
     public String getLengthString() {
         if (barcodeOne.isEmpty()) {
-            return "0";
+            return "NoIndex";
         } else if (barcodeTwo == null) {
             return Integer.toString(barcodeOne.length());
         } else {
