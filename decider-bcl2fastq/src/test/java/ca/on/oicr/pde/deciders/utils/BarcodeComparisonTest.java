@@ -15,63 +15,87 @@ public class BarcodeComparisonTest {
     }
 
     @Test
-    public void testSomeMethod() throws DataMismatchException {
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAA"), Barcode.fromString("AAAA")), Integer.valueOf(0));
+    public void calculateEditDistanceTest() throws DataMismatchException {
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAA"), Barcode.fromString("AAAA")), Integer.valueOf(0));
 
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAA"), Barcode.fromString("AAAT")), Integer.valueOf(1));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAA"), Barcode.fromString("AAAT")), Integer.valueOf(1));
 
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAA"), Barcode.fromString("AAAAT")), Integer.valueOf(1));
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAAT"), Barcode.fromString("AAAA")), Integer.valueOf(1));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAA"), Barcode.fromString("AAAAT")), Integer.valueOf(1));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAAT"), Barcode.fromString("AAAA")), Integer.valueOf(1));
 
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAA"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(4));
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAAA")), Integer.valueOf(4));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("ATCGT"), Barcode.fromString("TATCG")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("TATCG"), Barcode.fromString("ATCGT")), Integer.valueOf(2));
 
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(0));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("ATCGT"), Barcode.fromString("TATCGG")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("TATCGG"), Barcode.fromString("ATCGT")), Integer.valueOf(2));
 
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAA-TTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(2));
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAA-TTT")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("ATCGT-AAAAA"), Barcode.fromString("TATCGG-AAAAA")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("TATCGG-AAAAA"), Barcode.fromString("ATCGT-AAAAA")), Integer.valueOf(2));
 
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AA-TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(2));
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AA-TTTT")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAAA-ATCGT"), Barcode.fromString("AAAAA-TATCGG")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAAA-TATCGG"), Barcode.fromString("AAAAA-ATCGT")), Integer.valueOf(2));
 
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("A-TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(3));
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("A-TTTT")), Integer.valueOf(3));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAA"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(4));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAAA")), Integer.valueOf(4));
 
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(8));
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("TTTT")), Integer.valueOf(8));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(0));
 
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAT-TTTA"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(2));
-        assertEquals(Barcodes.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAAT-TTTA")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAA-TTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAA-TTT")), Integer.valueOf(2));
+
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AA-TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AA-TTTT")), Integer.valueOf(2));
+
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("A-TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(3));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("A-TTTT")), Integer.valueOf(3));
+
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(8));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("TTTT")), Integer.valueOf(8));
+
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAT-TTTA"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateEditDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAAT-TTTA")), Integer.valueOf(2));
     }
 
     @Test
-    public void testSomeMethod2() throws DataMismatchException {
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAA"), Barcode.fromString("AAAA")), Integer.valueOf(0));
+    public void calculateTruncatedHammingDistanceTest() throws DataMismatchException {
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAA"), Barcode.fromString("AAAA")), Integer.valueOf(0));
 
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAA"), Barcode.fromString("AAAT")), Integer.valueOf(1));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAA"), Barcode.fromString("AAAT")), Integer.valueOf(1));
 
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAA"), Barcode.fromString("AAAAT")), Integer.valueOf(0));
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAAT"), Barcode.fromString("AAAA")), Integer.valueOf(1));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAA"), Barcode.fromString("AAAAT")), Integer.valueOf(0));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAAT"), Barcode.fromString("AAAA")), Integer.valueOf(1));
 
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAA"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(0));
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAAA")), Integer.valueOf(4));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("ATCGT"), Barcode.fromString("TATCG")), Integer.valueOf(5));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("TATCG"), Barcode.fromString("ATCGT")), Integer.valueOf(5));
 
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(0));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("ATCGT"), Barcode.fromString("TATCGG")), Integer.valueOf(5));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("TATCGG"), Barcode.fromString("ATCGT")), Integer.valueOf(6));
 
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAA-TTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(0));
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAA-TTT")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("ATCGT-AAAAA"), Barcode.fromString("TATCGG-AAAAA")), Integer.valueOf(5));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("TATCGG-AAAAA"), Barcode.fromString("ATCGT-AAAAA")), Integer.valueOf(6));
 
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AA-TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(0));
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AA-TTTT")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAAA-ATCGT"), Barcode.fromString("AAAAA-TATCGG")), Integer.valueOf(5));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAAA-TATCGG"), Barcode.fromString("AAAAA-ATCGT")), Integer.valueOf(6));
 
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("A-TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(0));
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("A-TTTT")), Integer.valueOf(3));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAA"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(0));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAAA")), Integer.valueOf(4));
 
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(4));
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("TTTT")), Integer.valueOf(8));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(0));
 
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAT-TTTA"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(2));
-        assertEquals(Barcodes.calculateSimilarity(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAAT-TTTA")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAA-TTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(0));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAA-TTT")), Integer.valueOf(2));
+
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AA-TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(0));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AA-TTTT")), Integer.valueOf(2));
+
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("A-TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(0));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("A-TTTT")), Integer.valueOf(3));
+
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("TTTT"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(4));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("TTTT")), Integer.valueOf(8));
+
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAT-TTTA"), Barcode.fromString("AAAA-TTTT")), Integer.valueOf(2));
+        assertEquals(BarcodeComparison.calculateTruncatedHammingDistance(Barcode.fromString("AAAA-TTTT"), Barcode.fromString("AAAT-TTTA")), Integer.valueOf(2));
     }
 
 }
