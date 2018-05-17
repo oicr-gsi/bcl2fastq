@@ -97,7 +97,7 @@ public class Bcl2fastqDecider {
     private EnumMap<FileProvenanceFilter, Set<String>> includeFilters = new EnumMap<>(FileProvenanceFilter.class);
     private EnumMap<FileProvenanceFilter, Set<String>> excludeFilters = new EnumMap<>(FileProvenanceFilter.class);
 
-    private BasesMask overrideBasesMask;
+    private BasesMask overrideRunBasesMask;
 
     private List<String> overrides;
 
@@ -307,12 +307,12 @@ public class Bcl2fastqDecider {
         this.excludeFilters = excludeFilters;
     }
 
-    public BasesMask getOverrideBasesMask() {
-        return this.overrideBasesMask;
+    public BasesMask getOverrideRunBasesMask() {
+        return this.overrideRunBasesMask;
     }
 
-    public void setOverrideBasesMask(BasesMask basesMask) {
-        this.overrideBasesMask = basesMask;
+    public void setOverrideRunBasesMask(BasesMask basesMask) {
+        this.overrideRunBasesMask = basesMask;
     }
 
     public Integer getMinAllowedEditDistance() {
@@ -638,9 +638,9 @@ public class Bcl2fastqDecider {
             List<ProvenanceWithProvider<SampleProvenance>> samples = laneNameToSampleProvenance.get(laneName);
 
             //use overrideBasesMask or runBasesMask to calculate the sequenced barcodes
-            if (overrideBasesMask != null) {
+            if (overrideRunBasesMask != null) {
                 try {
-                    samples = applyBasesMask(samples, overrideBasesMask);
+                    samples = applyBasesMask(samples, overrideRunBasesMask);
                 } catch (DataMismatchException ex) {
                     addInvalidLane("Error while generating workflow run(s) for lane = [{0}], errors:\n{1}", laneName, ex.toString());
                     continue;
@@ -852,8 +852,8 @@ public class Bcl2fastqDecider {
                 basesMask = null;
             } else {
                 try {
-                    if (overrideBasesMask != null) {
-                        basesMask = BarcodeAndBasesMask.calculateBasesMask(workflowRunBarcodes, overrideBasesMask);
+                    if (overrideRunBasesMask != null) {
+                        basesMask = BarcodeAndBasesMask.calculateBasesMask(workflowRunBarcodes, overrideRunBasesMask);
                     } else {
                         basesMask = BarcodeAndBasesMask.calculateBasesMask(workflowRunBarcodes);
                     }

@@ -648,7 +648,7 @@ public class Bcl2fastqDeciderTest {
 
     @Test
     public void overrideBaseMaskTruncationTest() {
-        bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("Y*,I4,Y*"));
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromString("Y*,I4,Y*"));
         bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
 
         //run on all lanes
@@ -668,7 +668,7 @@ public class Bcl2fastqDeciderTest {
 
     @Test
     public void overrideBaseMaskInvalidBasesMaskTest() {
-        bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("Y*,I9,Y*"));
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromString("Y*,I9,Y*"));
         bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
         assertEquals(bcl2fastqDecider.run().size(), 2);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
@@ -723,14 +723,14 @@ public class Bcl2fastqDeciderTest {
         bcl2fastqDecider.setIncludeFilters(filters);
 
         //should produce invalid workflow run with barcode collisions
-        bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("Y*,I7,Y*"));
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromString("Y*,I7,Y*"));
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
-        bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("Y*,I8,Y*"));
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromString("Y*,I8,Y*"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
@@ -967,7 +967,7 @@ public class Bcl2fastqDeciderTest {
 
         bcl2fastqDecider.setDisableRunCompleteCheck(true);
         bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
-        bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("y*,i*,i*,y*"));
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromString("y*,i*,i*,y*"));
         assertEquals(bcl2fastqDecider.run().size(), 5);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 5);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 5);

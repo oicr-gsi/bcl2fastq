@@ -69,8 +69,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<String> beforeDateOpt;
     private final OptionSpec<String> includeInstrumentFilterOpt;
     private final OptionSpec<String> excludeInstrumentFilterOpt;
-    private final OptionSpec<String> overrideBasesMaskOpt;
     private final OptionSpec<Integer> minAllowedEditDistance;
+    private final OptionSpec<String> overrideRunBasesMaskOpt;
     private final NonOptionArgumentSpec<String> nonOptionSpec;
     private final Bcl2fastqDecider decider;
 
@@ -174,7 +174,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             excludeFilterOpts.put(filter, parser.accepts("exclude-" + filter.toString()).withRequiredArg().ofType(String.class));
         }
 
-        overrideBasesMaskOpt = parser.accepts("override-bases-mask", "Override the bases-mask and truncate barcodes to the specified index length.").withRequiredArg();
+        overrideRunBasesMaskOpt = parser.accepts("override-run-bases-mask", "Override the run bases-mask and truncate barcodes to the specified index length.").withRequiredArg();
 
         minAllowedEditDistance = parser.accepts("min-allowed-edit-distance",
                 "The minimum allowed barcode edit distance for sample barcodes within a lane (Default = " + decider.getMinAllowedEditDistance().toString() + ").").withRequiredArg().ofType(Integer.class);
@@ -333,8 +333,9 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             decider.setExcludeInstrumentNameFilter(ImmutableSet.copyOf(options.valuesOf(excludeInstrumentFilterOpt)));
         }
 
-        if (options.has(overrideBasesMaskOpt)) {
-            decider.setOverrideBasesMask(BasesMask.fromString(options.valueOf(overrideBasesMaskOpt)));
+        if (options.has(overrideRunBasesMaskOpt)) {
+            decider.setOverrideRunBasesMask(BasesMask.fromString(options.valueOf(overrideRunBasesMaskOpt)));
+        }
         }
 
         decider.setOverrides(options.valuesOf(nonOptionSpec));

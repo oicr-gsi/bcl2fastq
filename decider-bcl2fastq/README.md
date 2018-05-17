@@ -116,7 +116,7 @@ launch-max                               | Integer | The maximum number of workf
 study-to-output-path-csv                 | String (path) | The absolulte path to the "Study To Output Path" CSV file that defines the workflow "output-prefix"
 output-path                              | String (path) | Absolute path of directory to put the final files
 output-folder                            | String (path) | Path to put the final files, relative to output-path
-override-bases-mask              | String              | Override the bases-mask and truncate barcodes to the specified index length. (e.g. 'y\*,i6,y\*')
+override-run-bases-mask              | String              | Override the run bases-mask and truncate barcodes to the specified index length. (e.g. 'y\*,i6,y\*')
 
 
 **Note**
