@@ -69,8 +69,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<String> beforeDateOpt;
     private final OptionSpec<String> includeInstrumentFilterOpt;
     private final OptionSpec<String> excludeInstrumentFilterOpt;
-    private final OptionSpec<Integer> minAllowedEditDistance;
     private final OptionSpec<String> overrideRunBasesMaskOpt;
+    private final OptionSpec<Integer> minAllowedEditDistanceOpt;
     private final NonOptionArgumentSpec<String> nonOptionSpec;
     private final Bcl2fastqDecider decider;
 
@@ -176,7 +176,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
 
         overrideRunBasesMaskOpt = parser.accepts("override-run-bases-mask", "Override the run bases-mask and truncate barcodes to the specified index length.").withRequiredArg();
 
-        minAllowedEditDistance = parser.accepts("min-allowed-edit-distance",
+        minAllowedEditDistanceOpt = parser.accepts("min-allowed-edit-distance",
                 "The minimum allowed barcode edit distance for sample barcodes within a lane (Default = " + decider.getMinAllowedEditDistance().toString() + ").").withRequiredArg().ofType(Integer.class);
 
         nonOptionSpec = parser.nonOptions(WorkflowScheduler.OVERRIDE_INI_DESC);
@@ -336,6 +336,9 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         if (options.has(overrideRunBasesMaskOpt)) {
             decider.setOverrideRunBasesMask(BasesMask.fromString(options.valueOf(overrideRunBasesMaskOpt)));
         }
+
+        if (options.has(minAllowedEditDistanceOpt)) {
+            decider.setMinAllowedEditDistance(options.valueOf(minAllowedEditDistanceOpt));
         }
 
         decider.setOverrides(options.valuesOf(nonOptionSpec));
