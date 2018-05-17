@@ -21,7 +21,7 @@
                 "metadata": "metadata",
                 "output_dir": "seqware-results",
                 "output_prefix": "./",
-                "use_bases_mask": "y*,I6n*,y*"
+                "use_bases_mask": "y*,i6n*,y*"
             },
             "files": []
         }]
