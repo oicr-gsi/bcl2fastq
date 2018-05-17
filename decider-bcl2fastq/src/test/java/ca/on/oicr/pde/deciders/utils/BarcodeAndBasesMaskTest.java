@@ -13,16 +13,50 @@ import org.testng.annotations.Test;
 public class BarcodeAndBasesMaskTest {
 
     @Test
+    public void applyBasesMaskOrFailTest() throws DataMismatchException {
+        assertEquals(BarcodeAndBasesMask.applyBasesMaskOrFail(Barcode.fromString("AAAA"), BasesMask.fromString("y*,i*,y*")).toString(), "AAAA");
+        assertEquals(BarcodeAndBasesMask.applyBasesMaskOrFail(Barcode.fromString("AAAA-TTTT"), BasesMask.fromString("y*,i*,y*")).toString(), "AAAA");
+        assertEquals(BarcodeAndBasesMask.applyBasesMaskOrFail(Barcode.fromString("AAAA-TTTT"), BasesMask.fromString("y*,n*,i*,y*")).toString(), "TTTT");
+        assertEquals(BarcodeAndBasesMask.applyBasesMaskOrFail(Barcode.fromString("AAAA-TTTT"), BasesMask.fromString("y*,i*,i*,y*")).toString(), "AAAA-TTTT");
+        assertEquals(BarcodeAndBasesMask.applyBasesMaskOrFail(Barcode.fromString("AAAA-AAAA"), BasesMask.fromString("y*,i2,i2,y*")).toString(), "AA-AA");
+    }
+
+    @Test(expectedExceptions = DataMismatchException.class)
+    public void applyBasesMaskOrFailFailureTest1() throws DataMismatchException {
+        BarcodeAndBasesMask.applyBasesMaskOrFail(Barcode.fromString("AAAA"), BasesMask.fromString("y*,n*,i*,y*"));
+    }
+
+    @Test(expectedExceptions = DataMismatchException.class)
+    public void applyBasesMaskOrFailFailureTest2() throws DataMismatchException {
+        BarcodeAndBasesMask.applyBasesMaskOrFail(Barcode.fromString("AAAA"), BasesMask.fromString("y*,i*,i*,y*"));
+    }
+
+    @Test(expectedExceptions = DataMismatchException.class)
+    public void applyBasesMaskOrFailFailureTest3() throws DataMismatchException {
+        BarcodeAndBasesMask.applyBasesMaskOrFail(Barcode.fromString("AAAA"), BasesMask.fromString("y*,i*,i*,y*"));
+    }
+
+    @Test(expectedExceptions = DataMismatchException.class)
+    public void applyBasesMaskOrFailFailureTest4() throws DataMismatchException {
+        BarcodeAndBasesMask.applyBasesMaskOrFail(Barcode.fromString("AAAA"), BasesMask.fromString("y*,i2,i2,y*"));
+    }
+
+    @Test
     public void applyBasesMaskTest() throws DataMismatchException {
         assertEquals(BarcodeAndBasesMask.applyBasesMask(Barcode.fromString("AAAA"), BasesMask.fromString("y*,i*,y*")).toString(), "AAAA");
         assertEquals(BarcodeAndBasesMask.applyBasesMask(Barcode.fromString("AAAA-TTTT"), BasesMask.fromString("y*,i*,y*")).toString(), "AAAA");
         assertEquals(BarcodeAndBasesMask.applyBasesMask(Barcode.fromString("AAAA-TTTT"), BasesMask.fromString("y*,n*,i*,y*")).toString(), "TTTT");
         assertEquals(BarcodeAndBasesMask.applyBasesMask(Barcode.fromString("AAAA-TTTT"), BasesMask.fromString("y*,i*,i*,y*")).toString(), "AAAA-TTTT");
+        assertEquals(BarcodeAndBasesMask.applyBasesMask(Barcode.fromString("AAAA-AAAA"), BasesMask.fromString("y*,i2,i2,y*")).toString(), "AA-AA");
+
+        assertEquals(BarcodeAndBasesMask.applyBasesMask(Barcode.fromString("AAAA"), BasesMask.fromString("y*,i*,i*,y*")).toString(), "AAAA");
+        assertEquals(BarcodeAndBasesMask.applyBasesMask(Barcode.fromString("AAAA"), BasesMask.fromString("y*,i2,i*,y*")).toString(), "AA");
+        assertEquals(BarcodeAndBasesMask.applyBasesMask(Barcode.fromString("AAAA"), BasesMask.fromString("y*,i2,i2,y*")).toString(), "AA");
     }
 
     @Test(expectedExceptions = DataMismatchException.class)
-    public void applyBasesMaskFailTest() throws DataMismatchException {
-        BarcodeAndBasesMask.applyBasesMask(Barcode.fromString("AAAA"), BasesMask.fromString("y*,n*,i*,y*"));
+    public void applyBasesMaskFailureTest() throws DataMismatchException {
+        assertEquals(BarcodeAndBasesMask.applyBasesMask(Barcode.fromString("AAAA"), BasesMask.fromString("y*,n*,i*,y*")).toString(), "AAAA");
     }
 
     @Test

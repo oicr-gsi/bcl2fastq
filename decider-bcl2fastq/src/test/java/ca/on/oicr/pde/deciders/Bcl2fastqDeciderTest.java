@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -42,12 +43,14 @@ import org.powermock.reflect.Whitebox;
 import static org.testng.Assert.assertEquals;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /**
  *
  * @author mlaszloffy
  */
+@Listeners({TestListener.class})
 public class Bcl2fastqDeciderTest {
 
     private SampleProvenanceProvider spp;
@@ -798,6 +801,178 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
         assertEquals(getFpsForCurrentWorkflow().size(), 2); // 1 + 1
+    }
+
+    @Test
+    public void mixedSingleAndDualBarcodeRunTest() {
+        LaneProvenance lpLane1 = LaneProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .laneNumber("1")
+                .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
+                .sequencerRunAttribute("instrument_name", ImmutableSortedSet.of("n001"))
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .skip(false)
+                .provenanceId("1_1")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        SampleProvenance spLane1 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAAAAA")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_1_1")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+
+        LaneProvenance lpLane2 = LaneProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .laneNumber("2")
+                .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
+                .sequencerRunAttribute("instrument_name", ImmutableSortedSet.of("n001"))
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .skip(false)
+                .provenanceId("1_2")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        SampleProvenance sp1Lane2 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("2")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAAAAA-AAAAATTT")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_2_1")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        SampleProvenance sp2Lane2 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("2")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAAAAA-AAAAAAAA")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_2_2")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+
+        LaneProvenance lpLane3 = LaneProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .laneNumber("3")
+                .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
+                .sequencerRunAttribute("instrument_name", ImmutableSortedSet.of("n001"))
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .skip(false)
+                .provenanceId("1_3")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        SampleProvenance sp1Lane3 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("3")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAAAAA-TTTTTTTT")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_3_1")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        SampleProvenance sp2Lane3 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("3")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("TTTTTTTT")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_3_2")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+
+        LaneProvenance lpLane4 = LaneProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .laneNumber("4")
+                .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
+                .sequencerRunAttribute("instrument_name", ImmutableSortedSet.of("n001"))
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .skip(false)
+                .provenanceId("1_4")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        SampleProvenance sp1Lane4 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("4")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAAAAA")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_4_1")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        SampleProvenance sp2Lane4 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("4")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAATTT")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_4_2")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(spLane1, sp1Lane2, sp2Lane2, sp1Lane3, sp2Lane3, sp1Lane4, sp2Lane4));
+        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lpLane1, lpLane2, lpLane3, lpLane4));
+
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
+        bcl2fastqDecider.setOverrideBasesMask(BasesMask.fromString("y*,i*,i*,y*"));
+        assertEquals(bcl2fastqDecider.run().size(), 5);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 5);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 5);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 12); // 1+1 + 1+2 + (1+1 + 1+1) + 1+2
     }
 
     private Collection<FileProvenance> getFpsForCurrentWorkflow() {

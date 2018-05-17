@@ -17,12 +17,12 @@ import java.util.stream.Collectors;
  */
 public class BarcodeAndBasesMask {
 
-    public static Barcode applyBasesMask(Barcode barcode, BasesMask basesMask) throws DataMismatchException {
-        return applyBasesMask(barcode, basesMask, true);
+    public static Barcode applyBasesMaskOrFail(Barcode barcode, BasesMask basesMask) throws DataMismatchException {
+        return BarcodeAndBasesMask.applyBasesMask(barcode, basesMask, true);
     }
 
-    public static Barcode tryApplyingBasesMask(Barcode barcode, BasesMask basesMask) throws DataMismatchException {
-        return applyBasesMask(barcode, basesMask, false);
+    public static Barcode applyBasesMask(Barcode barcode, BasesMask basesMask) throws DataMismatchException {
+        return BarcodeAndBasesMask.applyBasesMask(barcode, basesMask, false);
     }
 
     private static Barcode applyBasesMask(Barcode barcode, BasesMask basesMask, boolean strict) throws DataMismatchException {
@@ -91,7 +91,7 @@ public class BarcodeAndBasesMask {
     }
 
     public static BasesMask calculateBasesMask(Barcode barcode, BasesMask runBasesMask) throws DataMismatchException {
-        Barcode sequencedBarcode = tryApplyingBasesMask(barcode, runBasesMask);
+        Barcode sequencedBarcode = applyBasesMask(barcode, runBasesMask);
         BasesMask barcodeBasesMask = calculateBasesMask(sequencedBarcode);
 
         BasesMask.BasesMaskBuilder basesMaskBuilder = new BasesMask.BasesMaskBuilder();

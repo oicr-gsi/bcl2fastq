@@ -702,7 +702,7 @@ public class Bcl2fastqDecider {
         //list invalid lanes
         for (String invalidLane : this.laneErrors) {
             log.error(invalidLane);
-//            log.warn("Invalid workflow run:\n" + debugWorkflowRun(wr));
+            //log.warn("Invalid workflow run:\n" + debugWorkflowRun(wr));
         }
 
         //schedule workflow runs
@@ -811,7 +811,12 @@ public class Bcl2fastqDecider {
         laneErrors.add(error);
     }
 
-    private List<WorkflowRunV2> generateWorkflowRunsForLane(ProvenanceWithProvider<LaneProvenance> lp, Map<String, List<ProvenanceWithProvider<SampleProvenance>>> groupedSamples, Bcl2FastqHandler handler, boolean doDemultiplexing) throws InvalidLaneException {
+    private List<WorkflowRunV2> generateWorkflowRunsForLane(
+            ProvenanceWithProvider<LaneProvenance> lp,
+            Map<String, List<ProvenanceWithProvider<SampleProvenance>>> groupedSamples,
+            Bcl2FastqHandler handler,
+            boolean doDemultiplexing) throws InvalidLaneException {
+
         List<String> laneErrors = new ArrayList<>();
         List<WorkflowRunV2> workflowRuns = new ArrayList<>();
         for (Entry<String, List<ProvenanceWithProvider<SampleProvenance>>> e : groupedSamples.entrySet()) {
