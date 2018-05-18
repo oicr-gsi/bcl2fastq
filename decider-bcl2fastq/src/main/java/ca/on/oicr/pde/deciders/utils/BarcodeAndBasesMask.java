@@ -78,14 +78,19 @@ public class BarcodeAndBasesMask {
 
         BasesMask.BasesMaskBuilder basesMaskBuilder = new BasesMask.BasesMaskBuilder();
 
+        basesMaskBuilder.setReadOneIncludeLength(Integer.MAX_VALUE);
+
         if (barcode.getBarcodeOne().length() > 0) {
             basesMaskBuilder.setIndexOneIncludeLength(barcode.getBarcodeOne().length());
+            basesMaskBuilder.setIndexOneIgnoreLength(Integer.MAX_VALUE);
         }
 
         if (barcode.getBarcodeTwo() != null && barcode.getBarcodeTwo().length() > 0) {
             basesMaskBuilder.setIndexTwoIncludeLength(barcode.getBarcodeTwo().length());
             basesMaskBuilder.setIndexTwoIgnoreLength(Integer.MAX_VALUE);
         }
+
+        basesMaskBuilder.setReadTwoIncludeLength(Integer.MAX_VALUE);
 
         return basesMaskBuilder.createBasesMask();
     }
@@ -101,43 +106,34 @@ public class BarcodeAndBasesMask {
         basesMaskBuilder.setReadOneIgnoreLength(runBasesMask.getReadOneIgnoreLength());
 
         //index one
-        if (runBasesMask.getIndexOneIncludeLength() == null && barcodeBasesMask.getIndexOneIncludeLength() == null) {
+        if (barcodeBasesMask.getIndexOneIncludeLength() == null) {
             throw new DataMismatchException("Unexpected state, runBasesMask = [" + runBasesMask.toString() + "],"
                     + " barcodeBasesMask = [" + barcodeBasesMask.toString() + "]");
-        } else if (runBasesMask.getIndexOneIncludeLength() == null && barcodeBasesMask.getIndexOneIncludeLength() != null) {
-            basesMaskBuilder.setIndexOneIncludeLength(barcodeBasesMask.getIndexOneIncludeLength());
-            basesMaskBuilder.setIndexOneIgnoreLength(barcodeBasesMask.getIndexOneIgnoreLength());
-        } else if (runBasesMask.getIndexOneIncludeLength() != null && barcodeBasesMask.getIndexOneIncludeLength() == null) {
-            throw new DataMismatchException("Unexpected state, runBasesMask = [" + runBasesMask.toString() + "],"
-                    + " barcodeBasesMask = [" + barcodeBasesMask.toString() + "]");
-        } else if (runBasesMask.getIndexOneIncludeLength() != null && barcodeBasesMask.getIndexOneIncludeLength() != null) {
-            basesMaskBuilder.setIndexOneIncludeLength(barcodeBasesMask.getIndexOneIncludeLength());
-            basesMaskBuilder.setIndexOneIgnoreLength(barcodeBasesMask.getIndexOneIgnoreLength());
         } else {
-            throw new DataMismatchException("Unexpected state, runBasesMask = [" + runBasesMask.toString() + "],"
-                    + " barcodeBasesMask = [" + barcodeBasesMask.toString() + "]");
+            basesMaskBuilder.setIndexOneIncludeLength(barcodeBasesMask.getIndexOneIncludeLength());
+            basesMaskBuilder.setIndexOneIgnoreLength(barcodeBasesMask.getIndexOneIgnoreLength());
+        }
+        if (runBasesMask.getIndexOneIgnoreLength() != null) {
+            basesMaskBuilder.setIndexOneIgnoreLength(runBasesMask.getIndexOneIgnoreLength());
+        } else {
+            basesMaskBuilder.setIndexOneIgnoreLength(Integer.MAX_VALUE);
         }
 
         //index two
-        if (runBasesMask.getIndexTwoIncludeLength() == null && barcodeBasesMask.getIndexTwoIncludeLength() == null) {
-            basesMaskBuilder.setIndexTwoIncludeLength(null);
-            basesMaskBuilder.setIndexTwoIgnoreLength(null);
-        } else if (runBasesMask.getIndexTwoIncludeLength() == null && barcodeBasesMask.getIndexTwoIncludeLength() != null) {
-            basesMaskBuilder.setIndexTwoIncludeLength(null);
-            basesMaskBuilder.setIndexTwoIgnoreLength(null);
-        } else if (runBasesMask.getIndexTwoIncludeLength() != null && barcodeBasesMask.getIndexTwoIncludeLength() == null) {
-            basesMaskBuilder.setIndexTwoIncludeLength(null);
-            if (runBasesMask.getIndexOneIncludeLength() == null) {
-                basesMaskBuilder.setIndexTwoIgnoreLength(null);
+        if (runBasesMask.getIndexTwoIncludeLength() != null) {
+            if (barcodeBasesMask.getIndexTwoIncludeLength() == null) {
+                if (runBasesMask.getIndexOneIncludeLength() != null) {
+                    basesMaskBuilder.setIndexTwoIgnoreLength(Integer.MAX_VALUE);
+                } else {
+                    basesMaskBuilder.setIndexTwoIgnoreLength(null);
+                }
             } else {
-                basesMaskBuilder.setIndexTwoIgnoreLength(Integer.MAX_VALUE);
+                basesMaskBuilder.setIndexTwoIncludeLength(barcodeBasesMask.getIndexTwoIncludeLength());
+                basesMaskBuilder.setIndexTwoIgnoreLength(barcodeBasesMask.getIndexTwoIgnoreLength());
             }
-        } else if (runBasesMask.getIndexTwoIncludeLength() != null && barcodeBasesMask.getIndexTwoIncludeLength() != null) {
-            basesMaskBuilder.setIndexTwoIncludeLength(barcodeBasesMask.getIndexTwoIncludeLength());
-            basesMaskBuilder.setIndexTwoIgnoreLength(barcodeBasesMask.getIndexTwoIgnoreLength());
-        } else {
-            throw new DataMismatchException("Unexpected state, runBasesMask = [" + runBasesMask.toString() + "],"
-                    + " barcodeBasesMask = [" + barcodeBasesMask.toString() + "]");
+        }
+        if (runBasesMask.getIndexTwoIgnoreLength() != null) {
+            basesMaskBuilder.setIndexTwoIgnoreLength(runBasesMask.getIndexTwoIgnoreLength());
         }
 
         //read two

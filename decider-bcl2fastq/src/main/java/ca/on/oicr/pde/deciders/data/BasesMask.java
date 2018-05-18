@@ -210,6 +210,13 @@ public class BasesMask {
             return new BasesMask(m.group(1), null, m.group(2), null, null, m.group(3), m.group(4), null);
         }
 
+        p = Pattern.compile("y(\\*|\\d+),i(\\*|\\d+)n(\\*|\\d+),n(\\*|\\d+),y(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
+        if (p.matcher(basesMaskString).matches()) {
+            Matcher m = p.matcher(basesMaskString);
+            m.find();
+            return new BasesMask(m.group(1), null, m.group(2), m.group(3), null, m.group(4), m.group(5), null);
+        }
+
         p = Pattern.compile("y(\\*|\\d+),n(\\*|\\d+),i(\\*|\\d+),y(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
         if (p.matcher(basesMaskString).matches()) {
             Matcher m = p.matcher(basesMaskString);
@@ -244,13 +251,13 @@ public class BasesMask {
 
     public static class BasesMaskBuilder {
 
-        private Integer readOneIncludeLength = Integer.MAX_VALUE;
+        private Integer readOneIncludeLength = null;
         private Integer readOneIgnoreLength = null;
-        private Integer indexOneIncludeLength = Integer.MAX_VALUE;
-        private Integer indexOneIgnoreLength = Integer.MAX_VALUE;
+        private Integer indexOneIncludeLength = null;
+        private Integer indexOneIgnoreLength = null;
         private Integer indexTwoIncludeLength = null;
         private Integer indexTwoIgnoreLength = null;
-        private Integer readTwoIncludeLength = Integer.MAX_VALUE;
+        private Integer readTwoIncludeLength = null;
         private Integer readTwoIgnoreLength = null;
 
         public BasesMaskBuilder() {

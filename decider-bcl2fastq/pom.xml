@@ -74,6 +74,7 @@
                 <configuration>
                     <forkCount>0</forkCount>
                     <parallel>methods</parallel>
+                    <threadCount>20</threadCount>
                     <skip>${skipITs}</skip>
                     <systemPropertyVariables>
                         <dbHost>${dbHost}</dbHost>
