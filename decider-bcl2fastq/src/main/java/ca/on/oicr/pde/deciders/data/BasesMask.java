@@ -1,6 +1,9 @@
 package ca.on.oicr.pde.deciders.data;
 
+import ca.on.oicr.pde.deciders.exceptions.InvalidBasesMaskException;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
@@ -178,7 +181,7 @@ public class BasesMask {
         return true;
     }
 
-    public static BasesMask fromString(String basesMaskString) {
+    public static BasesMask fromString(String basesMaskString) throws InvalidBasesMaskException {
         Pattern p = Pattern.compile(
                 "y(?<readOneInclude>\\*|\\d+)(n(?<readOneIgnore>\\*|\\d+))?,"
                 + "(i(?<indexOneInclude>\\*|\\d+))?(n(?<indexOneIgnore>\\*|\\d+))?"
@@ -194,7 +197,15 @@ public class BasesMask {
                     m.group("indexTwoInclude"), m.group("indexTwoIgnore"),
                     m.group("readTwoInclude"), m.group("readTwoIgnore"));
         } else {
-            throw new IllegalArgumentException("Unsupported bases mask string [" + basesMaskString + "]");
+            throw new InvalidBasesMaskException("Unsupported bases mask string [" + basesMaskString + "]");
+        }
+    }
+
+    public static BasesMask fromStringUnchecked(String basesMaskString) {
+        try {
+            return BasesMask.fromString(basesMaskString);
+        } catch (InvalidBasesMaskException ex) {
+            throw new IllegalArgumentException(ex.toString());
         }
     }
 

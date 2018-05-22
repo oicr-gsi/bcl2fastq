@@ -8,6 +8,7 @@ import ca.on.oicr.gsi.provenance.ProviderLoader;
 import ca.on.oicr.gsi.provenance.SampleProvenanceProvider;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
 import ca.on.oicr.pde.deciders.data.BasesMask;
+import ca.on.oicr.pde.deciders.exceptions.InvalidBasesMaskException;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -334,7 +335,12 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         }
 
         if (options.has(overrideRunBasesMaskOpt)) {
-            decider.setOverrideRunBasesMask(BasesMask.fromString(options.valueOf(overrideRunBasesMaskOpt)));
+            try {
+                decider.setOverrideRunBasesMask(BasesMask.fromString(options.valueOf(overrideRunBasesMaskOpt)));
+            } catch (InvalidBasesMaskException ex) {
+                log.error("Invalid override-run-bases-mask string: ", ex);
+                rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);
+            }
         }
 
         if (options.has(minAllowedEditDistanceOpt)) {

@@ -34,9 +34,11 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import net.sourceforge.seqware.common.metadata.Metadata;
 import net.sourceforge.seqware.common.metadata.MetadataInMemory;
 import net.sourceforge.seqware.common.model.Workflow;
+import org.apache.commons.lang3.tuple.Pair;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
 import org.powermock.reflect.Whitebox;
@@ -648,7 +650,7 @@ public class Bcl2fastqDeciderTest {
 
     @Test
     public void overrideBaseMaskTruncationTest() {
-        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromString("Y*,I4,Y*"));
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromStringUnchecked("Y*,I4,Y*"));
         bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
 
         //run on all lanes
@@ -668,7 +670,7 @@ public class Bcl2fastqDeciderTest {
 
     @Test
     public void overrideBaseMaskInvalidBasesMaskTest() {
-        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromString("Y*,I9,Y*"));
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromStringUnchecked("Y*,I9,Y*"));
         bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
         assertEquals(bcl2fastqDecider.run().size(), 2);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
@@ -723,14 +725,14 @@ public class Bcl2fastqDeciderTest {
         bcl2fastqDecider.setIncludeFilters(filters);
 
         //should produce invalid workflow run with barcode collisions
-        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromString("Y*,I7,Y*"));
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromStringUnchecked("Y*,I7,Y*"));
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
-        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromString("Y*,I8,Y*"));
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromStringUnchecked("Y*,I8,Y*"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
@@ -805,7 +807,47 @@ public class Bcl2fastqDeciderTest {
 
     @Test
     public void mixedSingleAndDualBarcodeRunTest() {
-        LaneProvenance lpLane1 = LaneProvenanceImpl.builder()
+        Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> mockData = getMockData();
+
+//        List<LaneProvenance> lps = mockData.getLeft().values().stream().map(l -> l.build()).collect(Collectors.toList());
+        when(spp.getSampleProvenance()).thenReturn(mockData.getRight().values().stream().map(s -> s.build()).collect(Collectors.toList()));
+        when(lpp.getLaneProvenance()).thenReturn(mockData.getLeft().values().stream().map(l -> l.build()).collect(Collectors.toList()));
+
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromStringUnchecked("y*,i*,i*,y*"));
+        assertEquals(bcl2fastqDecider.run().size(), 5);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 5);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 5);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 12); // 1+1 + 1+2 + (1+1 + 1+1) + 1+2
+    }
+
+    @Test
+    public void runBasesMaskTest() {
+        Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> mockData = getMockData();
+
+        when(spp.getSampleProvenance()).thenReturn(mockData.getRight().values().stream().map(s -> s.build()).collect(Collectors.toList()));
+        when(lpp.getLaneProvenance()).thenReturn(mockData.getLeft().values().stream()
+                .map(l -> {
+                    l.sequencerRunAttribute("run_bases_mask", ImmutableSortedSet.of("y126,I9,I8,y126"));
+                    return l.build();
+                }).collect(Collectors.toList()));
+
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        assertEquals(bcl2fastqDecider.run().size(), 5);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 5);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 5);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 12); // 1+1 + 1+2 + (1+1 + 1+1) + 1+2
+    }
+
+    private Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> getMockData() {
+        Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder> lanes = new HashMap<>();
+        Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder> samples = new HashMap();
+
+        LaneProvenanceImpl.LaneProvenanceImplBuilder builder = LaneProvenanceImpl.builder();
+        lanes.put("1_1", LaneProvenanceImpl.builder()
                 .sequencerRunName("RUN_0001")
                 .laneNumber("1")
                 .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
@@ -815,9 +857,8 @@ public class Bcl2fastqDeciderTest {
                 .skip(false)
                 .provenanceId("1_1")
                 .version("1")
-                .lastModified(expectedDate)
-                .build();
-        SampleProvenance spLane1 = SampleProvenanceImpl.builder()
+                .lastModified(expectedDate));
+        samples.put("1_1_1", SampleProvenanceImpl.builder()
                 .sequencerRunName("RUN_0001")
                 .studyTitle("TEST_STUDY_1")
                 .laneNumber("1")
@@ -830,10 +871,9 @@ public class Bcl2fastqDeciderTest {
                 .skip(false)
                 .provenanceId("1_1_1")
                 .version("1")
-                .lastModified(expectedDate)
-                .build();
+                .lastModified(expectedDate));
 
-        LaneProvenance lpLane2 = LaneProvenanceImpl.builder()
+        lanes.put("1_2", LaneProvenanceImpl.builder()
                 .sequencerRunName("RUN_0001")
                 .laneNumber("2")
                 .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
@@ -843,9 +883,8 @@ public class Bcl2fastqDeciderTest {
                 .skip(false)
                 .provenanceId("1_2")
                 .version("1")
-                .lastModified(expectedDate)
-                .build();
-        SampleProvenance sp1Lane2 = SampleProvenanceImpl.builder()
+                .lastModified(expectedDate));
+        samples.put("1_2_1", SampleProvenanceImpl.builder()
                 .sequencerRunName("RUN_0001")
                 .studyTitle("TEST_STUDY_1")
                 .laneNumber("2")
@@ -858,9 +897,8 @@ public class Bcl2fastqDeciderTest {
                 .skip(false)
                 .provenanceId("1_2_1")
                 .version("1")
-                .lastModified(expectedDate)
-                .build();
-        SampleProvenance sp2Lane2 = SampleProvenanceImpl.builder()
+                .lastModified(expectedDate));
+        samples.put("1_2_2", SampleProvenanceImpl.builder()
                 .sequencerRunName("RUN_0001")
                 .studyTitle("TEST_STUDY_1")
                 .laneNumber("2")
@@ -873,10 +911,9 @@ public class Bcl2fastqDeciderTest {
                 .skip(false)
                 .provenanceId("1_2_2")
                 .version("1")
-                .lastModified(expectedDate)
-                .build();
+                .lastModified(expectedDate));
 
-        LaneProvenance lpLane3 = LaneProvenanceImpl.builder()
+        lanes.put("1_3", LaneProvenanceImpl.builder()
                 .sequencerRunName("RUN_0001")
                 .laneNumber("3")
                 .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
@@ -886,9 +923,8 @@ public class Bcl2fastqDeciderTest {
                 .skip(false)
                 .provenanceId("1_3")
                 .version("1")
-                .lastModified(expectedDate)
-                .build();
-        SampleProvenance sp1Lane3 = SampleProvenanceImpl.builder()
+                .lastModified(expectedDate));
+        samples.put("1_3_1", SampleProvenanceImpl.builder()
                 .sequencerRunName("RUN_0001")
                 .studyTitle("TEST_STUDY_1")
                 .laneNumber("3")
@@ -901,9 +937,8 @@ public class Bcl2fastqDeciderTest {
                 .skip(false)
                 .provenanceId("1_3_1")
                 .version("1")
-                .lastModified(expectedDate)
-                .build();
-        SampleProvenance sp2Lane3 = SampleProvenanceImpl.builder()
+                .lastModified(expectedDate));
+        samples.put("1_3_2", SampleProvenanceImpl.builder()
                 .sequencerRunName("RUN_0001")
                 .studyTitle("TEST_STUDY_1")
                 .laneNumber("3")
@@ -916,10 +951,9 @@ public class Bcl2fastqDeciderTest {
                 .skip(false)
                 .provenanceId("1_3_2")
                 .version("1")
-                .lastModified(expectedDate)
-                .build();
+                .lastModified(expectedDate));
 
-        LaneProvenance lpLane4 = LaneProvenanceImpl.builder()
+        lanes.put("1_4", LaneProvenanceImpl.builder()
                 .sequencerRunName("RUN_0001")
                 .laneNumber("4")
                 .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
@@ -929,9 +963,8 @@ public class Bcl2fastqDeciderTest {
                 .skip(false)
                 .provenanceId("1_4")
                 .version("1")
-                .lastModified(expectedDate)
-                .build();
-        SampleProvenance sp1Lane4 = SampleProvenanceImpl.builder()
+                .lastModified(expectedDate));
+        samples.put("1_4_1", SampleProvenanceImpl.builder()
                 .sequencerRunName("RUN_0001")
                 .studyTitle("TEST_STUDY_1")
                 .laneNumber("4")
@@ -944,9 +977,8 @@ public class Bcl2fastqDeciderTest {
                 .skip(false)
                 .provenanceId("1_4_1")
                 .version("1")
-                .lastModified(expectedDate)
-                .build();
-        SampleProvenance sp2Lane4 = SampleProvenanceImpl.builder()
+                .lastModified(expectedDate));
+        samples.put("1_4_2", SampleProvenanceImpl.builder()
                 .sequencerRunName("RUN_0001")
                 .studyTitle("TEST_STUDY_1")
                 .laneNumber("4")
@@ -959,20 +991,9 @@ public class Bcl2fastqDeciderTest {
                 .skip(false)
                 .provenanceId("1_4_2")
                 .version("1")
-                .lastModified(expectedDate)
-                .build();
+                .lastModified(expectedDate));
 
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(spLane1, sp1Lane2, sp2Lane2, sp1Lane3, sp2Lane3, sp1Lane4, sp2Lane4));
-        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lpLane1, lpLane2, lpLane3, lpLane4));
-
-        bcl2fastqDecider.setDisableRunCompleteCheck(true);
-        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
-        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromString("y*,i*,i*,y*"));
-        assertEquals(bcl2fastqDecider.run().size(), 5);
-        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 5);
-        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 5);
-        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
-        assertEquals(getFpsForCurrentWorkflow().size(), 12); // 1+1 + 1+2 + (1+1 + 1+1) + 1+2
+        return Pair.of(lanes, samples);
     }
 
     private Collection<FileProvenance> getFpsForCurrentWorkflow() {
