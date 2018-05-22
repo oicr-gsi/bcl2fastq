@@ -179,74 +179,23 @@ public class BasesMask {
     }
 
     public static BasesMask fromString(String basesMaskString) {
-        Pattern p;
-
-        //dual barcode patterns
-        p = Pattern.compile("y(\\*|\\d+)n(\\*|\\d+),i(\\*|\\d+)n(\\*|\\d+),i(\\*|\\d+)n(\\*|\\d+),y(\\*|\\d+)n(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
+        Pattern p = Pattern.compile(
+                "y(?<readOneInclude>\\*|\\d+)(n(?<readOneIgnore>\\*|\\d+))?,"
+                + "(i(?<indexOneInclude>\\*|\\d+))?(n(?<indexOneIgnore>\\*|\\d+))?"
+                + "(,(i(?<indexTwoInclude>\\*|\\d+))?(n(?<indexTwoIgnore>\\*|\\d+))?)?"
+                + ",y(?<readTwoInclude>\\*|\\d+)(n(?<readTwoIgnore>\\*|\\d+))?",
+                Pattern.CASE_INSENSITIVE);
         if (p.matcher(basesMaskString).matches()) {
             Matcher m = p.matcher(basesMaskString);
             m.find();
-            return new BasesMask(m.group(1), m.group(2), m.group(3), m.group(4), m.group(5), m.group(6), m.group(7), m.group(8));
+            return new BasesMask(
+                    m.group("readOneInclude"), m.group("readOneIgnore"),
+                    m.group("indexOneInclude"), m.group("indexOneIgnore"),
+                    m.group("indexTwoInclude"), m.group("indexTwoIgnore"),
+                    m.group("readTwoInclude"), m.group("readTwoIgnore"));
+        } else {
+            throw new IllegalArgumentException("Unsupported bases mask string [" + basesMaskString + "]");
         }
-
-        p = Pattern.compile("y(\\*|\\d+),i(\\*|\\d+)n(\\*|\\d+),i(\\*|\\d+)n(\\*|\\d+),y(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
-        if (p.matcher(basesMaskString).matches()) {
-            Matcher m = p.matcher(basesMaskString);
-            m.find();
-            return new BasesMask(m.group(1), null, m.group(2), m.group(3), m.group(4), m.group(5), m.group(6), null);
-        }
-
-        p = Pattern.compile("y(\\*|\\d+),i(\\*|\\d+),i(\\*|\\d+),y(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
-        if (p.matcher(basesMaskString).matches()) {
-            Matcher m = p.matcher(basesMaskString);
-            m.find();
-            return new BasesMask(m.group(1), null, m.group(2), null, m.group(3), null, m.group(4), null);
-        }
-
-        p = Pattern.compile("y(\\*|\\d+),i(\\*|\\d+),n(\\*|\\d+),y(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
-        if (p.matcher(basesMaskString).matches()) {
-            Matcher m = p.matcher(basesMaskString);
-            m.find();
-            return new BasesMask(m.group(1), null, m.group(2), null, null, m.group(3), m.group(4), null);
-        }
-
-        p = Pattern.compile("y(\\*|\\d+),i(\\*|\\d+)n(\\*|\\d+),n(\\*|\\d+),y(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
-        if (p.matcher(basesMaskString).matches()) {
-            Matcher m = p.matcher(basesMaskString);
-            m.find();
-            return new BasesMask(m.group(1), null, m.group(2), m.group(3), null, m.group(4), m.group(5), null);
-        }
-
-        p = Pattern.compile("y(\\*|\\d+),n(\\*|\\d+),i(\\*|\\d+),y(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
-        if (p.matcher(basesMaskString).matches()) {
-            Matcher m = p.matcher(basesMaskString);
-            m.find();
-            return new BasesMask(m.group(1), null, null, m.group(2), m.group(3), null, m.group(4), null);
-        }
-
-        //single barcode patterns
-        p = Pattern.compile("y(\\*|\\d+)n(\\*|\\d+),i(\\*|\\d+)n(\\*|\\d+),y(\\*|\\d+)n(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
-        if (p.matcher(basesMaskString).matches()) {
-            Matcher m = p.matcher(basesMaskString);
-            m.find();
-            return new BasesMask(m.group(1), m.group(2), m.group(3), m.group(4), null, null, m.group(5), m.group(6));
-        }
-
-        p = Pattern.compile("y(\\*|\\d+),i(\\*|\\d+)n(\\*|\\d+),y(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
-        if (p.matcher(basesMaskString).matches()) {
-            Matcher m = p.matcher(basesMaskString);
-            m.find();
-            return new BasesMask(m.group(1), null, m.group(2), m.group(3), null, null, m.group(4), null);
-        }
-
-        p = Pattern.compile("y(\\*|\\d+),i(\\*|\\d+),y(\\*|\\d+)", Pattern.CASE_INSENSITIVE);
-        if (p.matcher(basesMaskString).matches()) {
-            Matcher m = p.matcher(basesMaskString);
-            m.find();
-            return new BasesMask(m.group(1), null, m.group(2), null, null, null, m.group(3), null);
-        }
-
-        throw new IllegalArgumentException("Unsupported bases mask string [" + basesMaskString + "]");
     }
 
     public static class BasesMaskBuilder {
