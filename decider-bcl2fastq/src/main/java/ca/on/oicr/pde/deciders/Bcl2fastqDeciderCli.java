@@ -15,7 +15,8 @@ import com.google.common.collect.Sets;
 import io.seqware.pipeline.plugins.WorkflowScheduler;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.time.ZonedDateTime;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -310,10 +311,10 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);
         }
 
-        DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter format = DateTimeFormatter.ISO_LOCAL_DATE;
         if (options.has(afterDateOpt)) {
             try {
-                decider.setAfterDateFilter(ZonedDateTime.parse(options.valueOf(afterDateOpt), format));
+                decider.setAfterDateFilter(LocalDate.parse(options.valueOf(afterDateOpt), format).atStartOfDay(ZoneOffset.UTC));
             } catch (DateTimeParseException e) {
                 log.error("After Date should be in the format: " + format.toString(), e);
                 rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);
@@ -321,7 +322,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         }
         if (options.has(beforeDateOpt)) {
             try {
-                decider.setBeforeDateFilter(ZonedDateTime.parse(options.valueOf(beforeDateOpt), format));
+                decider.setBeforeDateFilter(LocalDate.parse(options.valueOf(beforeDateOpt), format).atStartOfDay(ZoneOffset.UTC));
             } catch (DateTimeParseException e) {
                 log.error("Before Date should be in the format: " + format.toString(), e);
                 rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);

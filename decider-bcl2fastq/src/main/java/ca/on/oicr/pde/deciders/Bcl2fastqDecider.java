@@ -53,7 +53,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import net.sourceforge.seqware.common.metadata.Metadata;
 import net.sourceforge.seqware.common.model.Workflow;

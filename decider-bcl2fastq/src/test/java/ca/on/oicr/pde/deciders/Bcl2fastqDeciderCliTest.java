@@ -6,6 +6,7 @@ import ca.on.oicr.pde.client.MetadataBackedSeqwareClient;
 import ca.on.oicr.pde.client.SeqwareClient;
 import java.io.File;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -83,6 +84,27 @@ public class Bcl2fastqDeciderCliTest {
         assertFalse(decider.getDoCreateIusLimsKeys());
         assertFalse(decider.getDoScheduleWorkflowRuns());
         assertTrue(decider.getIsDemultiplexSingleSampleMode());
+    }
+
+    @Test
+    public void afterDateTest() throws IOException {
+        List<String> args = new ArrayList<>();
+        args.add("--dry-run");
+        args.add("--wf-accession");
+        args.add(bcl2fastqWorkflow.getSwAccession().toString());
+        args.add("--provenance-settings");
+        args.add(provenanceSettings.getAbsolutePath());
+        args.add("--after-date");
+        args.add("2017-01-01");
+        args.add("--all");
+
+        Bcl2fastqDecider decider = getDecider(args);
+        assertTrue(decider.getIsDryRunMode());
+        assertFalse(decider.getDoMetadataWriteback());
+        assertFalse(decider.getDoCreateIusLimsKeys());
+        assertFalse(decider.getDoScheduleWorkflowRuns());
+        assertFalse(decider.getIsDemultiplexSingleSampleMode());
+        assertTrue(decider.getAfterDateFilter().isEqual(ZonedDateTime.parse("2017-01-01T00:00:00Z")));
     }
 
     private Bcl2fastqDecider getDecider(List<String> args) {
