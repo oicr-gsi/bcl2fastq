@@ -1,3 +1,9 @@
+## 1.2
+- [GP-1516](https://jira.oicr.on.ca/browse/GP-1516)
+  - Trim barcode when index was sequenced with less cycles
+  - Schedule workflow runs by barcode length (support for calculating use_bases_mask from sequenced/run bases mask)
+  - Support for "run_bases_mask" lane attribute or overriding via "--override-run-bases-mask"
+  - Don't retrieve analysis provenance if "--ignore-previous-lims-keys" is provided
 ## 1.1.1 - 2017-07-05
 - [GP-1224](https://jira.oicr.on.ca/browse/GP-1224) - Filter by sample name + demultiplex single sample mode
 - Update to pipedev 2.2

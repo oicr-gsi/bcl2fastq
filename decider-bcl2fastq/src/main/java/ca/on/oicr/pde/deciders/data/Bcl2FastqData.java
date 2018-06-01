@@ -1,8 +1,7 @@
-package ca.on.oicr.pde.deciders.handlers;
+package ca.on.oicr.pde.deciders.data;
 
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
-import ca.on.oicr.pde.deciders.ProvenanceWithProvider;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -20,6 +19,7 @@ public class Bcl2FastqData {
     private final List<ProvenanceWithProvider<SampleProvenance>> samples;
     private Boolean metadataWriteback;
     private StudyToOutputPathConfig studyToOutputPathConfig;
+    private BasesMask basesMask;
 
     public Bcl2FastqData(ProvenanceWithProvider<LaneProvenance> lane, List<ProvenanceWithProvider<SampleProvenance>> samples) {
         this.lane = lane;
@@ -69,6 +69,14 @@ public class Bcl2FastqData {
 
     public void setStudyToOutputPathConfig(StudyToOutputPathConfig studyToOutputPathConfig) {
         this.studyToOutputPathConfig = studyToOutputPathConfig;
+    }
+
+    public BasesMask getBasesMask() {
+        return basesMask;
+    }
+
+    public void setBasesMask(BasesMask basesMask) {
+        this.basesMask = basesMask;
     }
 
 }

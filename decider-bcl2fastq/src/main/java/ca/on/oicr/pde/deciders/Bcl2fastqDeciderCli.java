@@ -7,14 +7,18 @@ import ca.on.oicr.gsi.provenance.MultiThreadedDefaultProvenanceClient;
 import ca.on.oicr.gsi.provenance.ProviderLoader;
 import ca.on.oicr.gsi.provenance.SampleProvenanceProvider;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
+import ca.on.oicr.pde.deciders.data.BasesMask;
+import ca.on.oicr.pde.deciders.exceptions.InvalidBasesMaskException;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import io.seqware.pipeline.plugins.WorkflowScheduler;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -36,7 +40,6 @@ import org.apache.log4j.PatternLayout;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.joda.time.DateTime;
 
 public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
 
@@ -68,6 +71,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<String> beforeDateOpt;
     private final OptionSpec<String> includeInstrumentFilterOpt;
     private final OptionSpec<String> excludeInstrumentFilterOpt;
+    private final OptionSpec<String> overrideRunBasesMaskOpt;
+    private final OptionSpec<Integer> minAllowedEditDistanceOpt;
     private final NonOptionArgumentSpec<String> nonOptionSpec;
     private final Bcl2fastqDecider decider;
 
@@ -171,6 +176,11 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             excludeFilterOpts.put(filter, parser.accepts("exclude-" + filter.toString()).withRequiredArg().ofType(String.class));
         }
 
+        overrideRunBasesMaskOpt = parser.accepts("override-run-bases-mask", "Override the run bases-mask and truncate barcodes to the specified index length.").withRequiredArg();
+
+        minAllowedEditDistanceOpt = parser.accepts("min-allowed-edit-distance",
+                "The minimum allowed barcode edit distance for sample barcodes within a lane (Default = " + decider.getMinAllowedEditDistance().toString() + ").").withRequiredArg().ofType(Integer.class);
+
         nonOptionSpec = parser.nonOptions(WorkflowScheduler.OVERRIDE_INI_DESC);
     }
 
@@ -201,7 +211,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             logger.addAppender(new ConsoleAppender(new PatternLayout("%p [%d{yyyy/MM/dd HH:mm:ss}] | %m%n")));
 
             //log4j2 logging configuration
-            Configurator.setRootLevel(org.apache.logging.log4j.Level.DEBUG);
+            Configurator.setRootLevel(org.apache.logging.log4j.Level.INFO);
+            Configurator.setLevel("ca.on.oicr", org.apache.logging.log4j.Level.DEBUG);
         }
 
         if (options.has(helpOpt)) {
@@ -300,20 +311,20 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);
         }
 
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        DateTimeFormatter format = DateTimeFormatter.ISO_LOCAL_DATE;
         if (options.has(afterDateOpt)) {
             try {
-                decider.setAfterDateFilter(new DateTime(format.parse(options.valueOf(afterDateOpt))));
-            } catch (ParseException e) {
-                log.error("After Date should be in the format: " + format.toPattern(), e);
+                decider.setAfterDateFilter(LocalDate.parse(options.valueOf(afterDateOpt), format).atStartOfDay(ZoneOffset.UTC));
+            } catch (DateTimeParseException e) {
+                log.error("After Date should be in the format: " + format.toString(), e);
                 rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);
             }
         }
         if (options.has(beforeDateOpt)) {
             try {
-                decider.setBeforeDateFilter(new DateTime(format.parse(options.valueOf(beforeDateOpt))));
-            } catch (ParseException e) {
-                log.error("Before Date should be in the format: " + format.toPattern(), e);
+                decider.setBeforeDateFilter(LocalDate.parse(options.valueOf(beforeDateOpt), format).atStartOfDay(ZoneOffset.UTC));
+            } catch (DateTimeParseException e) {
+                log.error("Before Date should be in the format: " + format.toString(), e);
                 rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);
             }
         }
@@ -322,6 +333,19 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         }
         if (options.has(excludeInstrumentFilterOpt)) {
             decider.setExcludeInstrumentNameFilter(ImmutableSet.copyOf(options.valuesOf(excludeInstrumentFilterOpt)));
+        }
+
+        if (options.has(overrideRunBasesMaskOpt)) {
+            try {
+                decider.setOverrideRunBasesMask(BasesMask.fromString(options.valueOf(overrideRunBasesMaskOpt)));
+            } catch (InvalidBasesMaskException ex) {
+                log.error("Invalid override-run-bases-mask string: ", ex);
+                rv.setExitStatus(ReturnValue.INVALIDPARAMETERS);
+            }
+        }
+
+        if (options.has(minAllowedEditDistanceOpt)) {
+            decider.setMinAllowedEditDistance(options.valueOf(minAllowedEditDistanceOpt));
         }
 
         decider.setOverrides(options.valuesOf(nonOptionSpec));
@@ -351,11 +375,12 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
             decider.run();
         } catch (Exception e) {
             log.error(e);
+            e.printStackTrace();
             return new ReturnValue(ReturnValue.ExitStatus.RUNNERERR);
         }
 
         //calculate exit code
-        if (!decider.getInvalidWorkflowRuns().isEmpty()) {
+        if (!decider.getInvalidLanes().isEmpty()) {
             //return exit code 91
             return new ReturnValue(ReturnValue.ExitStatus.RUNNERERR);
         } else if (!decider.getValidWorkflowRuns().isEmpty() && decider.getValidWorkflowRuns().size() < decider.getScheduledWorkflowRuns().size()) {

@@ -1,14 +1,15 @@
 package ca.on.oicr.pde.deciders.handlers;
 
+import ca.on.oicr.pde.deciders.data.Bcl2FastqData;
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.LimsKey;
 import ca.on.oicr.gsi.provenance.model.LimsProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
-import ca.on.oicr.pde.deciders.DataMismatchException;
-import ca.on.oicr.pde.deciders.IusWithProvenance;
+import ca.on.oicr.pde.deciders.exceptions.DataMismatchException;
+import ca.on.oicr.pde.deciders.data.IusWithProvenance;
 import ca.on.oicr.pde.deciders.Lims;
-import ca.on.oicr.pde.deciders.ProvenanceWithProvider;
-import ca.on.oicr.pde.deciders.WorkflowRunV2;
+import ca.on.oicr.pde.deciders.data.ProvenanceWithProvider;
+import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -33,7 +34,7 @@ public abstract class Bcl2FastqHandler implements Handler {
     public abstract WorkflowRunV2 modifyWorkflowRun(Bcl2FastqData data, WorkflowRunV2 workflowRun);
 
     public WorkflowRunV2 getWorkflowRun(Metadata metadata, Bcl2FastqData data, boolean createLimsKeys, boolean enableDemultiplexSingleSample) {
-        WorkflowRunV2 wr = new WorkflowRunV2(null, null);
+        WorkflowRunV2 wr = new WorkflowRunV2(null, null, data);
         wr.addProperty(data.getProperties());
 
         List<String> barcodes = new ArrayList<>();
@@ -63,15 +64,8 @@ public abstract class Bcl2FastqHandler implements Handler {
             wr.addError("Duplicate barcodes detected = [" + Joiner.on(",").join(duplicates) + "]");
         }
 
-        String basesMask;
-        try {
-            basesMask = calculateBasesMask(barcodes);
-        } catch (DataMismatchException dme) {
-            basesMask = "ERROR";
-            wr.addError(dme.getMessage());
-        }
-        if (basesMask != null) {
-            wr.addProperty("use_bases_mask", basesMask);
+        if (data.getBasesMask() != null) {
+            wr.addProperty("use_bases_mask", data.getBasesMask().toString());
         }
 
         String runDir = null;
@@ -158,58 +152,6 @@ public abstract class Bcl2FastqHandler implements Handler {
         }
 
         return wr;
-    }
-
-    public static String calculateBasesMask(List<String> barcodes) throws DataMismatchException {
-
-        if (barcodes == null || barcodes.isEmpty()) {
-            return null;
-        }
-
-        Set<Boolean> isNoIndexSet = new HashSet<>();
-        for (String barcode : barcodes) {
-            isNoIndexSet.add(barcode == null || barcode.isEmpty() || "NoIndex".equals(barcode));
-        }
-
-        Set<Boolean> isDualBarcodeSet = new HashSet<>();
-        for (String barcode : barcodes) {
-            isDualBarcodeSet.add(barcode != null && barcode.contains("-"));
-        }
-
-        Set<Integer> barcodeLengths = new HashSet<>();
-        for (String barcode : barcodes) {
-            if (barcode == null || barcode.isEmpty() || "NoIndex".equals(barcode)) {
-                barcodeLengths.add(0);
-            } else {
-                barcodeLengths.add(barcode.length());
-            }
-        }
-
-        if (isNoIndexSet.size() != 1) {
-            throw new DataMismatchException("Combination of NoIndex and barcoded samples");
-        }
-
-        if (isDualBarcodeSet.size() != 1) {
-            throw new DataMismatchException("Combination of dual-barcode and non-dual-barcode");
-        }
-
-        if (barcodeLengths.size() != 1) {
-            throw new DataMismatchException("Combination of barcodes with different lengths");
-        }
-
-        boolean isNoIndex = Iterables.getOnlyElement(isNoIndexSet);
-        boolean isDualBarcode = Iterables.getOnlyElement(isDualBarcodeSet);
-        int barcodeLength = Iterables.getOnlyElement(barcodeLengths);
-
-        if (isNoIndex) {
-            return null;
-        } else if (isDualBarcode) {
-            return "y*,I*,I*,y*";
-        } else if (barcodeLength > 0) {
-            return "y*,I" + barcodeLength + "n*,y*";
-        } else {
-            throw new DataMismatchException("Unable to calculate bases mask");
-        }
     }
 
     private String generateLinkingString(IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> lane, List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> sps, boolean enableDemultiplexSingleSample) throws DataMismatchException {

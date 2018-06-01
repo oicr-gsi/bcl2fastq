@@ -1,28 +1,28 @@
 {
-  "workflowRunCount" : 1,
-  "studies" : [ "EPICT" ],
-  "sequencerRuns" : [ "150814_M00146_0034_000000000-AHLAK" ],
-  "lanes" : [ "150814_M00146_0034_000000000-AHLAK_lane_1" ],
-  "samples" : [ "EPICT_0020_nn_n_PE_368_TS", "EPICT_0021_nn_n_PE_534_TS", "EPICT_0022_nn_n_PE_406_TS", "EPICT_0023_nn_n_PE_368_TS", "EPICT_0024_nn_n_PE_272_TS", "EPICT_0025_nn_n_PE_313_TS", "EPICT_0026_nn_n_PE_337_TS", "EPICT_0027_nn_n_PE_343_TS" ],
-  "workflows" : [ ],
-  "processingAlgorithms" : [ ],
-  "fileMetaTypes" : [ ],
-  "maxInputFiles" : 0,
-  "minInputFiles" : 0,
-  "totalInputFiles" : 0,
-  "workflowRuns" : [ {
-    "workflowIni" : {
-      "called_bases" : "/oicr/data/archive/m146/150814_M00146_0034_000000000-AHLAK/Data/Intensities/BaseCalls/",
-      "flowcell" : "150814_M00146_0034_000000000-AHLAK",
-      "intensity_folder" : "/oicr/data/archive/m146/150814_M00146_0034_000000000-AHLAK/Data/Intensities/",
-      "lanes" : "1,LANE_IUS_SWID:AACGTGAT-ATCGATCG,SAMPLE_IUS_SWID,EPICT_0020_nn_n_PE_368_TS+AAACATCG-ATCGATCG,SAMPLE_IUS_SWID,EPICT_0021_nn_n_PE_534_TS+ATGCCTAA-ATCGATCG,SAMPLE_IUS_SWID,EPICT_0022_nn_n_PE_406_TS+ACCACTGT-ATCGATCG,SAMPLE_IUS_SWID,EPICT_0023_nn_n_PE_368_TS+ACATTGGC-ATCGATCG,SAMPLE_IUS_SWID,EPICT_0024_nn_n_PE_272_TS+CAGATCTG-ATCGATCG,SAMPLE_IUS_SWID,EPICT_0025_nn_n_PE_313_TS+AACGTGAT-GATCGATC,SAMPLE_IUS_SWID,EPICT_0026_nn_n_PE_337_TS+AAACATCG-GATCGATC,SAMPLE_IUS_SWID,EPICT_0027_nn_n_PE_343_TS",
-      "manual_output" : "false",
-      "memory" : "16384",
-      "metadata" : "metadata",
-      "output_dir" : "seqware-results",
-      "output_prefix" : "./",
-      "use_bases_mask" : "y*,I*,I*,y*"
-    },
-    "files" : [ ]
-  } ]
+    "workflowRunCount": 1,
+    "studies": ["EPICT"],
+    "sequencerRuns": ["150814_M00146_0034_000000000-AHLAK"],
+    "lanes": ["150814_M00146_0034_000000000-AHLAK_lane_1"],
+    "samples": ["EPICT_0020_nn_n_PE_368_TS", "EPICT_0021_nn_n_PE_534_TS", "EPICT_0022_nn_n_PE_406_TS", "EPICT_0023_nn_n_PE_368_TS", "EPICT_0024_nn_n_PE_272_TS", "EPICT_0025_nn_n_PE_313_TS", "EPICT_0026_nn_n_PE_337_TS", "EPICT_0027_nn_n_PE_343_TS"],
+    "workflows": [],
+    "processingAlgorithms": [],
+    "fileMetaTypes": [],
+    "maxInputFiles": 0,
+    "minInputFiles": 0,
+    "totalInputFiles": 0,
+    "workflowRuns": [{
+            "workflowIni": {
+                "called_bases": "/oicr/data/archive/m146/150814_M00146_0034_000000000-AHLAK/Data/Intensities/BaseCalls/",
+                "flowcell": "150814_M00146_0034_000000000-AHLAK",
+                "intensity_folder": "/oicr/data/archive/m146/150814_M00146_0034_000000000-AHLAK/Data/Intensities/",
+                "lanes": "1,LANE_IUS_SWID:AACGTGAT-ATCGATCG,SAMPLE_IUS_SWID,EPICT_0020_nn_n_PE_368_TS+AAACATCG-ATCGATCG,SAMPLE_IUS_SWID,EPICT_0021_nn_n_PE_534_TS+ATGCCTAA-ATCGATCG,SAMPLE_IUS_SWID,EPICT_0022_nn_n_PE_406_TS+ACCACTGT-ATCGATCG,SAMPLE_IUS_SWID,EPICT_0023_nn_n_PE_368_TS+ACATTGGC-ATCGATCG,SAMPLE_IUS_SWID,EPICT_0024_nn_n_PE_272_TS+CAGATCTG-ATCGATCG,SAMPLE_IUS_SWID,EPICT_0025_nn_n_PE_313_TS+AACGTGAT-GATCGATC,SAMPLE_IUS_SWID,EPICT_0026_nn_n_PE_337_TS+AAACATCG-GATCGATC,SAMPLE_IUS_SWID,EPICT_0027_nn_n_PE_343_TS",
+                "manual_output": "false",
+                "memory": "16384",
+                "metadata": "metadata",
+                "output_dir": "seqware-results",
+                "output_prefix": "./",
+                "use_bases_mask": "y*,i8n*,i8n*,y*"
+            },
+            "files": []
+        }]
 }

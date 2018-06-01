@@ -1,4 +1,4 @@
-package ca.on.oicr.pde.deciders;
+package ca.on.oicr.pde.deciders.data;
 
 import ca.on.oicr.gsi.provenance.model.LimsKey;
 import ca.on.oicr.gsi.provenance.model.LimsProvenance;
@@ -8,7 +8,7 @@ import net.sourceforge.seqware.common.dto.LimsKeyDto;
  * Used to store provenance object with its provider.
  *
  * @author mlaszloffy
- * @param <T extends LimsProvenance>
+ * @param <T>
  */
 public class ProvenanceWithProvider<T extends LimsProvenance> {
 

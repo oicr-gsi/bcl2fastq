@@ -4,7 +4,8 @@
         "metricsResources": "/expected_output/development/",
         "parameters": {
             "--disable-run-complete-check": "",
-            "--no-null-created-date": ""
+            "--no-null-created-date": "",
+            "--ignore-previous-lims-keys": "true"
         },
         "properties": {
             "memory": "16384"
@@ -46,9 +47,7 @@
             "workflowName": "CASAVA",
             "workflowVersion": "2.7.1",
             "parameters": {
-                "--include-lane": "160615_D00331_0195_AC93ACANXX_lane_5",
-                "--check-wf-accessions": "996126,1753095,4186700,942766,37742,11034,538766,37743,4186700",
-                "--ignore-previous-runs": ""
+                "--include-lane": "160615_D00331_0195_AC93ACANXX_lane_5"
             }
         },
         {

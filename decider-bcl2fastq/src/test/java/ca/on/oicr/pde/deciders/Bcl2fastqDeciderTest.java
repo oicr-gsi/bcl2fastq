@@ -11,6 +11,8 @@ import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.client.MetadataBackedSeqwareClient;
 import ca.on.oicr.pde.client.SeqwareClient;
+import ca.on.oicr.pde.deciders.data.BasesMask;
+import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -20,6 +22,7 @@ import com.google.common.collect.Table;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,25 +34,25 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
-import lombok.Builder;
-import lombok.Singular;
-import lombok.Value;
+import java.util.stream.Collectors;
 import net.sourceforge.seqware.common.metadata.Metadata;
 import net.sourceforge.seqware.common.metadata.MetadataInMemory;
 import net.sourceforge.seqware.common.model.Workflow;
-import org.joda.time.DateTime;
+import org.apache.commons.lang3.tuple.Pair;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
 import org.powermock.reflect.Whitebox;
 import static org.testng.Assert.assertEquals;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 /**
  *
  * @author mlaszloffy
  */
+@Listeners({TestListener.class})
 public class Bcl2fastqDeciderTest {
 
     private SampleProvenanceProvider spp;
@@ -57,7 +60,7 @@ public class Bcl2fastqDeciderTest {
     private ProvenanceClient provenanceClient;
     private Bcl2fastqDecider bcl2fastqDecider;
     private Workflow bcl2fastqWorkflow;
-    private DateTime expectedDate = DateTime.parse("2016-01-01T00:00:00Z");
+    private ZonedDateTime expectedDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
 
     private SortedMap<String, SortedSet<String>> sp1Attrs = new TreeMap<>();
     private SortedMap<String, SortedSet<String>> sp2Attrs = new TreeMap<>();
@@ -166,14 +169,14 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 2);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
 
         //all lanes have been scheduled - no new bcl2fastqWorkflow runs expected
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
 
         //rerun everything
@@ -181,7 +184,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 2);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 8);
 
         //all should be blocked again
@@ -189,7 +192,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 8);
     }
 
@@ -199,14 +202,14 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         bcl2fastqDecider.setBeforeDateFilter(expectedDate.plusDays(1));
         assertEquals(bcl2fastqDecider.run().size(), 2);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
     }
 
@@ -216,14 +219,14 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         bcl2fastqDecider.setAfterDateFilter(expectedDate.minusDays(1));
         assertEquals(bcl2fastqDecider.run().size(), 2);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
     }
 
@@ -233,14 +236,14 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         bcl2fastqDecider.setIncludeInstrumentNameFilter(ImmutableSet.of("h001"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0001"));
@@ -253,7 +256,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0002"));
@@ -268,14 +271,14 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         filters.put(FileProvenanceFilter.sequencer_run, ImmutableSet.of("RUN_0001"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0001"));
@@ -290,7 +293,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0002"));
@@ -305,14 +308,14 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0001"));
@@ -327,7 +330,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0002"));
@@ -342,14 +345,14 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         filters.put(FileProvenanceFilter.sequencer_run_platform_model, ImmutableSet.of("HiSeq"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0001"));
@@ -364,7 +367,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0002"));
@@ -379,14 +382,14 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
         filters.put(FileProvenanceFilter.study, ImmutableSet.of("TEST_STUDY_1"));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0001"));
@@ -401,7 +404,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0002"));
@@ -420,7 +423,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
 
         bcl2fastqDecider.setIsDryRunMode(false);
         bcl2fastqDecider.setDoCreateIusLimsKeys(true);
@@ -428,7 +431,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
 
         bcl2fastqDecider.setIsDryRunMode(false);
         bcl2fastqDecider.setDoCreateIusLimsKeys(true);
@@ -436,7 +439,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
 
         bcl2fastqDecider.setIsDryRunMode(false);
         bcl2fastqDecider.setDoCreateIusLimsKeys(true);
@@ -445,7 +448,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
 
         Collection<FileProvenance> fps = getFpsForCurrentWorkflow();
         assertEquals(fps.size(), 2);
@@ -466,7 +469,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
         assertEquals(getFpsForCurrentWorkflow().size(), 2);
 
         //correct the group ids
@@ -476,7 +479,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
     }
 
@@ -500,11 +503,11 @@ public class Bcl2fastqDeciderTest {
         List<SampleProvenance> currentList = Lists.newArrayList(spp.getSampleProvenance());
         when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
 
-        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.run().size(), 1);  //lane 2 is okay
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
-        assertEquals(getFpsForCurrentWorkflow().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2); //(1+1)
 
         //correct the barcode and schedule
         sp.iusTag("TTTTTTTT");
@@ -512,8 +515,8 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
-        assertEquals(getFpsForCurrentWorkflow().size(), 5);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 5); //2+(1+2)
     }
 
     @Test
@@ -538,30 +541,22 @@ public class Bcl2fastqDeciderTest {
 
         EnumMap<FileProvenanceFilter, Set<String>> filters = new EnumMap<>(FileProvenanceFilter.class);
         filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
+
+        //there is a collison in index 1, nothing should be scheduled
         bcl2fastqDecider.setIncludeFilters(filters);
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
-        filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_0001_001"));
-        bcl2fastqDecider.setIncludeFilters(filters);
-        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
-        assertEquals(bcl2fastqDecider.run().size(), 1);
-        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
-        assertEquals(getFpsForCurrentWorkflow().size(), 2);
-
-        filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_9999_001"));
-        bcl2fastqDecider.setIncludeFilters(filters);
-        bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
-        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
-        assertEquals(bcl2fastqDecider.run().size(), 1);
-        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
+        //fix the barcode
+        sp.iusTag("AAAAATTT-TTTTTTTT");
+        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
+        assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 4);
     }
 
@@ -575,7 +570,7 @@ public class Bcl2fastqDeciderTest {
                 .createdDate(expectedDate)
                 .rootSampleName("TEST_9998")
                 .sampleName("TEST_9998_001")
-                .iusTag("AAAAAAAT")
+                .iusTag("AAAAATTT")
                 .sampleAttributes(sp1Attrs)
                 .skip(false)
                 .provenanceId("99998")
@@ -606,17 +601,20 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
         assertEquals(getFpsForCurrentWorkflow().size(), 0);
 
+        //correct collision (AAAAAAAA vs. AAAAAAAA-TTTTTTTT)
+        sp2.iusTag("AAAAAGGG-TTTTTTTT");
+        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp1.build(), sp2.build()))));
         filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_9999_001"));
         bcl2fastqDecider.setIncludeFilters(filters);
         bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
-        assertEquals(getFpsForCurrentWorkflow().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2); //(1+1)
 
         filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_0001_001", "TEST_9998_001"));
         bcl2fastqDecider.setIncludeFilters(filters);
@@ -624,8 +622,8 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
-        assertEquals(getFpsForCurrentWorkflow().size(), 5); //2+3
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 5); //2+(1+2)
 
         filters.remove(FileProvenanceFilter.sample);
         EnumMap<FileProvenanceFilter, Set<String>> excludeFilters = new EnumMap<>(FileProvenanceFilter.class);
@@ -636,8 +634,366 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
-        assertEquals(bcl2fastqDecider.getInvalidWorkflowRuns().size(), 0);
-        assertEquals(getFpsForCurrentWorkflow().size(), 8); //2+3+3
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 8); //5+(1+2)
+
+        //force rerun everything together
+        bcl2fastqDecider.setIncludeFilters(filters);
+        bcl2fastqDecider.setExcludeFilters(new EnumMap<>(FileProvenanceFilter.class));
+        bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
+        assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 13); //8+(1+2)+(1+1)
+    }
+
+    @Test
+    public void overrideBaseMaskTruncationTest() {
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromStringUnchecked("Y*,I4,Y*"));
+        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
+
+        //run on all lanes
+        assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 4);
+
+        bcl2fastqDecider.getValidWorkflowRuns().stream().forEach(wr -> {
+            assertEquals(wr.getIniFile().get("use_bases_mask"), "y*,i4n*,y*");
+            ((WorkflowRunV2) wr).getBcl2FastqData().getSps().forEach((sp) -> {
+                assertEquals(sp.getIusTag().length(), 4);
+            });
+        });
+    }
+
+    @Test
+    public void overrideBaseMaskInvalidBasesMaskTest() {
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromStringUnchecked("Y*,I9,Y*"));
+        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
+        assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+
+        bcl2fastqDecider.getValidWorkflowRuns().stream().forEach(wr -> {
+            assertEquals(wr.getIniFile().get("use_bases_mask"), "y*,i8n*,y*");
+            ((WorkflowRunV2) wr).getBcl2FastqData().getSps().forEach((sp) -> {
+                assertEquals(sp.getIusTag().length(), 8);
+            });
+        });
+    }
+
+    @Test
+    public void overrideBaseMaskDuplicateBarcodesTest() {
+        SampleProvenanceImpl.SampleProvenanceImplBuilder sp1 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("HiSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_9998")
+                .sampleName("TEST_9998_001")
+                .iusTag("AAAAATCT")
+                .sampleAttributes(sp1Attrs)
+                .skip(false)
+                .provenanceId("10")
+                .version("version")
+                .lastModified(expectedDate);
+
+        SampleProvenanceImpl.SampleProvenanceImplBuilder sp2 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("HiSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_9999")
+                .sampleName("TEST_9999_001")
+                .iusTag("AAAAAGGG")
+                .sampleAttributes(sp1Attrs)
+                .skip(false)
+                .provenanceId("11")
+                .version("version")
+                .lastModified(expectedDate);
+
+        List<SampleProvenance> currentList = Lists.newArrayList(spp.getSampleProvenance());
+        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp1.build(), sp2.build()))));
+
+        EnumMap<FileProvenanceFilter, Set<String>> filters = new EnumMap<>(FileProvenanceFilter.class);
+        filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
+        bcl2fastqDecider.setIncludeFilters(filters);
+
+        //should produce invalid workflow run with barcode collisions
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromStringUnchecked("Y*,I7,Y*"));
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
+        assertEquals(getFpsForCurrentWorkflow().size(), 0);
+
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromStringUnchecked("Y*,I8,Y*"));
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 4); //(1+3)
+    }
+
+    @Test
+    public void singleSampleNoBarcodeTest() {
+        LaneProvenance lp1 = LaneProvenanceImpl.builder()
+                .sequencerRunName("RUN_0003")
+                .laneNumber("1")
+                .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run3/"))
+                .sequencerRunAttribute("instrument_name", ImmutableSortedSet.of("n001"))
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .skip(false)
+                .provenanceId("2_1")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        SampleProvenance sp1 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0003")
+                .studyTitle("TEST_STUDY_2")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("")
+                .sampleAttributes(sp2Attrs)
+                .skip(false)
+                .provenanceId("2")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sp1));
+        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lp1));
+
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2); // 1 + 1
+
+        SampleProvenance sp2 = SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0003")
+                .studyTitle("TEST_STUDY_2")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0002")
+                .sampleName("TEST_0002_001")
+                .iusTag("A")
+                .sampleAttributes(sp2Attrs)
+                .skip(false)
+                .provenanceId("3")
+                .version("1")
+                .lastModified(expectedDate)
+                .build();
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sp1, sp2));
+
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2); // 1 + 1
+    }
+
+    @Test
+    public void mixedSingleAndDualBarcodeRunTest() {
+        Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> mockData = getMockData();
+
+//        List<LaneProvenance> lps = mockData.getLeft().values().stream().map(l -> l.build()).collect(Collectors.toList());
+        when(spp.getSampleProvenance()).thenReturn(mockData.getRight().values().stream().map(s -> s.build()).collect(Collectors.toList()));
+        when(lpp.getLaneProvenance()).thenReturn(mockData.getLeft().values().stream().map(l -> l.build()).collect(Collectors.toList()));
+
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
+        bcl2fastqDecider.setOverrideRunBasesMask(BasesMask.fromStringUnchecked("y*,i*,i*,y*"));
+        assertEquals(bcl2fastqDecider.run().size(), 5);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 5);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 5);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 12); // 1+1 + 1+2 + (1+1 + 1+1) + 1+2
+    }
+
+    @Test
+    public void runBasesMaskTest() {
+        Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> mockData = getMockData();
+
+        when(spp.getSampleProvenance()).thenReturn(mockData.getRight().values().stream().map(s -> s.build()).collect(Collectors.toList()));
+        when(lpp.getLaneProvenance()).thenReturn(mockData.getLeft().values().stream()
+                .map(l -> {
+                    l.sequencerRunAttribute("run_bases_mask", ImmutableSortedSet.of("y126,I9,I8,y126"));
+                    return l.build();
+                }).collect(Collectors.toList()));
+
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        assertEquals(bcl2fastqDecider.run().size(), 5);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 5);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 5);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 12); // 1+1 + 1+2 + (1+1 + 1+1) + 1+2
+    }
+
+    private Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> getMockData() {
+        Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder> lanes = new HashMap<>();
+        Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder> samples = new HashMap();
+
+        LaneProvenanceImpl.LaneProvenanceImplBuilder builder = LaneProvenanceImpl.builder();
+        lanes.put("1_1", LaneProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .laneNumber("1")
+                .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
+                .sequencerRunAttribute("instrument_name", ImmutableSortedSet.of("n001"))
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .skip(false)
+                .provenanceId("1_1")
+                .version("1")
+                .lastModified(expectedDate));
+        samples.put("1_1_1", SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("1")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAAAAA")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_1_1")
+                .version("1")
+                .lastModified(expectedDate));
+
+        lanes.put("1_2", LaneProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .laneNumber("2")
+                .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
+                .sequencerRunAttribute("instrument_name", ImmutableSortedSet.of("n001"))
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .skip(false)
+                .provenanceId("1_2")
+                .version("1")
+                .lastModified(expectedDate));
+        samples.put("1_2_1", SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("2")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAAAAA-AAAAATTT")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_2_1")
+                .version("1")
+                .lastModified(expectedDate));
+        samples.put("1_2_2", SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("2")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAAAAA-AAAAAAAA")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_2_2")
+                .version("1")
+                .lastModified(expectedDate));
+
+        lanes.put("1_3", LaneProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .laneNumber("3")
+                .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
+                .sequencerRunAttribute("instrument_name", ImmutableSortedSet.of("n001"))
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .skip(false)
+                .provenanceId("1_3")
+                .version("1")
+                .lastModified(expectedDate));
+        samples.put("1_3_1", SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("3")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAAAAA-TTTTTTTT")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_3_1")
+                .version("1")
+                .lastModified(expectedDate));
+        samples.put("1_3_2", SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("3")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("TTTTTTTT")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_3_2")
+                .version("1")
+                .lastModified(expectedDate));
+
+        lanes.put("1_4", LaneProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .laneNumber("4")
+                .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
+                .sequencerRunAttribute("instrument_name", ImmutableSortedSet.of("n001"))
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .skip(false)
+                .provenanceId("1_4")
+                .version("1")
+                .lastModified(expectedDate));
+        samples.put("1_4_1", SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("4")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAAAAA")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_4_1")
+                .version("1")
+                .lastModified(expectedDate));
+        samples.put("1_4_2", SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .laneNumber("4")
+                .sequencerRunPlatformModel("NextSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleName("TEST_0001_001")
+                .iusTag("AAAAATTT")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .provenanceId("1_4_2")
+                .version("1")
+                .lastModified(expectedDate));
+
+        return Pair.of(lanes, samples);
     }
 
     private Collection<FileProvenance> getFpsForCurrentWorkflow() {
@@ -645,46 +1001,4 @@ public class Bcl2fastqDeciderTest {
                 ImmutableMap.<FileProvenanceFilter, Set<String>>of(FileProvenanceFilter.workflow, ImmutableSet.of(bcl2fastqWorkflow.getSwAccession().toString())));
     }
 
-    @Builder
-    @Value
-    private static class LaneProvenanceImpl implements LaneProvenance {
-
-        private String sequencerRunName;
-
-        @Singular
-        private SortedMap<String, SortedSet<String>> sequencerRunAttributes;
-        private String sequencerRunPlatformModel;
-        private String laneNumber;
-        private SortedMap<String, SortedSet<String>> laneAttributes = new TreeMap<>();
-        private Boolean skip;
-        private DateTime createdDate;
-        private String laneProvenanceId;
-        private String provenanceId;
-        private String version;
-        private DateTime lastModified;
-    }
-
-    @Builder
-    @Value
-    private static class SampleProvenanceImpl implements SampleProvenance {
-
-        private String studyTitle;
-        private SortedMap<String, SortedSet<String>> studyAttributes = new TreeMap<>();
-        private String rootSampleName;
-        private String parentSampleName;
-        private String sampleName;
-        private SortedMap<String, SortedSet<String>> sampleAttributes;
-        private String sequencerRunName;
-        private SortedMap<String, SortedSet<String>> sequencerRunAttributes = new TreeMap<>();
-        private String sequencerRunPlatformModel;
-        private String laneNumber;
-        private SortedMap<String, SortedSet<String>> laneAttributes = new TreeMap<>();
-        private String iusTag;
-        private Boolean skip;
-        private DateTime createdDate;
-        private String sampleProvenanceId;
-        private String provenanceId;
-        private String version;
-        private DateTime lastModified;
-    }
 }

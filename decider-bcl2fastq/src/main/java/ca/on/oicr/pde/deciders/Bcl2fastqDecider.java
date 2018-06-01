@@ -1,16 +1,27 @@
 package ca.on.oicr.pde.deciders;
 
+import ca.on.oicr.pde.deciders.exceptions.DataMismatchException;
+import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
+import ca.on.oicr.pde.deciders.data.ProvenanceWithProvider;
 import ca.on.oicr.gsi.provenance.ExtendedProvenanceClient;
 import ca.on.oicr.gsi.provenance.FileProvenanceFilter;
 import ca.on.oicr.gsi.provenance.model.FileProvenance;
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
+import ca.on.oicr.pde.deciders.data.Barcode;
+import ca.on.oicr.pde.deciders.data.BarcodeCollision;
 import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq1Handler;
 import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq2Handler;
-import ca.on.oicr.pde.deciders.handlers.Bcl2FastqData;
+import ca.on.oicr.pde.deciders.data.Bcl2FastqData;
 import ca.on.oicr.pde.deciders.handlers.Bcl2FastqHandler;
 import ca.on.oicr.pde.deciders.handlers.Handler;
+import ca.on.oicr.pde.deciders.data.BasesMask;
+import ca.on.oicr.pde.deciders.data.SampleProvenanceWithCustomBarcode;
+import ca.on.oicr.pde.deciders.exceptions.InvalidBasesMaskException;
+import ca.on.oicr.pde.deciders.exceptions.InvalidLaneException;
+import ca.on.oicr.pde.deciders.utils.BarcodeComparison;
+import ca.on.oicr.pde.deciders.utils.BarcodeAndBasesMask;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -28,6 +39,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,7 +50,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.stream.Collectors;
 import net.sourceforge.seqware.common.metadata.Metadata;
 import net.sourceforge.seqware.common.model.Workflow;
 import net.sourceforge.seqware.pipeline.runner.PluginRunner;
@@ -45,7 +61,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.joda.time.DateTime;
 
 /**
  *
@@ -78,18 +93,22 @@ public class Bcl2fastqDecider {
     private StudyToOutputPathConfig studyToOutputPathConfig;
 
     private Boolean replaceNullCreatedDate = false;
-    private DateTime afterDateFilter = null;
-    private DateTime beforeDateFilter = null;
+    private ZonedDateTime afterDateFilter = null;
+    private ZonedDateTime beforeDateFilter = null;
     private Set<String> includeInstrumentNameFilter;
     private Set<String> excludeInstrumentNameFilter;
     private EnumMap<FileProvenanceFilter, Set<String>> includeFilters = new EnumMap<>(FileProvenanceFilter.class);
     private EnumMap<FileProvenanceFilter, Set<String>> excludeFilters = new EnumMap<>(FileProvenanceFilter.class);
 
+    private BasesMask overrideRunBasesMask;
+
     private List<String> overrides;
 
     private final List<WorkflowRun> validWorkflowRuns = new ArrayList<>();
-    private final List<WorkflowRun> invalidWorkflowRuns = new ArrayList<>();
     private final List<WorkflowRun> scheduledWorkflowRuns = new ArrayList<>();
+    private final List<String> laneErrors = new ArrayList<>();
+
+    private Integer minAllowedEditDistance = 3;
 
     public Bcl2fastqDecider() {
         //add workflow handlers
@@ -227,19 +246,19 @@ public class Bcl2fastqDecider {
         this.replaceNullCreatedDate = replaceNullCreatedDate;
     }
 
-    public DateTime getAfterDateFilter() {
+    public ZonedDateTime getAfterDateFilter() {
         return afterDateFilter;
     }
 
-    public void setAfterDateFilter(DateTime afterDateFilter) {
+    public void setAfterDateFilter(ZonedDateTime afterDateFilter) {
         this.afterDateFilter = afterDateFilter;
     }
 
-    public DateTime getBeforeDateFilter() {
+    public ZonedDateTime getBeforeDateFilter() {
         return beforeDateFilter;
     }
 
-    public void setBeforeDateFilter(DateTime beforeDateFilter) {
+    public void setBeforeDateFilter(ZonedDateTime beforeDateFilter) {
         this.beforeDateFilter = beforeDateFilter;
     }
 
@@ -291,6 +310,22 @@ public class Bcl2fastqDecider {
         this.excludeFilters = excludeFilters;
     }
 
+    public BasesMask getOverrideRunBasesMask() {
+        return this.overrideRunBasesMask;
+    }
+
+    public void setOverrideRunBasesMask(BasesMask basesMask) {
+        this.overrideRunBasesMask = basesMask;
+    }
+
+    public Integer getMinAllowedEditDistance() {
+        return minAllowedEditDistance;
+    }
+
+    public void setMinAllowedEditDistance(Integer minAllowedEditDistance) {
+        this.minAllowedEditDistance = minAllowedEditDistance;
+    }
+
     public void setProvenanceClient(ExtendedProvenanceClient provenanceClient) {
         this.provenanceClient = provenanceClient;
     }
@@ -311,12 +346,12 @@ public class Bcl2fastqDecider {
         return validWorkflowRuns;
     }
 
-    public List<WorkflowRun> getInvalidWorkflowRuns() {
-        return invalidWorkflowRuns;
-    }
-
     public List<WorkflowRun> getScheduledWorkflowRuns() {
         return scheduledWorkflowRuns;
+    }
+
+    public List<String> getInvalidLanes() {
+        return laneErrors;
     }
 
     public List<WorkflowRun> run() {
@@ -332,7 +367,7 @@ public class Bcl2fastqDecider {
 
         //reset workflow run collections
         validWorkflowRuns.clear();
-        invalidWorkflowRuns.clear();
+        laneErrors.clear();
         scheduledWorkflowRuns.clear();
 
         // provenance data structures
@@ -352,7 +387,7 @@ public class Bcl2fastqDecider {
                     continue;
                 }
 
-                DateTime createdDate;
+                ZonedDateTime createdDate;
                 if (replaceNullCreatedDate && lp.getCreatedDate() == null) { //ignore created date it is null
                     createdDate = lp.getLastModified();
                 } else {
@@ -503,16 +538,20 @@ public class Bcl2fastqDecider {
         //calculate the set of lanes that do not have associated workflow information but are linked in seqware
         Set<String> blockedLanes = new HashSet<>();
 
-        Collection<FileProvenance> fps = provenanceClient.getFileProvenance(analysisFilters);
-        for (FileProvenance fp : fps) {
-            if (fp.getWorkflowSWID() != null) { //analysis provenance for a worklow run
-                if (getWorkflowAccessionsToCheck().contains(fp.getWorkflowSWID().toString())
-                        || workflow.getSwAccession().equals(fp.getWorkflowSWID())) {
-                    analyzedLanes.addAll(fp.getLaneNames());
+        if (ignorePreviousLimsKeysMode) {
+            // ignorePreviousLimsKeysMode enabled, no need to download any analysis as all known lanes are candidate lanes for analysis
+        } else {
+            Collection<FileProvenance> fps = provenanceClient.getFileProvenance(analysisFilters);
+            for (FileProvenance fp : fps) {
+                if (fp.getWorkflowSWID() != null) { //analysis provenance for a worklow run
+                    if (getWorkflowAccessionsToCheck().contains(fp.getWorkflowSWID().toString())
+                            || workflow.getSwAccession().equals(fp.getWorkflowSWID())) {
+                        analyzedLanes.addAll(fp.getLaneNames());
+                    }
+                } else { //analysis provenance for an ius
+                    //include this record, it may be an IUS that is used for skipping a lane or sample
+                    blockedLanes.addAll(fp.getLaneNames());
                 }
-            } else { //analysis provenance for an ius
-                //include this record, it may be an IUS that is used for skipping a lane or sample
-                blockedLanes.addAll(fp.getLaneNames());
             }
         }
 
@@ -538,20 +577,20 @@ public class Bcl2fastqDecider {
         //lane validation before scheduling workflow run
         Set<String> invalidLanes = new HashSet<>();
         for (String laneName : candidateLanesToAnalyze) {
-            List<String> errors = new ArrayList<>();
+            List<String> laneErrors = new ArrayList<>();
 
             //expect one and only one lane provenance per lane name
             List<ProvenanceWithProvider<LaneProvenance>> lps = laneNameToLaneProvenance.get(laneName);
             if (lps.size() != 1) {
                 invalidLanes.add(laneName);
-                errors.add(String.format("Lane provenance count = [%s], expected 1.", lps.size()));
+                laneErrors.add(String.format("Lane provenance count = [%s], expected 1.", lps.size()));
             }
 
             //expect one or more sample provenance per lane name
             List<ProvenanceWithProvider<SampleProvenance>> sps = laneNameToSampleProvenance.get(laneName);
             if (sps.isEmpty()) {
                 invalidLanes.add(laneName);
-                errors.add(String.format("Sample provenance count = [%s], expected 1 or more.", sps.size()));
+                laneErrors.add(String.format("Sample provenance count = [%s], expected 1 or more.", sps.size()));
             }
 
             if (!disableRunCompleteCheck) {
@@ -565,24 +604,24 @@ public class Bcl2fastqDecider {
                             if (oicrRunCompleteTouchFile.exists()) {
                                 //run is complete
                             } else {
-                                errors.add(String.format("Lane has not completed sequencing ([%s] is missing).", oicrRunCompleteTouchFile.getAbsolutePath()));
+                                laneErrors.add(String.format("Lane has not completed sequencing ([%s] is missing).", oicrRunCompleteTouchFile.getAbsolutePath()));
                             }
                         } else {
-                            errors.add(String.format("Lane run_dir = [%s] is not accessible or does not exist.", runDir.getAbsolutePath()));
+                            laneErrors.add(String.format("Lane run_dir = [%s] is not accessible or does not exist.", runDir.getAbsolutePath()));
                         }
                     } else {
-                        errors.add(String.format("Lane run_dir = [%s].", (runDirs == null ? "" : Joiner.on(",").join(runDirs))));
+                        laneErrors.add(String.format("Lane run_dir = [%s].", (runDirs == null ? "" : Joiner.on(",").join(runDirs))));
                     }
                 }
             }
 
-            if (!errors.isEmpty()) {
+            if (!laneErrors.isEmpty()) {
                 invalidLanes.add(laneName);
                 log.warn("Lane = [{}] can not be processed due to the following reasons:\n"
                         + "{}\n"
                         + "Lane provenance: [{}]\n"
                         + "Sample provenance: [{}]",
-                        laneName, Joiner.on("\n").join(errors), Joiner.on(";").join(lps), Joiner.on(";").join(sps));
+                        laneName, Joiner.on("\n").join(laneErrors), Joiner.on(";").join(lps), Joiner.on(";").join(sps));
             }
         }
 
@@ -591,31 +630,99 @@ public class Bcl2fastqDecider {
 
         //collect required workflow run data - create IUS-LimsKey records in seqware that will be linked to the workflow run
         for (String laneName : lanesToAnalyze) {
+            log.info("Processing lane [{}]", laneName);
+            ProvenanceWithProvider<LaneProvenance> laneProvenanceAndProvider = Iterables.getOnlyElement(laneNameToLaneProvenance.get(laneName));
+            LaneProvenance laneProvenance = laneProvenanceAndProvider.getProvenance();
 
             if (launchMax != null && validWorkflowRuns.size() >= launchMax) {
                 log.info("Launch max [{}] reached.", launchMax);
                 break;
             }
 
-            Bcl2FastqData data = new Bcl2FastqData(
-                    Iterables.getOnlyElement(laneNameToLaneProvenance.get(laneName)),
-                    laneNameToSampleProvenance.get(laneName));
-            data.setProperties(ImmutableMap.of("output_prefix", outputPath, "output_dir", outputFolder));
-            data.setMetadataWriteback(getDoMetadataWriteback());
-            data.setStudyToOutputPathConfig(studyToOutputPathConfig);
+            //get samples in lane
+            List<ProvenanceWithProvider<SampleProvenance>> samples = laneNameToSampleProvenance.get(laneName);
 
-            WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode(), getIsDemultiplexSingleSampleMode());
-            if (wr.getErrors().isEmpty()) {
-                validWorkflowRuns.add(wr);
-            } else {
-                invalidWorkflowRuns.add(wr);
-                log.error("Error while generating workflow run for lane = [{}], errors:\n{}", laneName, Joiner.on("\n").join(wr.getErrors()));
+            //use overrideBasesMask or runBasesMask to calculate the sequenced barcodes
+            Optional<BasesMask> runBasesMask = Optional.empty();
+            if (overrideRunBasesMask != null) {
+                runBasesMask = Optional.of(overrideRunBasesMask);
+            } else if (laneProvenance.getSequencerRunAttributes().containsKey("run_bases_mask")) {
+                SortedSet<String> runBasesMaskSet = laneProvenance.getSequencerRunAttributes().get("run_bases_mask");
+                if (runBasesMaskSet.size() != 1) {
+                    addInvalidLane("Error while generating workflow run(s) for lane = [{0}], errors:\n{1}", laneName, "Expected one run_bases_mask, found: " + runBasesMaskSet.toString());
+                    continue;
+                }
+                try {
+                    runBasesMask = Optional.of(BasesMask.fromString(Iterables.getOnlyElement(runBasesMaskSet)));
+                } catch (InvalidBasesMaskException ex) {
+                    addInvalidLane("Error while generating workflow run(s) for lane = [{0}], errors:\n{1}", laneName, ex.toString());
+                    continue;
+                }
+            }
+            if (runBasesMask.isPresent()) {
+                try {
+                    samples = applyBasesMask(samples, runBasesMask.get());
+                } catch (DataMismatchException ex) {
+                    addInvalidLane("Error while generating workflow run(s) for lane = [{0}], errors:\n{1}", laneName, ex.toString());
+                    continue;
+                }
+            }
+
+            //get all barcodes in lane
+            Set<String> unsupportedBarcodeStrings = new HashSet<>();
+            List<Barcode> laneBarcodes = samples.stream()
+                    .map(ProvenanceWithProvider::getProvenance)
+                    .map(SampleProvenance::getIusTag)
+                    .map(barcodeString -> {
+                        try {
+                            return Barcode.fromString(barcodeString);
+                        } catch (DataMismatchException ex) {
+                            unsupportedBarcodeStrings.add(barcodeString);
+                            return null;
+                        }
+                    })
+                    .collect(Collectors.toList());
+            if (!unsupportedBarcodeStrings.isEmpty()) {
+                addInvalidLane("Error while generating workflow run(s) for lane = [{0}], unsupported barcode(s):\n{1}", laneName, unsupportedBarcodeStrings.toString());
+                continue;
+            }
+
+            //check for barcode collisions
+            List<BarcodeCollision> collisions = BarcodeComparison.getTruncatedHammingDistanceCollisions(laneBarcodes, minAllowedEditDistance);
+            if (collisions.size() > 0) {
+                addInvalidLane("Error while generating workflow run(s) for lane = [{0}], barcode collision(s):\n{1}", laneName, Joiner.on("\n").join(collisions));
+                continue;
+            }
+
+            //more than one sample in the lane, demultiplexing must be done for all workflow runs scheduled for this lane
+            boolean doDemulitplexing = getIsDemultiplexSingleSampleMode();
+            if (samples.size() > 1) {
+                doDemulitplexing = true;
+            }
+
+            //group lane samples by barcode length
+            Map<String, List<ProvenanceWithProvider<SampleProvenance>>> samplesGroupedByBarcodeLength = samples.stream()
+                    .collect(Collectors.groupingBy(s -> {
+                        try {
+                            return Barcode.fromString(s.getProvenance().getIusTag()).getLengthString();
+                        } catch (DataMismatchException ex) {
+                            //this error should have been handled already so this exception should not be thrown
+                            throw new RuntimeException(ex);
+                        }
+                    }));
+
+            //iterate over all lane samples grouped by barcode length
+            try {
+                validWorkflowRuns.addAll(generateWorkflowRunsForLane(laneProvenanceAndProvider, samplesGroupedByBarcodeLength, handler, runBasesMask.orElse(null), doDemulitplexing));
+            } catch (InvalidLaneException ex) {
+                addInvalidLane("Error while generating workflow run(s) for lane = [{0}]:\n{1}", laneName, ex.toString());
             }
         }
 
-        //list invalid workflow runs
-        for (WorkflowRun wr : invalidWorkflowRuns) {
-            log.info("Invalid workflow run:\n" + debugWorkflowRun(wr));
+        //list invalid lanes
+        for (String invalidLane : this.laneErrors) {
+            log.error(invalidLane);
+            //log.warn("Invalid workflow run:\n" + debugWorkflowRun(wr));
         }
 
         //schedule workflow runs
@@ -628,12 +735,12 @@ public class Bcl2fastqDecider {
             }
         }
 
-        log.info("Lane summary: fetched={} analyzed={} blocked={} allowed={} unprocessed={}",
+        log.info("Lane input summary: fetched={} analyzed={} blocked={} allowed={} unprocessed={}",
                 knownLanes.size(), analyzedLanes.size(), blockedLanes.size(), allowedLanes.size(), unprocessedLanes.size());
-        log.info("Requested summary: requested={} invalid={} valid={}",
+        log.info("Lane summary: requested={} invalid={} valid={}",
                 candidateLanesToAnalyze.size(), invalidLanes.size(), lanesToAnalyze.size());
-        log.info("Workflow run summary: candidate={} invalid={} valid={} scheduled={}",
-                lanesToAnalyze.size(), invalidWorkflowRuns.size(), validWorkflowRuns.size(), scheduledWorkflowRuns.size());
+        log.info("Final summary: candidate lanes={} invalid lanes={} valid workflow runs={} scheduled workflow runs={}",
+                lanesToAnalyze.size(), getInvalidLanes().size(), validWorkflowRuns.size(), scheduledWorkflowRuns.size());
 
         return scheduledWorkflowRuns;
     }
@@ -706,4 +813,92 @@ public class Bcl2fastqDecider {
             throw new RuntimeException(ex);
         }
     }
+
+    private List<ProvenanceWithProvider<SampleProvenance>> applyBasesMask(List<ProvenanceWithProvider<SampleProvenance>> samples, BasesMask basesMask) throws DataMismatchException {
+        List<ProvenanceWithProvider<SampleProvenance>> samplesWithCustomBarcodes = new ArrayList<>();
+        for (ProvenanceWithProvider<SampleProvenance> pwp : samples) {
+            SampleProvenance sp = pwp.getProvenance();
+            Barcode newBarcode = BarcodeAndBasesMask.applyBasesMask(Barcode.fromString(sp.getIusTag()), basesMask);
+            SampleProvenanceWithCustomBarcode sampleProvenanceWithCustomBarcode = new SampleProvenanceWithCustomBarcode(sp, newBarcode.toString());
+            ProvenanceWithProvider<SampleProvenance> newPwp = new ProvenanceWithProvider(pwp.getProvider(), sampleProvenanceWithCustomBarcode);
+            samplesWithCustomBarcodes.add(newPwp);
+        }
+        return samplesWithCustomBarcodes;
+    }
+
+    private void addInvalidLane(String message, String... args) {
+        String error = MessageFormat.format(message, (Object[]) args);
+        laneErrors.add(error);
+    }
+
+    private List<WorkflowRunV2> generateWorkflowRunsForLane(
+            ProvenanceWithProvider<LaneProvenance> lp,
+            Map<String, List<ProvenanceWithProvider<SampleProvenance>>> groupedSamples,
+            Bcl2FastqHandler handler,
+            BasesMask runBasesMask,
+            boolean doDemultiplexing) throws InvalidLaneException {
+
+        List<String> laneErrors = new ArrayList<>();
+        List<WorkflowRunV2> workflowRuns = new ArrayList<>();
+        for (Entry<String, List<ProvenanceWithProvider<SampleProvenance>>> e : groupedSamples.entrySet()) {
+            String group = e.getKey();
+            log.info("Generating workflow run for group = {}", group);
+
+            List<ProvenanceWithProvider<SampleProvenance>> samplesForGroup = e.getValue();
+
+            final List<String> barcodeErrors = new ArrayList<>();
+            List<Barcode> workflowRunBarcodes = samplesForGroup.stream().map(ProvenanceWithProvider::getProvenance)
+                    .map(SampleProvenance::getIusTag)
+                    .map(barcodeString -> {
+                        try {
+                            return Barcode.fromString(barcodeString);
+                        } catch (DataMismatchException ex) {
+                            barcodeErrors.add(ex.toString());
+                            return null;
+                        }
+                    })
+                    .collect(Collectors.toList());
+            if (!barcodeErrors.isEmpty()) {
+                laneErrors.add(MessageFormat.format("Error while parsing barcodes for group = [{0}]:\n{1}", barcodeErrors.toString()));
+                continue;
+            }
+
+            Bcl2FastqData data = new Bcl2FastqData(lp, samplesForGroup);
+            data.setProperties(ImmutableMap.of("output_prefix", outputPath, "output_dir", outputFolder));
+            data.setMetadataWriteback(getDoMetadataWriteback());
+            data.setStudyToOutputPathConfig(studyToOutputPathConfig);
+
+            BasesMask basesMask;
+            if (!doDemultiplexing) {
+                basesMask = null;
+            } else {
+                try {
+                    if (runBasesMask != null) {
+                        basesMask = BarcodeAndBasesMask.calculateBasesMask(workflowRunBarcodes, runBasesMask);
+                    } else {
+                        basesMask = BarcodeAndBasesMask.calculateBasesMask(workflowRunBarcodes);
+                    }
+                } catch (DataMismatchException ex) {
+                    laneErrors.add(MessageFormat.format("Error while calculating bases mask for group = [{0}]:\n{1}", ex.toString()));
+                    continue;
+                }
+            }
+            data.setBasesMask(basesMask);
+
+            WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode(), doDemultiplexing);
+
+            if (wr.getErrors().isEmpty()) {
+                workflowRuns.add(wr);
+            } else {
+                laneErrors.add(MessageFormat.format("Error while generating workflow run for group = [{0}], errors:\n{1}", group, Joiner.on("\n").join(wr.getErrors())));
+            }
+        }
+
+        if (!laneErrors.isEmpty()) {
+            throw new InvalidLaneException("Errors generating workflow runs for lane:\n" + Joiner.on("\n").join(laneErrors));
+        }
+
+        return workflowRuns;
+    }
+
 }

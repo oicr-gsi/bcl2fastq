@@ -1,4 +1,4 @@
-package ca.on.oicr.pde.deciders;
+package ca.on.oicr.pde.deciders.data;
 
 /**
  * Used to store IUS with its provenance object.
