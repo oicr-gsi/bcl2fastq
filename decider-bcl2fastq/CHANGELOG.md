@@ -1,4 +1,7 @@
-## 1.2
+## 1.2.1 - 2018-08-08
+- [GP-1705](https://jira.oicr.on.ca/browse/GP-1705) - bcl2fastq was launched for old sequencer runs
+- Update to pipedev 2.4.2 (provenance 1.2.2)
+## 1.2 - 2018-05-22
 - [GP-1516](https://jira.oicr.on.ca/browse/GP-1516)
   - Trim barcode when index was sequenced with less cycles
   - Schedule workflow runs by barcode length (support for calculating use_bases_mask from sequenced/run bases mask)
