@@ -1,9 +1,11 @@
 package ca.on.oicr.pde.deciders;
 
+import ca.on.oicr.gsi.provenance.FileProvenanceFilter;
 import ca.on.oicr.gsi.provenance.ProviderLoader;
 import ca.on.oicr.gsi.provenance.ProviderLoader.Provider;
 import ca.on.oicr.pde.client.MetadataBackedSeqwareClient;
 import ca.on.oicr.pde.client.SeqwareClient;
+import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -16,6 +18,7 @@ import net.sourceforge.seqware.common.metadata.MetadataInMemory;
 import net.sourceforge.seqware.common.model.Workflow;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.FileUtils;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import org.testng.annotations.BeforeMethod;
@@ -105,6 +108,29 @@ public class Bcl2fastqDeciderCliTest {
         assertFalse(decider.getDoScheduleWorkflowRuns());
         assertFalse(decider.getIsDemultiplexSingleSampleMode());
         assertTrue(decider.getAfterDateFilter().isEqual(ZonedDateTime.parse("2017-01-01T00:00:00Z")));
+    }
+
+    @Test
+    public void multipleFilterValuesTest() throws IOException {
+        List<String> args = new ArrayList<>();
+        args.add("--dry-run");
+        args.add("--wf-accession");
+        args.add(bcl2fastqWorkflow.getSwAccession().toString());
+        args.add("--provenance-settings");
+        args.add(provenanceSettings.getAbsolutePath());
+        args.add("--include-study");
+        args.add("1,2,3");
+        args.add("--exclude-study");
+        args.add("1,2,3");
+
+        Bcl2fastqDecider decider = getDecider(args);
+        assertTrue(decider.getIsDryRunMode());
+        assertFalse(decider.getDoMetadataWriteback());
+        assertFalse(decider.getDoCreateIusLimsKeys());
+        assertFalse(decider.getDoScheduleWorkflowRuns());
+        assertFalse(decider.getIsDemultiplexSingleSampleMode());
+        assertEquals(decider.getIncludeFilters().get(FileProvenanceFilter.study), ImmutableSet.of("1", "2", "3"));
+        assertEquals(decider.getExcludeFilters().get(FileProvenanceFilter.study), ImmutableSet.of("1", "2", "3"));
     }
 
     private Bcl2fastqDecider getDecider(List<String> args) {

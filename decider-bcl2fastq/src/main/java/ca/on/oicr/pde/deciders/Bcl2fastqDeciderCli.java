@@ -172,8 +172,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         includeFilterOpts = new EnumMap<>(FileProvenanceFilter.class);
         excludeFilterOpts = new EnumMap<>(FileProvenanceFilter.class);
         for (FileProvenanceFilter filter : Bcl2fastqDecider.getSupportedFilters()) {
-            includeFilterOpts.put(filter, parser.accepts("include-" + filter.toString()).withRequiredArg().ofType(String.class));
-            excludeFilterOpts.put(filter, parser.accepts("exclude-" + filter.toString()).withRequiredArg().ofType(String.class));
+            includeFilterOpts.put(filter, parser.accepts("include-" + filter.toString()).withRequiredArg().ofType(String.class).withValuesSeparatedBy(","));
+            excludeFilterOpts.put(filter, parser.accepts("exclude-" + filter.toString()).withRequiredArg().ofType(String.class).withValuesSeparatedBy(","));
         }
 
         overrideRunBasesMaskOpt = parser.accepts("override-run-bases-mask", "Override the run bases-mask and truncate barcodes to the specified index length.").withRequiredArg();

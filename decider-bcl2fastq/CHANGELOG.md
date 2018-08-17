@@ -1,3 +1,5 @@
+## 1.2.2 - 2018-08-15
+- [GP-1721](https://jira.oicr.on.ca/browse/GP-1721) - bcl2fastq decider does not support comma separated lists for filters arguments
 ## 1.2.1 - 2018-08-08
 - [GP-1705](https://jira.oicr.on.ca/browse/GP-1705) - bcl2fastq was launched for old sequencer runs
 - Update to pipedev 2.4.2 (provenance 1.2.2)
