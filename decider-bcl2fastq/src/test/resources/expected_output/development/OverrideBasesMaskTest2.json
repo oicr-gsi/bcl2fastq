@@ -10,6 +10,9 @@
     "maxInputFiles": 0,
     "minInputFiles": 0,
     "totalInputFiles": 0,
+    "maxOutputFileProvenanceRecords": 5,
+    "minOutputFileProvenanceRecords": 5,
+    "totalOutputFileProvenanceRecords": 5,
     "workflowRuns": [{
             "workflowIni": {
                 "called_bases": "/.mounts/labs/prod/archive/SickKids_HiSeqX/180420_E00389_0182_AHKTJLCCXY/Data/Intensities/BaseCalls/",
@@ -23,6 +26,7 @@
                 "output_prefix": "./",
                 "use_bases_mask": "y*,i6n*,n*,y*"
             },
-            "files": []
+            "files": [],
+            "outputFileProvenanceRecords": 5
         }]
 }

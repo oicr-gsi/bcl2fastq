@@ -10,6 +10,9 @@
     "maxInputFiles": 0,
     "minInputFiles": 0,
     "totalInputFiles": 0,
+    "maxOutputFileProvenanceRecords": 2,
+    "minOutputFileProvenanceRecords": 2,
+    "totalOutputFileProvenanceRecords": 2,
     "workflowRuns": [{
             "workflowIni": {
                 "called_bases": "/oicr/data/archive/h802/130404_SN802_0108_AC1TUBACXX/Data/Intensities/BaseCalls/",
@@ -22,6 +25,7 @@
                 "output_dir": "seqware-results",
                 "output_prefix": "./"
             },
-            "files": []
+            "files": [],
+            "outputFileProvenanceRecords": 2
         }]
 }

@@ -1,28 +1,32 @@
 {
-  "workflowRunCount" : 1,
-  "studies" : [ "FNS" ],
-  "sequencerRuns" : [ "180420_D00343_0233_ACCH40ANXX" ],
-  "lanes" : [ "180420_D00343_0233_ACCH40ANXX_lane_7" ],
-  "samples" : [ "FNS_0412_Pa_P_PE_599_WG", "FNS_0413_Pa_P_PE_730_WG" ],
-  "workflows" : [ ],
-  "processingAlgorithms" : [ ],
-  "fileMetaTypes" : [ ],
-  "maxInputFiles" : 0,
-  "minInputFiles" : 0,
-  "totalInputFiles" : 0,
-  "workflowRuns" : [ {
-    "workflowIni" : {
-      "called_bases" : "/oicr/data/archive/D00343/180420_D00343_0233_ACCH40ANXX/Data/Intensities/BaseCalls/",
-      "flowcell" : "180420_D00343_0233_ACCH40ANXX",
-      "intensity_folder" : "/oicr/data/archive/D00343/180420_D00343_0233_ACCH40ANXX/Data/Intensities/",
-      "lanes" : "7,LANE_IUS_SWID:TAAGGCGA,SAMPLE_IUS_SWID,FNS_0412_Pa_P_PE_599_WG+CGTACTAG,SAMPLE_IUS_SWID,FNS_0413_Pa_P_PE_730_WG",
-      "manual_output" : "false",
-      "memory" : "16384",
-      "metadata" : "metadata",
-      "output_dir" : "seqware-results",
-      "output_prefix" : "./",
-      "use_bases_mask" : "y*,i8n*,n*,y*"
-    },
-    "files" : [ ]
-  } ]
+    "workflowRunCount": 1,
+    "studies": ["FNS"],
+    "sequencerRuns": ["180420_D00343_0233_ACCH40ANXX"],
+    "lanes": ["180420_D00343_0233_ACCH40ANXX_lane_7"],
+    "samples": ["FNS_0412_Pa_P_PE_599_WG", "FNS_0413_Pa_P_PE_730_WG"],
+    "workflows": [],
+    "processingAlgorithms": [],
+    "fileMetaTypes": [],
+    "maxInputFiles": 0,
+    "minInputFiles": 0,
+    "totalInputFiles": 0,
+    "maxOutputFileProvenanceRecords": 3,
+    "minOutputFileProvenanceRecords": 3,
+    "totalOutputFileProvenanceRecords": 3,
+    "workflowRuns": [{
+            "workflowIni": {
+                "called_bases": "/oicr/data/archive/D00343/180420_D00343_0233_ACCH40ANXX/Data/Intensities/BaseCalls/",
+                "flowcell": "180420_D00343_0233_ACCH40ANXX",
+                "intensity_folder": "/oicr/data/archive/D00343/180420_D00343_0233_ACCH40ANXX/Data/Intensities/",
+                "lanes": "7,LANE_IUS_SWID:TAAGGCGA,SAMPLE_IUS_SWID,FNS_0412_Pa_P_PE_599_WG+CGTACTAG,SAMPLE_IUS_SWID,FNS_0413_Pa_P_PE_730_WG",
+                "manual_output": "false",
+                "memory": "16384",
+                "metadata": "metadata",
+                "output_dir": "seqware-results",
+                "output_prefix": "./",
+                "use_bases_mask": "y*,i8n*,n*,y*"
+            },
+            "files": [],
+            "outputFileProvenanceRecords": 3
+        }]
 }

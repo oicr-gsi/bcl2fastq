@@ -10,6 +10,9 @@
     "maxInputFiles": 0,
     "minInputFiles": 0,
     "totalInputFiles": 0,
+    "maxOutputFileProvenanceRecords": 2,
+    "minOutputFileProvenanceRecords": 2,
+    "totalOutputFileProvenanceRecords": 16,
     "workflowRuns": [{
             "workflowIni": {
                 "called_bases": "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
@@ -22,7 +25,8 @@
                 "output_dir": "seqware-results",
                 "output_prefix": "./"
             },
-            "files": []
+            "files": [],
+            "outputFileProvenanceRecords": 2
         }, {
             "workflowIni": {
                 "called_bases": "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
@@ -35,7 +39,8 @@
                 "output_dir": "seqware-results",
                 "output_prefix": "./"
             },
-            "files": []
+            "files": [],
+            "outputFileProvenanceRecords": 2
         }, {
             "workflowIni": {
                 "called_bases": "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
@@ -48,7 +53,8 @@
                 "output_dir": "seqware-results",
                 "output_prefix": "./"
             },
-            "files": []
+            "files": [],
+            "outputFileProvenanceRecords": 2
         }, {
             "workflowIni": {
                 "called_bases": "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
@@ -61,7 +67,8 @@
                 "output_dir": "seqware-results",
                 "output_prefix": "./"
             },
-            "files": []
+            "files": [],
+            "outputFileProvenanceRecords": 2
         }, {
             "workflowIni": {
                 "called_bases": "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
@@ -74,7 +81,8 @@
                 "output_dir": "seqware-results",
                 "output_prefix": "./"
             },
-            "files": []
+            "files": [],
+            "outputFileProvenanceRecords": 2
         }, {
             "workflowIni": {
                 "called_bases": "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
@@ -87,7 +95,8 @@
                 "output_dir": "seqware-results",
                 "output_prefix": "./"
             },
-            "files": []
+            "files": [],
+            "outputFileProvenanceRecords": 2
         }, {
             "workflowIni": {
                 "called_bases": "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
@@ -100,7 +109,8 @@
                 "output_dir": "seqware-results",
                 "output_prefix": "./"
             },
-            "files": []
+            "files": [],
+            "outputFileProvenanceRecords": 2
         }, {
             "workflowIni": {
                 "called_bases": "/oicr/data/archive/h802/131025_SN802_0145_AC2KVTACXX/Data/Intensities/BaseCalls/",
@@ -113,6 +123,7 @@
                 "output_dir": "seqware-results",
                 "output_prefix": "./"
             },
-            "files": []
+            "files": [],
+            "outputFileProvenanceRecords": 2
         }]
 }
