@@ -87,6 +87,7 @@ public class Bcl2fastqDecider {
     private Boolean ignorePreviousLimsKeysMode = false;
     private Boolean disableRunCompleteCheck = false;
     private Boolean isDemultiplexSingleSampleMode = false;
+    private Boolean noLaneSplittingMode = false;
 
     private String outputPath = "./";
     private String outputFolder = "seqware-results";
@@ -204,6 +205,14 @@ public class Bcl2fastqDecider {
 
     public void setIgnorePreviousLimsKeysMode(boolean ignorePreviousLimsKeysMode) {
         this.ignorePreviousLimsKeysMode = ignorePreviousLimsKeysMode;
+    }
+
+    public Boolean getNoLaneSplittingMode() {
+        return noLaneSplittingMode;
+    }
+
+    public void setNoLaneSplittingMode(Boolean noLaneSplittingMode) {
+        this.noLaneSplittingMode = noLaneSplittingMode;
     }
 
     public boolean isDisableRunCompleteCheck() {
@@ -628,6 +637,48 @@ public class Bcl2fastqDecider {
         //remove invalid lanes from lanes to analyze set
         Set<String> lanesToAnalyze = Sets.difference(candidateLanesToAnalyze, invalidLanes);
 
+        if (noLaneSplittingMode) {
+            Set<String> noLaneSplittingModeLanesToAnalyze = new HashSet<>();
+
+            // get all samples in lanesToAnalyze set
+            List<ProvenanceWithProvider<SampleProvenance>> samplesToAnalyze = new ArrayList<>();
+            for (String laneName : lanesToAnalyze) {
+                samplesToAnalyze.addAll(laneNameToSampleProvenance.get(laneName));
+            }
+
+            // group by samples by run and lane
+            Map<String, Map<String, List<String>>> samplesToAnalyzeGroupedByRun = samplesToAnalyze.stream().collect(
+                    Collectors.groupingBy(s -> {
+                        return s.getProvenance().getSequencerRunName();
+                    }, Collectors.groupingBy(s -> {
+                        return s.getProvenance().getLaneNumber();
+                    }, Collectors.mapping(s -> {
+                        //map sample provenance object to string representation for the following verification step
+                        return s.getProvenance().getSampleName() + "-" + s.getProvenance().getIusTag();
+                    }, Collectors.toList())))
+            );
+
+            //for each run, verify all lanes contain the same samples or only lane 1 has samples
+            for (Entry<String, Map<String, List<String>>> runEntry : samplesToAnalyzeGroupedByRun.entrySet()) {
+                String runName = runEntry.getKey();
+                Map<String, List<String>> runSamplesGroupByLane = runEntry.getValue();
+                if (runSamplesGroupByLane.values().stream().filter(l -> {
+                    return !l.isEmpty();
+                }).map(l -> {
+                    return l.stream().sorted().collect(Collectors.toList());
+                }).distinct().count() != 1) {
+                    addInvalidLane("Operating in no-lane-splitting mode and different samples in lanes detected, run = [{0}], errors:\n{1}", runName, runSamplesGroupByLane.toString());
+                } else if (runSamplesGroupByLane.get("1") == null || runSamplesGroupByLane.get("1").isEmpty()) {
+                    addInvalidLane("Operating in no-lane-splitting mode and no samples detected in lane 1, run = [{0}], errors:\n{1}", runName, runSamplesGroupByLane.toString());
+                } else {
+                    noLaneSplittingModeLanesToAnalyze.add(runName + "_lane_1");
+                }
+            }
+
+            //replace the current lanesToAnalyze with noLaneSplittingMode lanesToAnalyze
+            lanesToAnalyze = noLaneSplittingModeLanesToAnalyze;
+        }
+
         //collect required workflow run data - create IUS-LimsKey records in seqware that will be linked to the workflow run
         for (String laneName : lanesToAnalyze) {
             log.info("Processing lane [{}]", laneName);
@@ -884,6 +935,7 @@ public class Bcl2fastqDecider {
                 }
             }
             data.setBasesMask(basesMask);
+            data.setNoLaneSplitting(noLaneSplittingMode);
 
             WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode(), doDemultiplexing);
 

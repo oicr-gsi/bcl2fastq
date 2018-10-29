@@ -43,6 +43,7 @@ import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
 import org.powermock.reflect.Whitebox;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -61,6 +62,7 @@ public class Bcl2fastqDeciderTest {
     private Bcl2fastqDecider bcl2fastqDecider;
     private Workflow bcl2fastqWorkflow;
     private ZonedDateTime expectedDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
+    private SeqwareClient seqwareClient;
 
     private SortedMap<String, SortedSet<String>> sp1Attrs = new TreeMap<>();
     private SortedMap<String, SortedSet<String>> sp2Attrs = new TreeMap<>();
@@ -89,7 +91,7 @@ public class Bcl2fastqDeciderTest {
         client.registerSampleProvenanceProvider(provider, spp);
         bcl2fastqDecider.setProvenanceClient(client);
 
-        SeqwareClient seqwareClient = new MetadataBackedSeqwareClient(metadata, config);
+        seqwareClient = new MetadataBackedSeqwareClient(metadata, config);
         bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.7.1", "test workflow");
         bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
 
@@ -808,8 +810,6 @@ public class Bcl2fastqDeciderTest {
     @Test
     public void mixedSingleAndDualBarcodeRunTest() {
         Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> mockData = getMockData();
-
-//        List<LaneProvenance> lps = mockData.getLeft().values().stream().map(l -> l.build()).collect(Collectors.toList());
         when(spp.getSampleProvenance()).thenReturn(mockData.getRight().values().stream().map(s -> s.build()).collect(Collectors.toList()));
         when(lpp.getLaneProvenance()).thenReturn(mockData.getLeft().values().stream().map(l -> l.build()).collect(Collectors.toList()));
 
@@ -840,6 +840,94 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 5);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertEquals(getFpsForCurrentWorkflow().size(), 12); // 1+1 + 1+2 + (1+1 + 1+1) + 1+2
+    }
+
+    @Test
+    public void noLaneSplittingModeTest() {
+
+        //setup decider
+        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        bcl2fastqDecider.setNoLaneSplittingMode(true);
+
+        //case when there are different samples per lane
+        LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").build();
+        SampleProvenance lane1_sample1 = getBaseSample().laneNumber("1").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_1_1").build();
+        SampleProvenance lane1_sample2 = getBaseSample().laneNumber("1").sampleName("TEST_0001_002").iusTag("TTTT").provenanceId("1_1_2").build();
+        LaneProvenance lane2 = getBaseLane().laneNumber("2").provenanceId("1_2").build();
+        SampleProvenance lane2_sample3 = getBaseSample().laneNumber("2").sampleName("TEST_0001_003").iusTag("CCCC").provenanceId("1_2_3").build();
+        SampleProvenance lane2_sample4 = getBaseSample().laneNumber("2").sampleName("TEST_0001_004").iusTag("GGGG").provenanceId("1_2_4").build();
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2, lane2_sample3, lane2_sample4));
+        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
+
+        //fix the samples in lane 2
+        lane2_sample3 = getBaseSample().laneNumber("2").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_2_3").build();
+        lane2_sample4 = getBaseSample().laneNumber("2").sampleName("TEST_0001_002").iusTag("TTTT").provenanceId("1_2_4").build();
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2, lane2_sample3, lane2_sample4));
+        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("no_lane_splitting")).allMatch(s -> "true".equals(s)));
+
+        //removing samples from lane 2 should also be valid
+        bcl2fastqDecider.setIgnorePreviousAnalysisMode(true); //need to ignore the above scheduled workflow run
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2));
+        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("no_lane_splitting")).allMatch(s -> "true".equals(s)));
+    }
+
+    @Test
+    public void noLaneSplittingModeSampleOrderTest() {
+        //setup decider
+        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        bcl2fastqDecider.setNoLaneSplittingMode(true);
+
+        //case when there are different samples per lane
+        LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").build();
+        SampleProvenance lane1_sample1 = getBaseSample().laneNumber("1").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_1_1").build();
+        SampleProvenance lane1_sample2 = getBaseSample().laneNumber("1").sampleName("TEST_0001_002").iusTag("TTTT").provenanceId("1_1_2").build();
+        LaneProvenance lane2 = getBaseLane().laneNumber("2").provenanceId("1_2").build();
+        SampleProvenance lane2_sample3 = getBaseSample().laneNumber("2").sampleName("TEST_0001_002").iusTag("TTTT").provenanceId("1_2_3").build();
+        SampleProvenance lane2_sample4 = getBaseSample().laneNumber("2").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_2_4").build();
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2, lane2_sample3, lane2_sample4));
+        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("no_lane_splitting")).allMatch(s -> "true".equals(s)));
+    }
+
+    @Test
+    public void noLaneSplittingModeSamplesInWrongLaneTest() {
+        //setup decider
+        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        bcl2fastqDecider.setNoLaneSplittingMode(true);
+
+        //case when there are different samples per lane
+        LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").build();
+        LaneProvenance lane2 = getBaseLane().laneNumber("2").provenanceId("1_2").build();
+        SampleProvenance sample1 = getBaseSample().laneNumber("2").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_2_1").build();
+        SampleProvenance sample2 = getBaseSample().laneNumber("2").sampleName("TEST_0001_002").iusTag("TTTT").provenanceId("1_2_2").build();
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2));
+        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
+
+        //move samples to lane 1
+        sample1 = getBaseSample().laneNumber("1").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_1_1").build();
+        sample2 = getBaseSample().laneNumber("1").sampleName("TEST_0001_002").iusTag("TTTT").provenanceId("1_1_2").build();
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2));
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("no_lane_splitting")).allMatch(s -> "true".equals(s)));
     }
 
     private Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> getMockData() {
@@ -994,6 +1082,31 @@ public class Bcl2fastqDeciderTest {
                 .lastModified(expectedDate));
 
         return Pair.of(lanes, samples);
+    }
+
+    private LaneProvenanceImpl.LaneProvenanceImplBuilder getBaseLane() {
+        return LaneProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .sequencerRunAttribute("run_dir", ImmutableSortedSet.of("/tmp/run_dir/"))
+                .sequencerRunAttribute("instrument_name", ImmutableSortedSet.of("n001"))
+                .sequencerRunPlatformModel("NovaSeq")
+                .createdDate(expectedDate)
+                .skip(false)
+                .version("1")
+                .lastModified(expectedDate);
+    }
+
+    private SampleProvenanceImpl.SampleProvenanceImplBuilder getBaseSample() {
+        return SampleProvenanceImpl.builder()
+                .sequencerRunName("RUN_0001")
+                .studyTitle("TEST_STUDY_1")
+                .sequencerRunPlatformModel("NovaSeq")
+                .createdDate(expectedDate)
+                .rootSampleName("TEST_0001")
+                .sampleAttributes(Collections.emptySortedMap())
+                .skip(false)
+                .version("1")
+                .lastModified(expectedDate);
     }
 
     private Collection<FileProvenance> getFpsForCurrentWorkflow() {
