@@ -92,6 +92,25 @@
                 "--include-lane": "180420_D00343_0233_ACCH40ANXX_lane_7",
                 "--override-run-bases-mask": "y*,i8n*,n*,y*"
             }
+        },
+        {
+            "id": "No lane splitting one lane test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.9.1",
+            "parameters": {
+                "--include-sequencer-run": "171128_NB551056_0036_AHVCJKBGX3",
+                "--no-lane-splitting": "true"
+            }
+        },
+        {
+            "id": "No lane splitting multiple lanes test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.9.1",
+            "parameters": {
+                "--include-sequencer-run": "180713_A00469_0010_AH7CT5DSXX",
+                "--exclude-sample" : "NOVA_0032_nn_U_PE_376_WG",
+                "--no-lane-splitting": "true"
+            }
         }
     ]
 }
