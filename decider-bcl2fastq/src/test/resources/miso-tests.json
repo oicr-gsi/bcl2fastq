@@ -11,7 +11,7 @@
             "memory": "16384"
         },
         "iniExclusions": ["parent-accessions", "workflow_run_accession", "workflow-run-accession",
-            "unique_string", "parent_accessions", "parent_accession", "input_file", "input_files", "workflow_bundle_dir"],
+            "unique_string", "parent_accessions", "parent_accession", "input_file", "input_files", "workflow_bundle_dir", "1_sort_order"],
         "iniStringSubstitutions": {
             ",\\d+,": ",SAMPLE_IUS_SWID,",
             ",\\d+:": ",LANE_IUS_SWID:"
