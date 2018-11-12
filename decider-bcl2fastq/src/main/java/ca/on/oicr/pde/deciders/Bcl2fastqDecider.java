@@ -648,25 +648,22 @@ public class Bcl2fastqDecider {
 
             // group by samples by run and lane
             Map<String, Map<String, List<String>>> samplesToAnalyzeGroupedByRun = samplesToAnalyze.stream().collect(
-                    Collectors.groupingBy(s -> {
-                        return s.getProvenance().getSequencerRunName();
-                    }, Collectors.groupingBy(s -> {
-                        return s.getProvenance().getLaneNumber();
-                    }, Collectors.mapping(s -> {
-                        //map sample provenance object to string representation for the following verification step
-                        return s.getProvenance().getSampleName() + "-" + s.getProvenance().getIusTag();
-                    }, Collectors.toList())))
+                    Collectors.groupingBy(s -> s.getProvenance().getSequencerRunName(),
+                            Collectors.groupingBy(s -> s.getProvenance().getLaneNumber(),
+                                    //map sample provenance object to string representation for the following verification step
+                                    Collectors.mapping(s -> s.getProvenance().getSampleName() + "-" + s.getProvenance().getIusTag(),
+                                            Collectors.toList())))
             );
 
             //for each run, verify all lanes contain the same samples or only lane 1 has samples
             for (Entry<String, Map<String, List<String>>> runEntry : samplesToAnalyzeGroupedByRun.entrySet()) {
                 String runName = runEntry.getKey();
                 Map<String, List<String>> runSamplesGroupByLane = runEntry.getValue();
-                if (runSamplesGroupByLane.values().stream().filter(l -> {
-                    return !l.isEmpty();
-                }).map(l -> {
-                    return l.stream().sorted().collect(Collectors.toList());
-                }).distinct().count() != 1) {
+                if (runSamplesGroupByLane.values().stream() //
+                        .filter(l -> !l.isEmpty()) //
+                        .map(l -> l.stream().sorted().collect(Collectors.toList())) //
+                        .distinct() //
+                        .count() != 1) {
                     addInvalidLane("Operating in no-lane-splitting mode and different samples in lanes detected, run = [{0}], errors:\n{1}", runName, runSamplesGroupByLane.toString());
                 } else if (runSamplesGroupByLane.get("1") == null || runSamplesGroupByLane.get("1").isEmpty()) {
                     addInvalidLane("Operating in no-lane-splitting mode and no samples detected in lane 1, run = [{0}], errors:\n{1}", runName, runSamplesGroupByLane.toString());
