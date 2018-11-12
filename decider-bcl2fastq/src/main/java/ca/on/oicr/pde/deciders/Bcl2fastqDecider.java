@@ -53,6 +53,8 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.sourceforge.seqware.common.metadata.Metadata;
 import net.sourceforge.seqware.common.model.Workflow;
@@ -531,6 +533,28 @@ public class Bcl2fastqDecider {
             }
             laneNameToLaneProvenance.keySet().removeAll(lanesToRemove);
         }
+
+        Predicate<SampleProvenance> is10x = (SampleProvenance sp) -> {
+            if (sp.getSampleAttributes().containsKey("geo_prep_kit")
+                    && sp.getSampleAttributes().get("geo_prep_kit").stream().anyMatch(s -> s.toLowerCase().contains("10x"))) {
+                return true;
+            }
+            if (sp.getIusTag() != null && sp.getIusTag().startsWith("SI-")) {
+                return true;
+            }
+            return false;
+        };
+
+        Function<SampleProvenance, String> getLaneName = (SampleProvenance s) -> s.getSequencerRunName() + "_lane_" + s.getLaneNumber();
+
+        //filter 10x lanes
+        List<String> lanes10x = sampleProvenanceByProvider.values().stream() //
+                .flatMap(Collection::stream) //
+                .filter(is10x) //
+                .map(getLaneName) //
+                .distinct() //
+                .collect(Collectors.toList());
+        laneNameToLaneProvenance.keySet().removeAll(lanes10x);
 
         //get previous analysis
         Map<FileProvenanceFilter, Set<String>> analysisFilters = new HashMap<>();

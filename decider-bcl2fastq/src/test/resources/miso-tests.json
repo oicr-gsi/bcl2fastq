@@ -108,8 +108,15 @@
             "workflowVersion": "2.9.1",
             "parameters": {
                 "--include-sequencer-run": "180713_A00469_0010_AH7CT5DSXX",
-                "--exclude-sample" : "NOVA_0032_nn_U_PE_376_WG",
+                "--exclude-sample": "NOVA_0032_nn_U_PE_376_WG",
                 "--no-lane-splitting": "true"
+            }
+        }, {
+            "id": "10X filtering test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "170915_D00353_0218_AHVGL2BCXY_lane_1,170915_D00353_0218_AHVGL2BCXY_lane_2,170919_D00343_0190_BCBKNDANXX_lane_1"
             }
         }
     ]
