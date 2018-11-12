@@ -30,6 +30,9 @@ public class Bcl2Fastq2Handler extends Bcl2FastqHandler {
                 runDir = runDir + "/";
             }
         }
+        if(data.getNoLaneSplitting()) {
+            run.addProperty("no_lane_splitting", "true");
+        }
         run.addProperty("run_folder", runDir);
         run.addProperty("intensity_folder", runDir + "Data/Intensities/");
         run.addProperty("called_bases", runDir + "Data/Intensities/BaseCalls/");

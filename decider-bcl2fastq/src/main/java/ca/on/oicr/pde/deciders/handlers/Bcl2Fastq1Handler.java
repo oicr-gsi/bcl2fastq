@@ -16,6 +16,10 @@ public class Bcl2Fastq1Handler extends Bcl2FastqHandler {
 
     @Override
     public WorkflowRunV2 modifyWorkflowRun(Bcl2FastqData data, WorkflowRunV2 run) {
+        if (data.getNoLaneSplitting()) {
+            run.addError(Bcl2Fastq1Handler.class.getSimpleName() + " does not support no-lane-splitting");
+        }
+
         return run;
     }
 }

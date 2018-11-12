@@ -75,6 +75,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<Integer> minAllowedEditDistanceOpt;
     private final NonOptionArgumentSpec<String> nonOptionSpec;
     private final Bcl2fastqDecider decider;
+    private final OptionSpec<Boolean> noLaneSplittingOpt;
 
     public Bcl2fastqDeciderCli() {
         super();
@@ -136,6 +137,10 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         launchMaxOpt = parser.acceptsAll(Arrays.asList("launch-max"),
                 "The maximum number of jobs to launch at once.")
                 .withRequiredArg().ofType(Integer.class).defaultsTo(decider.getLaunchMax());
+        noLaneSplittingOpt = parser.accepts("no-lane-splitting",
+                "Schedule workflow runs using no-lane-splitting "
+                + "(Note: this mode requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples).")
+                .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
 
         //output options
         outputPathOpt = parser.accepts("output-path",
@@ -271,6 +276,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         decider.setIgnorePreviousLimsKeysMode(getBooleanFlagOrArgValue(ignorePreviousLimsKeysOpt));
         decider.setDisableRunCompleteCheck(getBooleanFlagOrArgValue(disableRunCompleteCheckOpt));
         decider.setLaunchMax(options.valueOf(launchMaxOpt));
+        decider.setNoLaneSplittingMode(getBooleanFlagOrArgValue(noLaneSplittingOpt));
 
         decider.setOutputPath(options.valueOf(outputPathOpt).endsWith("/") ? options.valueOf(outputPathOpt) : options.valueOf(outputPathOpt) + "/");
         decider.setOutputFolder(options.valueOf(outputFolderOpt));

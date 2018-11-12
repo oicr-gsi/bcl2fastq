@@ -87,6 +87,7 @@ public class Bcl2fastqDecider {
     private Boolean ignorePreviousLimsKeysMode = false;
     private Boolean disableRunCompleteCheck = false;
     private Boolean isDemultiplexSingleSampleMode = false;
+    private Boolean noLaneSplittingMode = false;
 
     private String outputPath = "./";
     private String outputFolder = "seqware-results";
@@ -204,6 +205,14 @@ public class Bcl2fastqDecider {
 
     public void setIgnorePreviousLimsKeysMode(boolean ignorePreviousLimsKeysMode) {
         this.ignorePreviousLimsKeysMode = ignorePreviousLimsKeysMode;
+    }
+
+    public Boolean getNoLaneSplittingMode() {
+        return noLaneSplittingMode;
+    }
+
+    public void setNoLaneSplittingMode(Boolean noLaneSplittingMode) {
+        this.noLaneSplittingMode = noLaneSplittingMode;
     }
 
     public boolean isDisableRunCompleteCheck() {
@@ -577,20 +586,20 @@ public class Bcl2fastqDecider {
         //lane validation before scheduling workflow run
         Set<String> invalidLanes = new HashSet<>();
         for (String laneName : candidateLanesToAnalyze) {
-            List<String> laneErrors = new ArrayList<>();
+            List<String> errors = new ArrayList<>();
 
             //expect one and only one lane provenance per lane name
             List<ProvenanceWithProvider<LaneProvenance>> lps = laneNameToLaneProvenance.get(laneName);
             if (lps.size() != 1) {
                 invalidLanes.add(laneName);
-                laneErrors.add(String.format("Lane provenance count = [%s], expected 1.", lps.size()));
+                errors.add(String.format("Lane provenance count = [%s], expected 1.", lps.size()));
             }
 
             //expect one or more sample provenance per lane name
             List<ProvenanceWithProvider<SampleProvenance>> sps = laneNameToSampleProvenance.get(laneName);
             if (sps.isEmpty()) {
                 invalidLanes.add(laneName);
-                laneErrors.add(String.format("Sample provenance count = [%s], expected 1 or more.", sps.size()));
+                errors.add(String.format("Sample provenance count = [%s], expected 1 or more.", sps.size()));
             }
 
             if (!disableRunCompleteCheck) {
@@ -604,29 +613,68 @@ public class Bcl2fastqDecider {
                             if (oicrRunCompleteTouchFile.exists()) {
                                 //run is complete
                             } else {
-                                laneErrors.add(String.format("Lane has not completed sequencing ([%s] is missing).", oicrRunCompleteTouchFile.getAbsolutePath()));
+                                errors.add(String.format("Lane has not completed sequencing ([%s] is missing).", oicrRunCompleteTouchFile.getAbsolutePath()));
                             }
                         } else {
-                            laneErrors.add(String.format("Lane run_dir = [%s] is not accessible or does not exist.", runDir.getAbsolutePath()));
+                            errors.add(String.format("Lane run_dir = [%s] is not accessible or does not exist.", runDir.getAbsolutePath()));
                         }
                     } else {
-                        laneErrors.add(String.format("Lane run_dir = [%s].", (runDirs == null ? "" : Joiner.on(",").join(runDirs))));
+                        errors.add(String.format("Lane run_dir = [%s].", (runDirs == null ? "" : Joiner.on(",").join(runDirs))));
                     }
                 }
             }
 
-            if (!laneErrors.isEmpty()) {
+            if (!errors.isEmpty()) {
                 invalidLanes.add(laneName);
                 log.warn("Lane = [{}] can not be processed due to the following reasons:\n"
                         + "{}\n"
                         + "Lane provenance: [{}]\n"
                         + "Sample provenance: [{}]",
-                        laneName, Joiner.on("\n").join(laneErrors), Joiner.on(";").join(lps), Joiner.on(";").join(sps));
+                        laneName, Joiner.on("\n").join(errors), Joiner.on(";").join(lps), Joiner.on(";").join(sps));
             }
         }
 
         //remove invalid lanes from lanes to analyze set
         Set<String> lanesToAnalyze = Sets.difference(candidateLanesToAnalyze, invalidLanes);
+
+        if (noLaneSplittingMode) {
+            Set<String> noLaneSplittingModeLanesToAnalyze = new HashSet<>();
+
+            // get all samples in lanesToAnalyze set
+            List<ProvenanceWithProvider<SampleProvenance>> samplesToAnalyze = new ArrayList<>();
+            for (String laneName : lanesToAnalyze) {
+                samplesToAnalyze.addAll(laneNameToSampleProvenance.get(laneName));
+            }
+
+            // group by samples by run and lane
+            Map<String, Map<String, List<String>>> samplesToAnalyzeGroupedByRun = samplesToAnalyze.stream().collect(
+                    Collectors.groupingBy(s -> s.getProvenance().getSequencerRunName(),
+                            Collectors.groupingBy(s -> s.getProvenance().getLaneNumber(),
+                                    //map sample provenance object to string representation for the following verification step
+                                    Collectors.mapping(s -> s.getProvenance().getSampleName() + "-" + s.getProvenance().getIusTag(),
+                                            Collectors.toList())))
+            );
+
+            //for each run, verify all lanes contain the same samples or only lane 1 has samples
+            for (Entry<String, Map<String, List<String>>> runEntry : samplesToAnalyzeGroupedByRun.entrySet()) {
+                String runName = runEntry.getKey();
+                Map<String, List<String>> runSamplesGroupByLane = runEntry.getValue();
+                if (runSamplesGroupByLane.values().stream() //
+                        .filter(l -> !l.isEmpty()) //
+                        .map(l -> l.stream().sorted().collect(Collectors.toList())) //
+                        .distinct() //
+                        .count() != 1) {
+                    addInvalidLane("Operating in no-lane-splitting mode and different samples in lanes detected, run = [{0}], errors:\n{1}", runName, runSamplesGroupByLane.toString());
+                } else if (runSamplesGroupByLane.get("1") == null || runSamplesGroupByLane.get("1").isEmpty()) {
+                    addInvalidLane("Operating in no-lane-splitting mode and no samples detected in lane 1, run = [{0}], errors:\n{1}", runName, runSamplesGroupByLane.toString());
+                } else {
+                    noLaneSplittingModeLanesToAnalyze.add(runName + "_lane_1");
+                }
+            }
+
+            //replace the current lanesToAnalyze with noLaneSplittingMode lanesToAnalyze
+            lanesToAnalyze = noLaneSplittingModeLanesToAnalyze;
+        }
 
         //collect required workflow run data - create IUS-LimsKey records in seqware that will be linked to the workflow run
         for (String laneName : lanesToAnalyze) {
@@ -838,7 +886,7 @@ public class Bcl2fastqDecider {
             BasesMask runBasesMask,
             boolean doDemultiplexing) throws InvalidLaneException {
 
-        List<String> laneErrors = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
         List<WorkflowRunV2> workflowRuns = new ArrayList<>();
         for (Entry<String, List<ProvenanceWithProvider<SampleProvenance>>> e : groupedSamples.entrySet()) {
             String group = e.getKey();
@@ -859,7 +907,7 @@ public class Bcl2fastqDecider {
                     })
                     .collect(Collectors.toList());
             if (!barcodeErrors.isEmpty()) {
-                laneErrors.add(MessageFormat.format("Error while parsing barcodes for group = [{0}]:\n{1}", barcodeErrors.toString()));
+                errors.add(MessageFormat.format("Error while parsing barcodes for group = [{0}]:\n{1}", barcodeErrors.toString()));
                 continue;
             }
 
@@ -879,23 +927,24 @@ public class Bcl2fastqDecider {
                         basesMask = BarcodeAndBasesMask.calculateBasesMask(workflowRunBarcodes);
                     }
                 } catch (DataMismatchException ex) {
-                    laneErrors.add(MessageFormat.format("Error while calculating bases mask for group = [{0}]:\n{1}", ex.toString()));
+                    errors.add(MessageFormat.format("Error while calculating bases mask for group = [{0}]:\n{1}", ex.toString()));
                     continue;
                 }
             }
             data.setBasesMask(basesMask);
+            data.setNoLaneSplitting(noLaneSplittingMode);
 
             WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode(), doDemultiplexing);
 
             if (wr.getErrors().isEmpty()) {
                 workflowRuns.add(wr);
             } else {
-                laneErrors.add(MessageFormat.format("Error while generating workflow run for group = [{0}], errors:\n{1}", group, Joiner.on("\n").join(wr.getErrors())));
+                errors.add(MessageFormat.format("Error while generating workflow run for group = [{0}], errors:\n{1}", group, Joiner.on("\n").join(wr.getErrors())));
             }
         }
 
-        if (!laneErrors.isEmpty()) {
-            throw new InvalidLaneException("Errors generating workflow runs for lane:\n" + Joiner.on("\n").join(laneErrors));
+        if (!errors.isEmpty()) {
+            throw new InvalidLaneException("Errors generating workflow runs for lane:\n" + Joiner.on("\n").join(errors));
         }
 
         return workflowRuns;
