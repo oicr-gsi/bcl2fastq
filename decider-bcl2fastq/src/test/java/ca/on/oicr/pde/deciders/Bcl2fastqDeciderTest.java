@@ -930,6 +930,27 @@ public class Bcl2fastqDeciderTest {
         assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("no_lane_splitting")).allMatch(s -> "true".equals(s)));
     }
 
+    @Test
+    public void test10xFilter() {
+        //setup decider
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+
+        //case when there are different samples per lane
+        LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").build();
+        LaneProvenance lane2 = getBaseLane().laneNumber("2").provenanceId("1_2").build();
+        LaneProvenance lane3 = getBaseLane().laneNumber("3").provenanceId("1_3").build();
+        SampleProvenance sample1 = getBaseSample().laneNumber("1").sampleName("TEST_0001_001").iusTag("SI-GA").provenanceId("1_1_1").build();
+        SortedMap<String, SortedSet<String>> attrs = new TreeMap<>();
+        attrs.put("geo_prep_kit", ImmutableSortedSet.of("A 10X kit"));
+        SampleProvenance sample2 = getBaseSample().laneNumber("2").sampleName("TEST_0001_002").iusTag("AAAAAA").sampleAttributes(attrs).provenanceId("1_2_2").build();
+        SampleProvenance sample3 = getBaseSample().laneNumber("3").sampleName("TEST_0001_003").iusTag("AAAAAA").provenanceId("1_3_3").build();
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2, sample3));
+        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2, lane3));
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+    }
+
     private Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> getMockData() {
         Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder> lanes = new HashMap<>();
         Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder> samples = new HashMap();
