@@ -18,7 +18,8 @@ public class Bcl2FastqDeciderMisoProvenanceOicrDataIT {
         System.setProperty("provenanceSettingsPath", System.getProperty("misoProvenanceSettingsPath"));
 
         DeciderRunTestFactory d = new DeciderRunTestFactory();
-        return d.createTests("/miso-tests.json");
+        Object[] tests = d.createTests("target/test-classes/miso-tests.json");
+        return tests;
     }
 
 }

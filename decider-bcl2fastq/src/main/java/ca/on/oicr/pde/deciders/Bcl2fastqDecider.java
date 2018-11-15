@@ -18,10 +18,12 @@ import ca.on.oicr.pde.deciders.handlers.Bcl2FastqHandler;
 import ca.on.oicr.pde.deciders.handlers.Handler;
 import ca.on.oicr.pde.deciders.data.BasesMask;
 import ca.on.oicr.pde.deciders.data.SampleProvenanceWithCustomBarcode;
+import ca.on.oicr.pde.deciders.exceptions.ConfigurationException;
 import ca.on.oicr.pde.deciders.exceptions.InvalidBasesMaskException;
 import ca.on.oicr.pde.deciders.exceptions.InvalidLaneException;
 import ca.on.oicr.pde.deciders.utils.BarcodeComparison;
 import ca.on.oicr.pde.deciders.utils.BarcodeAndBasesMask;
+import ca.on.oicr.pde.deciders.utils.PineryClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -34,11 +36,9 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -74,6 +74,7 @@ public class Bcl2fastqDecider {
     private final List<Bcl2FastqHandler> handlers = new ArrayList<>();
 
     private ExtendedProvenanceClient provenanceClient;
+    private PineryClient pineryClient;
     private Metadata metadata;
     private Map<String, String> config;
     private Workflow workflow;
@@ -341,6 +342,10 @@ public class Bcl2fastqDecider {
         this.provenanceClient = provenanceClient;
     }
 
+    public void setPineryClient(PineryClient pineryClient) {
+        this.pineryClient = pineryClient;
+    }
+
     public void setWorkflow(Workflow workflow) {
         this.workflow = workflow;
     }
@@ -375,6 +380,10 @@ public class Bcl2fastqDecider {
             throw new RuntimeException("Workflow [" + workflowName + "-" + workflowVersion + "] is not supported");
         }
         Bcl2FastqHandler handler = getHandler(workflowName, workflowVersion);
+
+        if (!disableRunCompleteCheck && pineryClient == null) {
+            throw new ConfigurationException("Run complete check enabled but no pinery client has been configured");
+        }
 
         //reset workflow run collections
         validWorkflowRuns.clear();
@@ -610,51 +619,42 @@ public class Bcl2fastqDecider {
         //lane validation before scheduling workflow run
         Set<String> invalidLanes = new HashSet<>();
         for (String laneName : candidateLanesToAnalyze) {
-            List<String> errors = new ArrayList<>();
+            List<String> laneValidationErrors = new ArrayList<>();
 
             //expect one and only one lane provenance per lane name
             List<ProvenanceWithProvider<LaneProvenance>> lps = laneNameToLaneProvenance.get(laneName);
             if (lps.size() != 1) {
-                invalidLanes.add(laneName);
-                errors.add(String.format("Lane provenance count = [%s], expected 1.", lps.size()));
+                laneValidationErrors.add(String.format("Lane provenance count = [%s], expected 1.", lps.size()));
             }
 
             //expect one or more sample provenance per lane name
             List<ProvenanceWithProvider<SampleProvenance>> sps = laneNameToSampleProvenance.get(laneName);
             if (sps.isEmpty()) {
-                invalidLanes.add(laneName);
-                errors.add(String.format("Sample provenance count = [%s], expected 1 or more.", sps.size()));
+                laneValidationErrors.add(String.format("Sample provenance count = [%s], expected 1 or more.", sps.size()));
             }
 
             if (!disableRunCompleteCheck) {
                 if (lps.size() == 1) {
-                    Set<String> runDirs = Iterables.getOnlyElement(lps).getProvenance().getSequencerRunAttributes().get("run_dir");
-                    if (runDirs != null && runDirs.size() == 1) {
-                        Path runDirPath = Paths.get(Iterables.getOnlyElement(Iterables.getOnlyElement(lps).getProvenance().getSequencerRunAttributes().get("run_dir")));
-                        File runDir = runDirPath.toFile();
-                        if (runDir.exists() && runDir.isDirectory() && runDir.canRead()) {
-                            File oicrRunCompleteTouchFile = runDirPath.resolve("oicr_run_complete").toFile();
-                            if (oicrRunCompleteTouchFile.exists()) {
-                                //run is complete
-                            } else {
-                                errors.add(String.format("Lane has not completed sequencing ([%s] is missing).", oicrRunCompleteTouchFile.getAbsolutePath()));
-                            }
-                        } else {
-                            errors.add(String.format("Lane run_dir = [%s] is not accessible or does not exist.", runDir.getAbsolutePath()));
+                    LaneProvenance lp = Iterables.getOnlyElement(lps).getProvenance();
+                    try {
+                        String runStatus = pineryClient.getRunStatus(lp.getSequencerRunName()).orElse("");
+                        if (!"Completed".equals(runStatus)) {
+                            laneValidationErrors.add(String.format("Run state = [%s], expected [Completed])", runStatus));
                         }
-                    } else {
-                        errors.add(String.format("Lane run_dir = [%s].", (runDirs == null ? "" : Joiner.on(",").join(runDirs))));
+                    } catch (IOException ex) {
+                        log.error("Failed to get run state from pinery:", ex);
+                        laneValidationErrors.add(String.format("Unable to get sequencer run state for run [%s]", lp.getSequencerRunName()));
                     }
                 }
             }
 
-            if (!errors.isEmpty()) {
+            if (!laneValidationErrors.isEmpty()) {
                 invalidLanes.add(laneName);
                 log.warn("Lane = [{}] can not be processed due to the following reasons:\n"
                         + "{}\n"
                         + "Lane provenance: [{}]\n"
                         + "Sample provenance: [{}]",
-                        laneName, Joiner.on("\n").join(errors), Joiner.on(";").join(lps), Joiner.on(";").join(sps));
+                        laneName, Joiner.on("\n").join(laneValidationErrors), Joiner.on(";").join(lps), Joiner.on(";").join(sps));
             }
         }
 

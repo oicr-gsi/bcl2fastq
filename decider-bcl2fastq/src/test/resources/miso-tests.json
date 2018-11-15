@@ -3,7 +3,7 @@
         "description": "Bcl2fastq decider test",
         "metricsResources": "/expected_output/development/",
         "parameters": {
-            "--disable-run-complete-check": "",
+            "--pinery-url": "${misoPineryUrl}",
             "--no-null-created-date": "",
             "--ignore-previous-lims-keys": "true"
         },
@@ -117,6 +117,21 @@
             "workflowVersion": "2.7.1",
             "parameters": {
                 "--include-lane": "170915_D00353_0218_AHVGL2BCXY_lane_1,170915_D00353_0218_AHVGL2BCXY_lane_2,170919_D00343_0190_BCBKNDANXX_lane_1"
+            }
+        }, {
+            "id": "Failed run test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "180627_D00355_0229_ACCHCEANXX_lane_1"
+            }
+        }, {
+            "id": "Failed run force run test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "180627_D00355_0229_ACCHCEANXX_lane_1",
+                "--disable-run-complete-check": ""
             }
         }
     ]
