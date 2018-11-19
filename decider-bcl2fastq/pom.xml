@@ -26,6 +26,7 @@
         <runTestThreads>8</runTestThreads>
         <provenanceSettingsPath></provenanceSettingsPath>
         <misoProvenanceSettingsPath></misoProvenanceSettingsPath>
+        <misoPineryUrl></misoPineryUrl>
         <pinery-version>2.2.0</pinery-version>
     </properties>
 

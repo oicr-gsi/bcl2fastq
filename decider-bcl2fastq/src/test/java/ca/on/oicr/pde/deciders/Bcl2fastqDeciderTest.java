@@ -13,6 +13,9 @@ import ca.on.oicr.pde.client.MetadataBackedSeqwareClient;
 import ca.on.oicr.pde.client.SeqwareClient;
 import ca.on.oicr.pde.deciders.data.BasesMask;
 import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
+import ca.on.oicr.pde.deciders.utils.PineryClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -30,6 +33,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -59,6 +63,7 @@ public class Bcl2fastqDeciderTest {
     private SampleProvenanceProvider spp;
     private LaneProvenanceProvider lpp;
     private ProvenanceClient provenanceClient;
+    private PineryClient pineryClient;
     private Bcl2fastqDecider bcl2fastqDecider;
     private Workflow bcl2fastqWorkflow;
     private ZonedDateTime expectedDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
@@ -82,6 +87,20 @@ public class Bcl2fastqDeciderTest {
         spp = Mockito.mock(SampleProvenanceProvider.class);
         lpp = Mockito.mock(LaneProvenanceProvider.class);
 
+        pineryClient = Mockito.mock(PineryClient.class);
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode result = (ObjectNode) mapper.readTree("{\n"
+                + "  \"state\": \"Completed\",\n"
+                + "  \"name\": \"any\",\n"
+                + "  \"positions\": [\n"
+                + "    {\n"
+                + "      \"position\": 3,\n"
+                + "      \"pool_created_by_id\": 0\n"
+                + "    }]\n"
+                + "}");
+        when(pineryClient.fetch(Mockito.any())).thenReturn(Optional.of(result));
+        when(pineryClient.getRunStatus(Mockito.any())).thenCallRealMethod();
+
         MultiThreadedDefaultProvenanceClient client = new MultiThreadedDefaultProvenanceClient();
         provenanceClient = client;
 
@@ -90,6 +109,7 @@ public class Bcl2fastqDeciderTest {
         client.registerLaneProvenanceProvider(provider, lpp);
         client.registerSampleProvenanceProvider(provider, spp);
         bcl2fastqDecider.setProvenanceClient(client);
+        bcl2fastqDecider.setPineryClient(pineryClient);
 
         seqwareClient = new MetadataBackedSeqwareClient(metadata, config);
         bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.7.1", "test workflow");
@@ -97,9 +117,7 @@ public class Bcl2fastqDeciderTest {
 
         File runDir = Files.createTempDir();
         runDir.deleteOnExit();
-        File oicrCompleteFile = new File(runDir, "oicr_run_complete");
-        oicrCompleteFile.createNewFile();
-        oicrCompleteFile.deleteOnExit();
+
         LaneProvenance lp1 = LaneProvenanceImpl.builder()
                 .sequencerRunName("RUN_0001")
                 .laneNumber("1")
