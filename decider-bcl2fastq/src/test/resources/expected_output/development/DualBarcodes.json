@@ -10,6 +10,9 @@
     "maxInputFiles": 0,
     "minInputFiles": 0,
     "totalInputFiles": 0,
+    "maxOutputFileProvenanceRecords": 9,
+    "minOutputFileProvenanceRecords": 9,
+    "totalOutputFileProvenanceRecords": 9,
     "workflowRuns": [{
             "workflowIni": {
                 "called_bases": "/oicr/data/archive/m146/150814_M00146_0034_000000000-AHLAK/Data/Intensities/BaseCalls/",
@@ -23,6 +26,7 @@
                 "output_prefix": "./",
                 "use_bases_mask": "y*,i8n*,i8n*,y*"
             },
-            "files": []
+            "files": [],
+            "outputFileProvenanceRecords": 9
         }]
 }

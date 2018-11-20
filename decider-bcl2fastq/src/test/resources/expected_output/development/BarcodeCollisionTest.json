@@ -10,6 +10,9 @@
     "maxInputFiles": 0,
     "minInputFiles": 0,
     "totalInputFiles": 0,
+    "maxOutputFileProvenanceRecords": 62,
+    "minOutputFileProvenanceRecords": 62,
+    "totalOutputFileProvenanceRecords": 62,
     "workflowRuns": [{
             "workflowIni": {
                 "called_bases": "/oicr/data/archive/m753/180507_M00753_0046_000000000-D3T43/Data/Intensities/BaseCalls/",
@@ -25,6 +28,7 @@
                 "run_folder": "/oicr/data/archive/m753/180507_M00753_0046_000000000-D3T43/",
                 "use_bases_mask": "y151,i8n*,y151"
             },
-            "files": []
+            "files": [],
+            "outputFileProvenanceRecords": 62
         }]
 }

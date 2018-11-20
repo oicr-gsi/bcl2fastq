@@ -3,7 +3,7 @@
         "description": "Bcl2fastq decider test",
         "metricsResources": "/expected_output/development/",
         "parameters": {
-            "--disable-run-complete-check": "",
+            "--pinery-url": "${misoPineryUrl}",
             "--no-null-created-date": "",
             "--ignore-previous-lims-keys": "true"
         },
@@ -11,7 +11,7 @@
             "memory": "16384"
         },
         "iniExclusions": ["parent-accessions", "workflow_run_accession", "workflow-run-accession",
-            "unique_string", "parent_accessions", "parent_accession", "input_file", "input_files", "workflow_bundle_dir"],
+            "unique_string", "parent_accessions", "parent_accession", "input_file", "input_files", "workflow_bundle_dir", "1_sort_order"],
         "iniStringSubstitutions": {
             ",\\d+,": ",SAMPLE_IUS_SWID,",
             ",\\d+:": ",LANE_IUS_SWID:"
@@ -91,6 +91,47 @@
             "parameters": {
                 "--include-lane": "180420_D00343_0233_ACCH40ANXX_lane_7",
                 "--override-run-bases-mask": "y*,i8n*,n*,y*"
+            }
+        },
+        {
+            "id": "No lane splitting one lane test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.9.1",
+            "parameters": {
+                "--include-sequencer-run": "171128_NB551056_0036_AHVCJKBGX3",
+                "--no-lane-splitting": "true"
+            }
+        },
+        {
+            "id": "No lane splitting multiple lanes test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.9.1",
+            "parameters": {
+                "--include-sequencer-run": "180713_A00469_0010_AH7CT5DSXX",
+                "--exclude-sample": "NOVA_0032_nn_U_PE_376_WG",
+                "--no-lane-splitting": "true"
+            }
+        }, {
+            "id": "10X filtering test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "170915_D00353_0218_AHVGL2BCXY_lane_1,170915_D00353_0218_AHVGL2BCXY_lane_2,170919_D00343_0190_BCBKNDANXX_lane_1"
+            }
+        }, {
+            "id": "Failed run test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "180627_D00355_0229_ACCHCEANXX_lane_1"
+            }
+        }, {
+            "id": "Failed run force run test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "180627_D00355_0229_ACCHCEANXX_lane_1",
+                "--disable-run-complete-check": ""
             }
         }
     ]

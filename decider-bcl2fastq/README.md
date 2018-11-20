@@ -1,6 +1,6 @@
 ## BCL2FastQ Decider
 
-Version 1.2.1
+Version 1.2.3
 
 ### Overview
 
@@ -76,12 +76,10 @@ Parameters to filter/select the set of lanes to operate on:
 
 Parameter | Type | Description \[default\]
 ----------|------|-------------------------
-check-wf-accessions                      | String  | The comma-separated, no spaces, workflow accessions of the workflow that      
-                                                     perform the same function (e.g. older versions). Any files that have been   
-                                                     processed with these workflows will be skipped.
+check-wf-accessions                      | String  | The comma-separated, no spaces, workflow accessions of the workflow that perform the same function (e.g. older versions). Any files that have been processed with these workflows will be skipped.
 after-date                               | String  | Include only lanes created after the specified date
 before-date                              | String  | Include only lanes created before the specified date
-include-instrument                       | String  | Include only lanes with sequencer run attribute "instrument name"  
+include-instrument                       | String  | Include only lanes with sequencer run attribute "instrument name"
 include-lane                             | String  | Include only lanes with lane name
 include-sequencer-run                    | String  | Include only lanes with sequencer run name
 include-sequencer-run-platform-model     | String  | Include only lanes with sequencer run platform model
@@ -101,14 +99,13 @@ Parameter | Type | Description \[default\]
 ----------|------|-------------------------
 help                                     | none    | Display help
 verbose                                  | Boolean | Log verbose output
-host                                     | String  | Used only in combination with --schedule to schedule onto a specific host. If 
-                                                     not provided, the default is the local host [local hostname]
+host                                     | String  | Used only in combination with --schedule to schedule onto a specific host. If not provided, the default is the local host [local hostname]
 dry-run or test                          | Boolean | Dry-run/test mode. Prints the INI files to standard out and does not submit the workflow [false]
-demux-single-sample                      | Boolean | Enable demultiplexing if there is only a single sample in the workflow run (default behaviour is to 
-                                                     run single samples with "NoIndex") [false]
-no-meta-db or no-metadata                | Boolean | Prevents metadata writeback (which is done by default) by the Decider and that is subsequently passed 
-                                                     to the called workflow which can use it to determine if they should write metadata at runtime on the cluster [false]
-disable-run-complete-check               | Boolean | Disable checking that the file "oicr_run_complete" is present in the "run_dir" [false]
+demux-single-sample                      | Boolean | Enable demultiplexing if there is only a single sample in the workflow run (default behaviour is to run single samples with "NoIndex") [false]
+no-lane-splitting	| Boolean	| Schedule workflow runs using no-lane-splitting (Note: this mode requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples) [false]
+no-meta-db or no-metadata                | Boolean | Prevents metadata writeback (which is done by default) by the Decider and that is subsequently passed to the called workflow which can use it to determine if they should write metadata at runtime on the cluster [false]
+disable-run-complete-check               | Boolean | Disable checking that the run status is complete (see "--pinery-url") [false]
+pinery-url | String | Pinery service url to use for run status check (required if "--disable-run-complete-check is not specified)
 no-null-created-date                     | Boolean | Set the filter comparison date to "last modified" date if "created date" is null [false]
 force-run-all or ignore-previous-runs    | Boolean | (WARNING: use with caution) Forces the decider to run all matches regardless of whether they've been run before or not [false]
 ignore-previous-lims-keys                | Boolean | (WARNING: use with caution) Ignore all existing analysis (workflow runs and IUS skip) [false]
@@ -121,6 +118,7 @@ min-allowed-edit-distance                | Integer       | The "The minimum allo
 
 
 **Note**
+
 All of the [workflow properties](../workflow-casava) can be overridden by providing <property, value> pairs in the command, for example:
 ```
 java -jar /path/to/decider.jar --wf-accession 000000 --provenance-settings /path/to/provenance-settings.json -- --property1 value1 --property2 value2
