@@ -1,3 +1,7 @@
+## 1.2.3 - 2018-11-20
+- [GP-1121](https://jira.oicr.on.ca/browse/GP-1121) - Filter 10X lanes
+- [GP-1865](https://jira.oicr.on.ca/browse/GP-1865) - "--no-lane-splitting" mode
+- [GP-1679](https://jira.oicr.on.ca/browse/GP-1679) - Update run complete check to use Pinery run status
 ## 1.2.2 - 2018-08-15
 - [GP-1721](https://jira.oicr.on.ca/browse/GP-1721) - bcl2fastq decider does not support comma separated lists for filters arguments
 ## 1.2.1 - 2018-08-08
