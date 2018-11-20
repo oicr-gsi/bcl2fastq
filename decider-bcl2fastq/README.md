@@ -76,12 +76,10 @@ Parameters to filter/select the set of lanes to operate on:
 
 Parameter | Type | Description \[default\]
 ----------|------|-------------------------
-check-wf-accessions                      | String  | The comma-separated, no spaces, workflow accessions of the workflow that      
-                                                     perform the same function (e.g. older versions). Any files that have been   
-                                                     processed with these workflows will be skipped.
+check-wf-accessions                      | String  | The comma-separated, no spaces, workflow accessions of the workflow that perform the same function (e.g. older versions). Any files that have been processed with these workflows will be skipped.
 after-date                               | String  | Include only lanes created after the specified date
 before-date                              | String  | Include only lanes created before the specified date
-include-instrument                       | String  | Include only lanes with sequencer run attribute "instrument name"  
+include-instrument                       | String  | Include only lanes with sequencer run attribute "instrument name"
 include-lane                             | String  | Include only lanes with lane name
 include-sequencer-run                    | String  | Include only lanes with sequencer run name
 include-sequencer-run-platform-model     | String  | Include only lanes with sequencer run platform model
@@ -120,6 +118,7 @@ min-allowed-edit-distance                | Integer       | The "The minimum allo
 
 
 **Note**
+
 All of the [workflow properties](../workflow-casava) can be overridden by providing <property, value> pairs in the command, for example:
 ```
 java -jar /path/to/decider.jar --wf-accession 000000 --provenance-settings /path/to/provenance-settings.json -- --property1 value1 --property2 value2
