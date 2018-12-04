@@ -567,12 +567,12 @@ public class Bcl2fastqDecider {
 
         //get previous analysis
         Map<FileProvenanceFilter, Set<String>> analysisFilters = new HashMap<>();
+        Set<String> workflowSwidsToCheck = new HashSet<>();
         //TODO: seqware currently does not support retrieving FP with null workflow swids
-        //Set<String> workflowSwidsToCheck = new HashSet<>();
-        //workflowSwidsToCheck.add(getWorkflowAccession());
         //workflowSwidsToCheck.add(null);
-        //workflowSwidsToCheck.addAll(getWorkflowAccessionsToCheck());
-        //analysisFilters.put(FileProvenanceFilter.workflow, workflowSwidsToCheck);
+        workflowSwidsToCheck.add(workflow.getSwAccession().toString());
+        workflowSwidsToCheck.addAll(getWorkflowAccessionsToCheck());
+        analysisFilters.put(FileProvenanceFilter.workflow, workflowSwidsToCheck);
 
         //the set of all lanes that have been analyzed using the current workflow or a workflow in the set of "check workflows"
         Set<String> analyzedLanes = new HashSet<>();
