@@ -107,6 +107,10 @@ public abstract class Bcl2FastqHandler implements Handler {
             wr.addProperty("output_prefix", outputPrefix);
         }
 
+        if (data.getReadEnds() != null) {
+            wr.addProperty("read_ends", data.getReadEnds());
+        }
+
         //dry-run creating the "lane string" before actually creating IUS-LimsKeys
         try {
             IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> linkedLane = createIusToProvenanceLink(metadata, data.getLane(), false);

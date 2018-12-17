@@ -940,6 +940,11 @@ public class Bcl2fastqDecider {
             data.setMetadataWriteback(getDoMetadataWriteback());
             data.setStudyToOutputPathConfig(studyToOutputPathConfig);
 
+            // support single end reads
+            if (runBasesMask != null && runBasesMask.getReadTwoIncludeLength() == null) {
+                data.setReadEnds("1");
+            }
+
             BasesMask basesMask;
             if (!doDemultiplexing) {
                 basesMask = null;

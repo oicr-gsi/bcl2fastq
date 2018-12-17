@@ -2,8 +2,6 @@ package ca.on.oicr.pde.deciders.data;
 
 import ca.on.oicr.pde.deciders.exceptions.InvalidBasesMaskException;
 import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
@@ -117,14 +115,16 @@ public class BasesMask {
         sb.append(",");
         sb.append(getVal("i", indexOneIncludeLength));
         sb.append(getVal("n", indexOneIgnoreLength));
-        sb.append(",");
         if (indexTwoIncludeLength != null || indexTwoIgnoreLength != null) {
+            sb.append(",");
             sb.append(getVal("i", indexTwoIncludeLength));
             sb.append(getVal("n", indexTwoIgnoreLength));
-            sb.append(",");
         }
-        sb.append(getVal("y", readTwoIncludeLength));
-        sb.append(getVal("n", readTwoIgnoreLength));
+        if (readTwoIncludeLength != null || readTwoIgnoreLength != null) {
+            sb.append(",");
+            sb.append(getVal("y", readTwoIncludeLength));
+            sb.append(getVal("n", readTwoIgnoreLength));
+        }
         return sb.toString();
     }
 
@@ -185,8 +185,8 @@ public class BasesMask {
         Pattern p = Pattern.compile(
                 "y(?<readOneInclude>\\*|\\d+)(n(?<readOneIgnore>\\*|\\d+))?,"
                 + "(i(?<indexOneInclude>\\*|\\d+))?(n(?<indexOneIgnore>\\*|\\d+))?"
-                + "(,(i(?<indexTwoInclude>\\*|\\d+))?(n(?<indexTwoIgnore>\\*|\\d+))?)?"
-                + ",y(?<readTwoInclude>\\*|\\d+)(n(?<readTwoIgnore>\\*|\\d+))?",
+                + "(,?(i(?<indexTwoInclude>\\*|\\d+))?(n(?<indexTwoIgnore>\\*|\\d+))?)?"
+                + "(,?(y(?<readTwoInclude>\\*|\\d+))?(n(?<readTwoIgnore>\\*|\\d+))?)?",
                 Pattern.CASE_INSENSITIVE);
         if (p.matcher(basesMaskString).matches()) {
             Matcher m = p.matcher(basesMaskString);

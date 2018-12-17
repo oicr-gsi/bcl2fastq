@@ -21,6 +21,7 @@ public class Bcl2FastqData {
     private StudyToOutputPathConfig studyToOutputPathConfig;
     private BasesMask basesMask;
     private Boolean noLaneSplitting = false;
+    private String readEnds;
 
     public Bcl2FastqData(ProvenanceWithProvider<LaneProvenance> lane, List<ProvenanceWithProvider<SampleProvenance>> samples) {
         this.lane = lane;
@@ -86,6 +87,14 @@ public class Bcl2FastqData {
 
     public void setNoLaneSplitting(Boolean noLaneSplitting) {
         this.noLaneSplitting = noLaneSplitting;
+    }
+
+    public String getReadEnds() {
+        return readEnds;
+    }
+
+    public void setReadEnds(String readEnds) {
+        this.readEnds = readEnds;
     }
 
 }
