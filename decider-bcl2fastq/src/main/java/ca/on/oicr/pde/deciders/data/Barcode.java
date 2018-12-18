@@ -95,7 +95,7 @@ public class Barcode {
     public static Barcode fromString(String barcodeString) throws DataMismatchException {
         Matcher m;
 
-        if (barcodeString == null || barcodeString.isEmpty()) {
+        if (barcodeString == null || barcodeString.isEmpty() || "NoIndex".equals(barcodeString)) {
             return new Barcode();
         }
 

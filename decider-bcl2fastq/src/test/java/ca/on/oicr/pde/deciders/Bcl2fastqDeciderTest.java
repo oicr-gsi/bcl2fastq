@@ -463,7 +463,6 @@ public class Bcl2fastqDeciderTest {
         //assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
         //assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
         //assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
-
         bcl2fastqDecider.setIsDryRunMode(false);
         bcl2fastqDecider.setDoCreateIusLimsKeys(true);
         bcl2fastqDecider.setDoScheduleWorkflowRuns(true);
@@ -984,6 +983,28 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 2);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("read_ends")).allMatch(s -> "1".equals(s)));
+    }
+
+    @Test
+    public void testEmptyOrNoIndexBarcode() {
+        LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").sequencerRunAttribute("run_bases_mask", ImmutableSortedSet.of("y*,i*,y*")).build();
+        SampleProvenance lane1_sample1 = getBaseSample().laneNumber("1").sampleName("TEST_0001_001").iusTag("NoIndex").provenanceId("1_1_1").build();
+        LaneProvenance lane2 = getBaseLane().laneNumber("2").provenanceId("1_2").sequencerRunAttribute("run_bases_mask", ImmutableSortedSet.of("y*,i*,y*")).build();
+        SampleProvenance lane2_sample1 = getBaseSample().laneNumber("2").sampleName("TEST_0001_002").iusTag("").provenanceId("1_2_1").build();
+
+        // only one empty or NoIndex barcoded sample is supported per lane
+        LaneProvenance lane3 = getBaseLane().laneNumber("3").provenanceId("1_3").sequencerRunAttribute("run_bases_mask", ImmutableSortedSet.of("y*,i*,y*")).build();
+        SampleProvenance lane3_sample1 = getBaseSample().laneNumber("3").sampleName("TEST_0001_003").iusTag("NoIndex").provenanceId("1_3_1").build();
+        SampleProvenance lane3_sample2 = getBaseSample().laneNumber("3").sampleName("TEST_0002_001").iusTag("").provenanceId("1_3_2").build();
+
+        // a single end lane
+        LaneProvenance lane4 = getBaseLane().laneNumber("4").provenanceId("1_4").sequencerRunAttribute("run_bases_mask", ImmutableSortedSet.of("y*,i*")).build();
+        SampleProvenance lane4_sample1 = getBaseSample().laneNumber("4").sampleName("TEST_0001_004").iusTag("NoIndex").provenanceId("1_4_1").build();
+
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane2_sample1, lane3_sample1, lane3_sample2, lane4_sample1));
+        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2, lane3, lane4));
+        assertEquals(bcl2fastqDecider.run().size(), 3);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
     }
 
     private Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> getMockData() {
