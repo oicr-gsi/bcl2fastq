@@ -91,6 +91,7 @@ public class Bcl2fastqDecider {
     private Boolean disableRunCompleteCheck = false;
     private Boolean isDemultiplexSingleSampleMode = false;
     private Boolean noLaneSplittingMode = false;
+    private Boolean ignoreLaneSkip = false;
 
     private String outputPath = "./";
     private String outputFolder = "seqware-results";
@@ -216,6 +217,14 @@ public class Bcl2fastqDecider {
 
     public void setNoLaneSplittingMode(Boolean noLaneSplittingMode) {
         this.noLaneSplittingMode = noLaneSplittingMode;
+    }
+
+    public Boolean getIgnoreLaneSkip() {
+        return ignoreLaneSkip;
+    }
+
+    public void setIgnoreLaneSkip(Boolean ignoreLaneSkip) {
+        this.ignoreLaneSkip = ignoreLaneSkip;
     }
 
     public boolean isDisableRunCompleteCheck() {
@@ -403,8 +412,12 @@ public class Bcl2fastqDecider {
                 providerAndIdToLaneName.put(provider + lp.getProvenanceId(), laneName);
 
                 if (lp.getSkip()) {
-                    log.debug("Lane = [{}] is skipped", laneName);
-                    continue;
+                    if (getIgnoreLaneSkip()) {
+                        log.warn("Ignoring skip flag for lane = [{}]", laneName);
+                    } else {
+                        log.info("Lane = [{}] is skipped", laneName);
+                        continue;
+                    }
                 }
 
                 ZonedDateTime createdDate;
