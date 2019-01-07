@@ -576,6 +576,7 @@ public class Bcl2fastqDecider {
                 .map(getLaneName) //
                 .distinct() //
                 .collect(Collectors.toList());
+        lanes10x.stream().forEach(lane -> log.info("Lane = [{}] excluded because it has 10X samples", lane));
         laneNameToLaneProvenance.keySet().removeAll(lanes10x);
 
         //get previous analysis
