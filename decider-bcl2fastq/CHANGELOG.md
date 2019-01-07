@@ -1,3 +1,4 @@
+## 1.3 - 2018-01-??
 ## 1.2.4 - 2018-12-04
 - [GP-1883](https://jira.oicr.on.ca/browse/GP-1883) - Only retrieve analysis records from "check-wf-accessions"
 ## 1.2.3 - 2018-11-20
