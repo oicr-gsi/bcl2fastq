@@ -317,7 +317,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
 
         decider.setReplaceNullCreatedDate(getBooleanFlagOrArgValue(noNullCreatedDateOpt));
 
-        Function<String, Set<String>> function = (String input) -> {
+        Function<String, Set<String>> stringOrFileOfStrings = (String input) -> {
             if (input.startsWith("file://") || input.startsWith("/")) {
                 Path filePath;
                 if (input.startsWith("file://")) {
@@ -327,8 +327,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
                 } else {
                     throw new IllegalArgumentException("Unsupported input file path");
                 }
-                try {
-                    Stream<String> lines = Files.lines(filePath);
+                try (Stream<String> lines = Files.lines(filePath);) {
                     return lines.filter(line -> !line.isEmpty()).collect(Collectors.toSet());
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
@@ -341,7 +340,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         EnumMap<FileProvenanceFilter, Set<String>> includeFilters = new EnumMap<>(FileProvenanceFilter.class);
         for (Entry<FileProvenanceFilter, OptionSpec<String>> e : includeFilterOpts.entrySet()) {
             if (options.has(e.getValue())) {
-                Set<String> vals = options.valuesOf(e.getValue()).stream().map(function).flatMap(m -> m.stream()).collect(Collectors.toSet());
+                Set<String> vals = options.valuesOf(e.getValue()).stream().map(stringOrFileOfStrings).flatMap(m -> m.stream()).collect(Collectors.toSet());
                 includeFilters.put(e.getKey(), ImmutableSet.copyOf(vals));
             }
         }
@@ -350,7 +349,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         EnumMap<FileProvenanceFilter, Set<String>> excludeFilters = new EnumMap<>(FileProvenanceFilter.class);
         for (Entry<FileProvenanceFilter, OptionSpec<String>> e : excludeFilterOpts.entrySet()) {
             if (options.has(e.getValue())) {
-                Set<String> vals = options.valuesOf(e.getValue()).stream().map(function).flatMap(m -> m.stream()).collect(Collectors.toSet());
+                Set<String> vals = options.valuesOf(e.getValue()).stream().map(stringOrFileOfStrings).flatMap(m -> m.stream()).collect(Collectors.toSet());
                 excludeFilters.put(e.getKey(), ImmutableSet.copyOf(vals));
             }
         }
