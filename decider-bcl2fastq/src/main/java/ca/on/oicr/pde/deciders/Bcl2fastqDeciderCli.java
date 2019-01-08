@@ -15,6 +15,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import io.seqware.pipeline.plugins.WorkflowScheduler;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -26,6 +29,9 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionException;
 import joptsimple.OptionParser;
@@ -311,10 +317,32 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
 
         decider.setReplaceNullCreatedDate(getBooleanFlagOrArgValue(noNullCreatedDateOpt));
 
+        Function<String, Set<String>> function = (String input) -> {
+            if (input.startsWith("file://") || input.startsWith("/")) {
+                Path filePath;
+                if (input.startsWith("file://")) {
+                    filePath = Paths.get(URI.create(input));
+                } else if (input.startsWith("/")) {
+                    filePath = Paths.get(input);
+                } else {
+                    throw new IllegalArgumentException("Unsupported input file path");
+                }
+                try {
+                    Stream<String> lines = Files.lines(filePath);
+                    return lines.filter(line -> !line.isEmpty()).collect(Collectors.toSet());
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            } else {
+                return Stream.of(input).collect(Collectors.toSet());
+            }
+        };
+
         EnumMap<FileProvenanceFilter, Set<String>> includeFilters = new EnumMap<>(FileProvenanceFilter.class);
         for (Entry<FileProvenanceFilter, OptionSpec<String>> e : includeFilterOpts.entrySet()) {
             if (options.has(e.getValue())) {
-                includeFilters.put(e.getKey(), ImmutableSet.copyOf(options.valuesOf(e.getValue())));
+                Set<String> vals = options.valuesOf(e.getValue()).stream().map(function).flatMap(m -> m.stream()).collect(Collectors.toSet());
+                includeFilters.put(e.getKey(), ImmutableSet.copyOf(vals));
             }
         }
         decider.setIncludeFilters(includeFilters);
@@ -322,7 +350,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         EnumMap<FileProvenanceFilter, Set<String>> excludeFilters = new EnumMap<>(FileProvenanceFilter.class);
         for (Entry<FileProvenanceFilter, OptionSpec<String>> e : excludeFilterOpts.entrySet()) {
             if (options.has(e.getValue())) {
-                excludeFilters.put(e.getKey(), ImmutableSet.copyOf(options.valuesOf(e.getValue())));
+                Set<String> vals = options.valuesOf(e.getValue()).stream().map(function).flatMap(m -> m.stream()).collect(Collectors.toSet());
+                excludeFilters.put(e.getKey(), ImmutableSet.copyOf(vals));
             }
         }
         decider.setExcludeFilters(excludeFilters);
