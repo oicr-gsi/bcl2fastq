@@ -30,6 +30,11 @@ public class BarcodeAndBasesMask {
         String barcodeOne = barcode.getBarcodeOne();
         String barcodeTwo = barcode.getBarcodeTwo();
 
+        if ((barcodeOne == null || barcodeOne.isEmpty()) && (barcodeTwo == null || barcodeTwo.isEmpty())) {
+            // Empty or NoIndex barcode, no need to apply bases mask
+            return barcode;
+        }
+
         if (basesMask.getIndexOneIncludeLength() == null && barcodeOne == null) {
             barcodeOne = null;
         } else if (basesMask.getIndexOneIncludeLength() == null && barcodeOne != null) {

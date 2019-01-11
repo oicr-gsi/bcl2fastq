@@ -1,4 +1,5 @@
-## 1.3 - 2018-01-??
+## 1.3 - 2019-01-??
+- [GP-1211](https://jira.oicr.on.ca/browse/GP-1121) - Support for single end sequencing
 ## 1.2.4 - 2018-12-04
 - [GP-1883](https://jira.oicr.on.ca/browse/GP-1883) - Only retrieve analysis records from "check-wf-accessions"
 ## 1.2.3 - 2018-11-20

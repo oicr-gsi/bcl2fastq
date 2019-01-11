@@ -4,7 +4,7 @@ Version 1.3
 
 ### Overview
 
-This decider launches the [BCL2FastQ (AKA Casava) Workflow](../workflow-casava) to demultiplex and convert BCL files from an Illumina sequencer run to FASTQ format. This decider assumes paired-end reads, so if this is not the case, the read-ends parameter must be used.
+This decider launches the [BCL2FastQ (AKA Casava) Workflow](../workflow-casava) to demultiplex and convert BCL files from an Illumina sequencer run to FASTQ format.
 
 The decider operates as follows:
 - retrieves all lanes that are available from the sample and lane provenance providers (specified in the provenance settings file)
