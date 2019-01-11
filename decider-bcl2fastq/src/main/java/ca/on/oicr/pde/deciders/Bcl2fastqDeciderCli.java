@@ -85,6 +85,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final Bcl2fastqDecider decider;
     private final OptionSpec<Boolean> noLaneSplittingOpt;
     private final OptionSpec<Boolean> ignoreLaneSkipOpt;
+    private final OptionSpec<Boolean> doNotProvisionUndeterminedOpt;
 
     public Bcl2fastqDeciderCli() {
         super();
@@ -152,6 +153,9 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
         ignoreLaneSkipOpt = parser.accepts("ignore-lane-skip",
                 "Ignore lane skip field and process lanes that are marked as skipped.")
+                .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
+        doNotProvisionUndeterminedOpt = parser.accepts("do-not-provision-out-undetermined",
+                "Do not provision out undetermined fastqs.")
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
 
         //output options
@@ -299,6 +303,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         decider.setLaunchMax(options.valueOf(launchMaxOpt));
         decider.setNoLaneSplittingMode(getBooleanFlagOrArgValue(noLaneSplittingOpt));
         decider.setIgnoreLaneSkip(getBooleanFlagOrArgValue(ignoreLaneSkipOpt));
+        decider.setDoNotProvisionOutUndetermined(getBooleanFlagOrArgValue(doNotProvisionUndeterminedOpt));
 
         decider.setOutputPath(options.valueOf(outputPathOpt).endsWith("/") ? options.valueOf(outputPathOpt) : options.valueOf(outputPathOpt) + "/");
         decider.setOutputFolder(options.valueOf(outputFolderOpt));

@@ -1007,6 +1007,29 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
     }
 
+    @Test
+    public void testDoNotProvisionOutUndetermined() throws IOException {
+        bcl2fastqDecider.setWorkflow(seqwareClient.createWorkflow("CASAVA", "2.7.1", "test workflow"));
+        bcl2fastqDecider.setDoNotProvisionOutUndetermined(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+
+        bcl2fastqDecider.setWorkflow(seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow"));
+        bcl2fastqDecider.setDoNotProvisionOutUndetermined(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+
+        Workflow bcl2fastq_2_9_2 = seqwareClient.createWorkflow("CASAVA", "2.9.2", "test workflow");
+        bcl2fastqDecider.setWorkflow(bcl2fastq_2_9_2);
+        bcl2fastqDecider.setDoNotProvisionOutUndetermined(true);
+        assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForWorkflow(bcl2fastq_2_9_2).size(), 4);
+        bcl2fastqDecider.getValidWorkflowRuns().stream().forEach(wr -> {
+            assertEquals(wr.getIniFile().get("provision_out_undetermined"), "false");
+        });
+    }
+
     private Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> getMockData() {
         Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder> lanes = new HashMap<>();
         Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder> samples = new HashMap();
@@ -1186,9 +1209,16 @@ public class Bcl2fastqDeciderTest {
                 .lastModified(expectedDate);
     }
 
-    private Collection<FileProvenance> getFpsForCurrentWorkflow() {
+    private Collection<FileProvenance> getFpsForWorkflow(Workflow workflow) {
         return provenanceClient.getFileProvenance(
-                ImmutableMap.<FileProvenanceFilter, Set<String>>of(FileProvenanceFilter.workflow, ImmutableSet.of(bcl2fastqWorkflow.getSwAccession().toString())));
+                ImmutableMap.<FileProvenanceFilter, Set<String>>of(
+                        FileProvenanceFilter.workflow,
+                        ImmutableSet.of(workflow.getSwAccession().toString())
+                ));
+    }
+
+    private Collection<FileProvenance> getFpsForCurrentWorkflow() {
+        return getFpsForWorkflow(bcl2fastqWorkflow);
     }
 
 }

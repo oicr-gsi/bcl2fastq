@@ -11,8 +11,8 @@ import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
 import ca.on.oicr.pde.deciders.data.Barcode;
 import ca.on.oicr.pde.deciders.data.BarcodeCollision;
-import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq1Handler;
-import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq2Handler;
+import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq_2_7_1_Handler;
+import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq_2_9_1_Handler;
 import ca.on.oicr.pde.deciders.data.Bcl2FastqData;
 import ca.on.oicr.pde.deciders.handlers.Bcl2FastqHandler;
 import ca.on.oicr.pde.deciders.handlers.Handler;
@@ -21,6 +21,7 @@ import ca.on.oicr.pde.deciders.data.SampleProvenanceWithCustomBarcode;
 import ca.on.oicr.pde.deciders.exceptions.ConfigurationException;
 import ca.on.oicr.pde.deciders.exceptions.InvalidBasesMaskException;
 import ca.on.oicr.pde.deciders.exceptions.InvalidLaneException;
+import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq_2_9_2_Handler;
 import ca.on.oicr.pde.deciders.utils.BarcodeComparison;
 import ca.on.oicr.pde.deciders.utils.BarcodeAndBasesMask;
 import ca.on.oicr.pde.deciders.utils.PineryClient;
@@ -92,6 +93,7 @@ public class Bcl2fastqDecider {
     private Boolean isDemultiplexSingleSampleMode = false;
     private Boolean noLaneSplittingMode = false;
     private Boolean ignoreLaneSkip = false;
+    private Boolean doNotProvisionOutUndetermined = false;
 
     private String outputPath = "./";
     private String outputFolder = "seqware-results";
@@ -117,8 +119,9 @@ public class Bcl2fastqDecider {
 
     public Bcl2fastqDecider() {
         //add workflow handlers
-        handlers.add(new Bcl2Fastq1Handler()); //CASAVA 2.7 handler
-        handlers.add(new Bcl2Fastq2Handler()); //CASAVA 2.8+ handler
+        handlers.add(new Bcl2Fastq_2_7_1_Handler()); //CASAVA 2.7.1 handler
+        handlers.add(new Bcl2Fastq_2_9_1_Handler()); //CASAVA 2.9.1 handler
+        handlers.add(new Bcl2Fastq_2_9_2_Handler()); //CASAVA 2.9.2 handler
     }
 
     public static Set<FileProvenanceFilter> getSupportedFilters() {
@@ -225,6 +228,14 @@ public class Bcl2fastqDecider {
 
     public void setIgnoreLaneSkip(Boolean ignoreLaneSkip) {
         this.ignoreLaneSkip = ignoreLaneSkip;
+    }
+
+    public Boolean getDoNotProvisionOutUndetermined() {
+        return doNotProvisionOutUndetermined;
+    }
+
+    public void setDoNotProvisionOutUndetermined(Boolean doNotProvisionOutUndetermined) {
+        this.doNotProvisionOutUndetermined = doNotProvisionOutUndetermined;
     }
 
     public boolean isDisableRunCompleteCheck() {
@@ -976,6 +987,7 @@ public class Bcl2fastqDecider {
             }
             data.setBasesMask(basesMask);
             data.setNoLaneSplitting(noLaneSplittingMode);
+            data.setDoNotProvisionUndetermined(getDoNotProvisionOutUndetermined());
 
             WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode(), doDemultiplexing);
 

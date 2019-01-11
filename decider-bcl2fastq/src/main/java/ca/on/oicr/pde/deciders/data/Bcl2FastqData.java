@@ -22,6 +22,7 @@ public class Bcl2FastqData {
     private BasesMask basesMask;
     private Boolean noLaneSplitting = false;
     private String readEnds;
+    private Boolean doNotProvisionUndetermined = false;
 
     public Bcl2FastqData(ProvenanceWithProvider<LaneProvenance> lane, List<ProvenanceWithProvider<SampleProvenance>> samples) {
         this.lane = lane;
@@ -95,6 +96,14 @@ public class Bcl2FastqData {
 
     public void setReadEnds(String readEnds) {
         this.readEnds = readEnds;
+    }
+
+    public Boolean getDoNotProvisionOutUndetermined() {
+        return doNotProvisionUndetermined;
+    }
+
+    public void setDoNotProvisionUndetermined(Boolean doNotProvisionUndetermined) {
+        this.doNotProvisionUndetermined = doNotProvisionUndetermined;
     }
 
 }

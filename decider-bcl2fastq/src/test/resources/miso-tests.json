@@ -141,6 +141,16 @@
                 "--include-lane": "110520_SN801_0050_AB09E1ABXX_lane_1",
                 "--disable-run-complete-check": ""
             }
+        }, {
+            "id": "Do not provision out undetermined test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.9.2",
+            "parameters": {
+                "--include-lane": "170627_D00343_0178_ACB0F2ANXX_lane_8",
+                "--include-sample": "GCONT_0004_Li_C_PE_264_TS",
+                "--demux-single-sample": "",
+                "--do-not-provision-out-undetermined": ""
+            }
         }
     ]
 }
