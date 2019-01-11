@@ -69,6 +69,7 @@ public class WorkflowClient extends OicrWorkflow {
     private String mismatches;
     private String otherBclToFastqOptions;
     private String otherBustardOptions;
+    private Boolean provisionOutUndetermined;
 
     private void WorkflowClient() {
 
@@ -101,7 +102,7 @@ public class WorkflowClient extends OicrWorkflow {
         mismatches = getOptionalProperty("mismatches", "");
         otherBclToFastqOptions = getOptionalProperty("other_bcltofastq_options", "");
         otherBustardOptions = getOptionalProperty("other_bustard_options", "");
-
+        provisionOutUndetermined = Boolean.valueOf(getOptionalProperty("provision_out_undetermined", "true"));
     }
 
     @Override
@@ -228,7 +229,7 @@ public class WorkflowClient extends OicrWorkflow {
         }
 
         // if the sample sheet for the lane does not have a "NoIndex" entry, Undetermined_indicies will exist
-        if (!ProcessEvent.containsBarcode(ps, "NoIndex")) {
+        if (!ProcessEvent.containsBarcode(ps, "NoIndex") && provisionOutUndetermined) {
             SqwFile r1 = createOutputFile(
                     getUndeterminedFastqPath(dataDir, flowcell, laneNum, "1", noLaneSplitting),
                     //maintain file name produced by previous versions of bcl2fastq
