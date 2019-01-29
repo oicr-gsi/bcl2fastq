@@ -93,7 +93,7 @@ public class Bcl2fastqDecider {
     private Boolean isDemultiplexSingleSampleMode = false;
     private Boolean noLaneSplittingMode = false;
     private Boolean ignoreLaneSkip = false;
-    private Boolean doNotProvisionOutUndetermined = false;
+    private Boolean provisionOutUndetermined = true;
 
     private String outputPath = "./";
     private String outputFolder = "seqware-results";
@@ -230,12 +230,12 @@ public class Bcl2fastqDecider {
         this.ignoreLaneSkip = ignoreLaneSkip;
     }
 
-    public Boolean getDoNotProvisionOutUndetermined() {
-        return doNotProvisionOutUndetermined;
+    public Boolean getProvisionOutUndetermined() {
+        return provisionOutUndetermined;
     }
 
-    public void setDoNotProvisionOutUndetermined(Boolean doNotProvisionOutUndetermined) {
-        this.doNotProvisionOutUndetermined = doNotProvisionOutUndetermined;
+    public void setProvisionOutUndetermined(Boolean provisionOutUndetermined) {
+        this.provisionOutUndetermined = provisionOutUndetermined;
     }
 
     public boolean isDisableRunCompleteCheck() {
@@ -987,7 +987,7 @@ public class Bcl2fastqDecider {
             }
             data.setBasesMask(basesMask);
             data.setNoLaneSplitting(noLaneSplittingMode);
-            data.setDoNotProvisionUndetermined(getDoNotProvisionOutUndetermined());
+            data.setProvisionOutUndetermined(getProvisionOutUndetermined());
 
             WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode(), doDemultiplexing);
 

@@ -1010,16 +1010,16 @@ public class Bcl2fastqDeciderTest {
     @Test
     public void testDoNotProvisionOutUndetermined() throws IOException {
         bcl2fastqDecider.setWorkflow(seqwareClient.createWorkflow("CASAVA", "2.7.1", "test workflow"));
-        bcl2fastqDecider.setDoNotProvisionOutUndetermined(true);
+        bcl2fastqDecider.setProvisionOutUndetermined(false);
         assertEquals(bcl2fastqDecider.run().size(), 0);
 
         bcl2fastqDecider.setWorkflow(seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow"));
-        bcl2fastqDecider.setDoNotProvisionOutUndetermined(true);
+        bcl2fastqDecider.setProvisionOutUndetermined(false);
         assertEquals(bcl2fastqDecider.run().size(), 0);
 
         Workflow bcl2fastq_2_9_2 = seqwareClient.createWorkflow("CASAVA", "2.9.2", "test workflow");
         bcl2fastqDecider.setWorkflow(bcl2fastq_2_9_2);
-        bcl2fastqDecider.setDoNotProvisionOutUndetermined(true);
+        bcl2fastqDecider.setProvisionOutUndetermined(false);
         assertEquals(bcl2fastqDecider.run().size(), 2);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);

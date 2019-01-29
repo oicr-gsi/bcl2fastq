@@ -19,8 +19,8 @@ public class Bcl2Fastq_2_9_1_Handler extends Bcl2FastqHandler {
 
     @Override
     public void validate(Bcl2FastqData data, WorkflowRunV2 workflowRun) {
-        if (data.getDoNotProvisionOutUndetermined()) {
-            workflowRun.addError(Bcl2Fastq_2_7_1_Handler.class.getSimpleName() + " does not support do-not-provision-out-undetermined");
+        if (!data.getProvisionOutUndetermined()) {
+            workflowRun.addError(Bcl2Fastq_2_7_1_Handler.class.getSimpleName() + " does not support disabling provision-out-undetermined");
         }
     }
 

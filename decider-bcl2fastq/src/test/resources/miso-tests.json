@@ -149,7 +149,7 @@
                 "--include-lane": "170627_D00343_0178_ACB0F2ANXX_lane_8",
                 "--include-sample": "GCONT_0004_Li_C_PE_264_TS",
                 "--demux-single-sample": "",
-                "--do-not-provision-out-undetermined": ""
+                "--provision-out-undetermined": "false"
             }
         }
     ]

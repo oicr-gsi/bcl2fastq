@@ -24,7 +24,7 @@ public class Bcl2Fastq_2_9_2_Handler extends Bcl2Fastq_2_9_1_Handler {
     public void modifyWorkflowRun(Bcl2FastqData data, WorkflowRunV2 workflowRun) {
         super.modifyWorkflowRun(data, workflowRun);
 
-        if (data.getDoNotProvisionOutUndetermined()) {
+        if (!data.getProvisionOutUndetermined()) {
             workflowRun.addProperty("provision_out_undetermined", "false");
         }
     }
