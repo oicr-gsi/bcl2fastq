@@ -102,7 +102,7 @@ verbose                                  | Boolean | Log verbose output
 host                                     | String  | Used only in combination with --schedule to schedule onto a specific host. If not provided, the default is the local host [local hostname]
 dry-run or test                          | Boolean | Dry-run/test mode. Prints the INI files to standard out and does not submit the workflow [false]
 demux-single-sample                      | Boolean | Enable demultiplexing if there is only a single sample in the workflow run (default behaviour is to run single samples with "NoIndex") [false]
-no-lane-splitting	| Boolean	| Schedule workflow runs using no-lane-splitting (Note: this mode requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples) [false]
+lane-splitting                           | Boolean | Option to disable lane-splitting (Note: --lane-splitting=false requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples). [true]
 no-meta-db or no-metadata                | Boolean | Prevents metadata writeback (which is done by default) by the Decider and that is subsequently passed to the called workflow which can use it to determine if they should write metadata at runtime on the cluster [false]
 disable-run-complete-check               | Boolean | Disable checking that the run status is complete (see "--pinery-url") [false]
 pinery-url | String | Pinery service url to use for run status check (required if "--disable-run-complete-check is not specified)

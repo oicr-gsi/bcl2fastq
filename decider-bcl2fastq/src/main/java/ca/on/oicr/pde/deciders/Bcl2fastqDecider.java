@@ -91,7 +91,7 @@ public class Bcl2fastqDecider {
     private Boolean ignorePreviousLimsKeysMode = false;
     private Boolean disableRunCompleteCheck = false;
     private Boolean isDemultiplexSingleSampleMode = false;
-    private Boolean noLaneSplittingMode = false;
+    private Boolean doLaneSplitting = true;
     private Boolean ignoreLaneSkip = false;
     private Boolean provisionOutUndetermined = true;
 
@@ -214,12 +214,12 @@ public class Bcl2fastqDecider {
         this.ignorePreviousLimsKeysMode = ignorePreviousLimsKeysMode;
     }
 
-    public Boolean getNoLaneSplittingMode() {
-        return noLaneSplittingMode;
+    public Boolean getDoLaneSplitting() {
+        return doLaneSplitting;
     }
 
-    public void setNoLaneSplittingMode(Boolean noLaneSplittingMode) {
-        this.noLaneSplittingMode = noLaneSplittingMode;
+    public void setDoLaneSplitting(Boolean doLaneSplitting) {
+        this.doLaneSplitting = doLaneSplitting;
     }
 
     public Boolean getIgnoreLaneSkip() {
@@ -686,7 +686,7 @@ public class Bcl2fastqDecider {
         //remove invalid lanes from lanes to analyze set
         Set<String> lanesToAnalyze = Sets.difference(candidateLanesToAnalyze, invalidLanes);
 
-        if (noLaneSplittingMode) {
+        if (!doLaneSplitting) {
             Set<String> noLaneSplittingModeLanesToAnalyze = new HashSet<>();
 
             // get all samples in lanesToAnalyze set
@@ -986,7 +986,7 @@ public class Bcl2fastqDecider {
                 }
             }
             data.setBasesMask(basesMask);
-            data.setNoLaneSplitting(noLaneSplittingMode);
+            data.setDoLaneSplitting(doLaneSplitting);
             data.setProvisionOutUndetermined(getProvisionOutUndetermined());
 
             WorkflowRunV2 wr = handler.getWorkflowRun(metadata, data, getDoCreateIusLimsKeys() && !getIsDryRunMode(), doDemultiplexing);

@@ -869,7 +869,7 @@ public class Bcl2fastqDeciderTest {
         bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
         bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
         bcl2fastqDecider.setDisableRunCompleteCheck(true);
-        bcl2fastqDecider.setNoLaneSplittingMode(true);
+        bcl2fastqDecider.setDoLaneSplitting(false);
 
         //case when there are different samples per lane
         LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").build();
@@ -907,7 +907,7 @@ public class Bcl2fastqDeciderTest {
         bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
         bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
         bcl2fastqDecider.setDisableRunCompleteCheck(true);
-        bcl2fastqDecider.setNoLaneSplittingMode(true);
+        bcl2fastqDecider.setDoLaneSplitting(false);
 
         //case when there are different samples per lane
         LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").build();
@@ -929,7 +929,7 @@ public class Bcl2fastqDeciderTest {
         bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
         bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
         bcl2fastqDecider.setDisableRunCompleteCheck(true);
-        bcl2fastqDecider.setNoLaneSplittingMode(true);
+        bcl2fastqDecider.setDoLaneSplitting(false);
 
         //case when there are different samples per lane
         LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").build();

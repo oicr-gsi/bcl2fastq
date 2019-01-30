@@ -20,7 +20,7 @@ public class Bcl2FastqData {
     private Boolean metadataWriteback;
     private StudyToOutputPathConfig studyToOutputPathConfig;
     private BasesMask basesMask;
-    private Boolean noLaneSplitting = false;
+    private Boolean doLaneSplitting = true;
     private String readEnds;
     private Boolean provisionOutUndetermined = true;
 
@@ -82,12 +82,12 @@ public class Bcl2FastqData {
         this.basesMask = basesMask;
     }
 
-    public Boolean getNoLaneSplitting() {
-        return noLaneSplitting;
+    public Boolean getDoLaneSplitting() {
+        return doLaneSplitting;
     }
 
-    public void setNoLaneSplitting(Boolean noLaneSplitting) {
-        this.noLaneSplitting = noLaneSplitting;
+    public void setDoLaneSplitting(Boolean doLaneSplitting) {
+        this.doLaneSplitting = doLaneSplitting;
     }
 
     public String getReadEnds() {

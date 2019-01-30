@@ -99,7 +99,7 @@
             "workflowVersion": "2.9.1",
             "parameters": {
                 "--include-sequencer-run": "171128_NB551056_0036_AHVCJKBGX3",
-                "--no-lane-splitting": "true"
+                "--lane-splitting": "false"
             }
         },
         {
@@ -109,7 +109,7 @@
             "parameters": {
                 "--include-sequencer-run": "180713_A00469_0010_AH7CT5DSXX",
                 "--exclude-sample": "NOVA_0032_nn_U_PE_376_WG",
-                "--no-lane-splitting": "true"
+                "--lane-splitting": "false"
             }
         }, {
             "id": "10X filtering test",

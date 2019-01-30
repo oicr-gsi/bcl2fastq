@@ -37,7 +37,7 @@ public class Bcl2Fastq_2_9_1_Handler extends Bcl2FastqHandler {
                 runDir = runDir + "/";
             }
         }
-        if (data.getNoLaneSplitting()) {
+        if (!data.getDoLaneSplitting()) {
             workflowRun.addProperty("no_lane_splitting", "true");
         }
 
