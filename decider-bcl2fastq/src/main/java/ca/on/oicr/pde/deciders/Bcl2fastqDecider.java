@@ -581,8 +581,8 @@ public class Bcl2fastqDecider {
         Function<SampleProvenance, String> getLaneName = (SampleProvenance s) -> s.getSequencerRunName() + "_lane_" + s.getLaneNumber();
 
         //filter 10x lanes
-        List<String> lanes10x = sampleProvenanceByProvider.values().stream() //
-                .flatMap(Collection::stream) //
+        List<String> lanes10x = laneNameToSampleProvenance.values().stream() //
+                .map(spp -> spp.getProvenance()) //
                 .filter(is10x) //
                 .map(getLaneName) //
                 .distinct() //

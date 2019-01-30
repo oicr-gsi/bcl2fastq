@@ -972,6 +972,28 @@ public class Bcl2fastqDeciderTest {
     }
 
     @Test
+    public void testMixed10xLane() {
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+
+        LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").build();
+        SampleProvenance sample1 = getBaseSample().laneNumber("1").sampleName("TEST_0001_001").iusTag("SI-GA").provenanceId("1_1_1").build();
+        SampleProvenance sample2 = getBaseSample().laneNumber("1").sampleName("TEST_0001_002").iusTag("AAAAAA").provenanceId("1_2_2").build();
+
+        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2));
+        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1));
+
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+
+        EnumMap<FileProvenanceFilter, Set<String>> filters = new EnumMap<>(FileProvenanceFilter.class);
+        filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_0001_001"));
+        bcl2fastqDecider.setExcludeFilters(filters);
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+    }
+
+    @Test
     public void testSingleEndRun() {
         LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").sequencerRunAttribute("run_bases_mask", ImmutableSortedSet.of("y100,i8")).build();
         SampleProvenance lane1_sample1 = getBaseSample().laneNumber("1").sampleName("TEST_0001_001").iusTag("AAAAAAAA").provenanceId("1_1_1").build();
