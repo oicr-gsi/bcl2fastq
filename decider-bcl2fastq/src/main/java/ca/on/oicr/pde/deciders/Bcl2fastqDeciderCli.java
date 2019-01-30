@@ -84,7 +84,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final NonOptionArgumentSpec<String> nonOptionSpec;
     private final Bcl2fastqDecider decider;
     private final OptionSpec<Boolean> doLaneSplittingOpt;
-    private final OptionSpec<Boolean> ignoreLaneSkipOpt;
+    private final OptionSpec<Boolean> processSkippedLanesOpt;
     private final OptionSpec<Boolean> provisionUndeterminedOpt;
 
     public Bcl2fastqDeciderCli() {
@@ -151,8 +151,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
                 "Option to disable lane-splitting "
                 + "(Note: --lane-splitting=false requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples).")
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(true);
-        ignoreLaneSkipOpt = parser.accepts("ignore-lane-skip",
-                "Ignore lane skip field and process lanes that are marked as skipped.")
+        processSkippedLanesOpt = parser.accepts("process-skipped-lanes",
+                "Process lanes that have been marked as skipped.")
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
         provisionUndeterminedOpt = parser.accepts("provision-out-undetermined",
                 "Provision out undetermined fastqs.")
@@ -302,7 +302,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         decider.setDisableRunCompleteCheck(getBooleanFlagOrArgValue(disableRunCompleteCheckOpt));
         decider.setLaunchMax(options.valueOf(launchMaxOpt));
         decider.setDoLaneSplitting(getBooleanFlagOrArgValue(doLaneSplittingOpt));
-        decider.setIgnoreLaneSkip(getBooleanFlagOrArgValue(ignoreLaneSkipOpt));
+        decider.setProcessSkippedLanes(getBooleanFlagOrArgValue(processSkippedLanesOpt));
         decider.setProvisionOutUndetermined(getBooleanFlagOrArgValue(provisionUndeterminedOpt));
 
         decider.setOutputPath(options.valueOf(outputPathOpt).endsWith("/") ? options.valueOf(outputPathOpt) : options.valueOf(outputPathOpt) + "/");

@@ -92,7 +92,7 @@ public class Bcl2fastqDecider {
     private Boolean disableRunCompleteCheck = false;
     private Boolean isDemultiplexSingleSampleMode = false;
     private Boolean doLaneSplitting = true;
-    private Boolean ignoreLaneSkip = false;
+    private Boolean processSkippedLanes = false;
     private Boolean provisionOutUndetermined = true;
 
     private String outputPath = "./";
@@ -222,12 +222,12 @@ public class Bcl2fastqDecider {
         this.doLaneSplitting = doLaneSplitting;
     }
 
-    public Boolean getIgnoreLaneSkip() {
-        return ignoreLaneSkip;
+    public Boolean getProcessSkippedLanes() {
+        return processSkippedLanes;
     }
 
-    public void setIgnoreLaneSkip(Boolean ignoreLaneSkip) {
-        this.ignoreLaneSkip = ignoreLaneSkip;
+    public void setProcessSkippedLanes(Boolean processSkippedLanes) {
+        this.processSkippedLanes = processSkippedLanes;
     }
 
     public Boolean getProvisionOutUndetermined() {
@@ -423,8 +423,8 @@ public class Bcl2fastqDecider {
                 providerAndIdToLaneName.put(provider + lp.getProvenanceId(), laneName);
 
                 if (lp.getSkip()) {
-                    if (getIgnoreLaneSkip()) {
-                        log.warn("Ignoring skip flag for lane = [{}]", laneName);
+                    if (getProcessSkippedLanes()) {
+                        log.warn("Processing skipped lane = [{}]", laneName);
                     } else {
                         log.info("Lane = [{}] is skipped", laneName);
                         continue;

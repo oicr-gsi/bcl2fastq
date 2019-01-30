@@ -116,7 +116,7 @@ output-folder                            | String (path) | Path to put the final
 override-run-bases-mask                  | String        | Override the run bases-mask and truncate barcodes to the specified index length. (e.g. 'y\*,i6,y\*')
 min-allowed-edit-distance                | Integer       | The "The minimum allowed barcode edit distance for sample barcodes within a lane [3]
 provision-out-undetermined               | Boolean | Provision out undetermined fastqs (supported by workflow versions 2.9.2+) [true]
-
+process-skipped-lanes                    | Boolean | Process lanes that have been marked as skipped [false]
 
 **Note**
 
