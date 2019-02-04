@@ -63,6 +63,8 @@ public class Bcl2fastqDeciderCliTest {
         args.add(provenanceSettings.getAbsolutePath());
         args.add("--all");
         args.add("--disable-run-complete-check");
+        args.add("--lane-splitting");
+        args.add("true");
 
         Bcl2fastqDecider decider = getDecider(args);
         assertTrue(decider.getIsDryRunMode());
@@ -83,6 +85,7 @@ public class Bcl2fastqDeciderCliTest {
         args.add("--all");
         args.add("--demux-single-sample");
         args.add("--disable-run-complete-check");
+        args.add("--lane-splitting=true");
 
         Bcl2fastqDecider decider = getDecider(args);
         assertTrue(decider.getIsDryRunMode());
@@ -104,6 +107,7 @@ public class Bcl2fastqDeciderCliTest {
         args.add("2017-01-01");
         args.add("--all");
         args.add("--disable-run-complete-check");
+        args.add("--lane-splitting=true");
 
         Bcl2fastqDecider decider = getDecider(args);
         assertTrue(decider.getIsDryRunMode());
@@ -127,6 +131,7 @@ public class Bcl2fastqDeciderCliTest {
         args.add("--exclude-study");
         args.add("1,2,3");
         args.add("--disable-run-complete-check");
+        args.add("--lane-splitting=true");
 
         Bcl2fastqDecider decider = getDecider(args);
         assertTrue(decider.getIsDryRunMode());
@@ -155,6 +160,7 @@ public class Bcl2fastqDeciderCliTest {
         args.add("--exclude-lane");
         args.add("file://" + filePath);
         args.add("--disable-run-complete-check");
+        args.add("--lane-splitting=true");
 
         Bcl2fastqDecider decider = getDecider(args);
         assertTrue(decider.getIsDryRunMode());

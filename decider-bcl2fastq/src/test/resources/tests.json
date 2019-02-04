@@ -5,7 +5,8 @@
         "parameters": {
             "--disable-run-complete-check": "",
             "--no-null-created-date": "",
-            "--ignore-previous-lims-keys": "true"
+            "--ignore-previous-lims-keys": "true",
+            "--lane-splitting" : "true"
         },
         "properties": {
             "memory": "16384"

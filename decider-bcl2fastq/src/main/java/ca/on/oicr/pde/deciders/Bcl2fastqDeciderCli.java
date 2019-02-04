@@ -10,6 +10,7 @@ import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
 import ca.on.oicr.pde.deciders.data.BasesMask;
 import ca.on.oicr.pde.deciders.exceptions.InvalidBasesMaskException;
 import ca.on.oicr.pde.deciders.utils.PineryClient;
+import ca.on.oicr.pde.deciders.utils.RunScannerClient;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -72,6 +73,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<String> studyOutputPathOpt;
     private final OptionSpec<String> provenanceSettingsOpt;
     private final OptionSpec<String> pineryUrlOpt;
+    private final OptionSpec<String> runScannerUrlOpt;
     private final OptionSpec allOpt;
     private final EnumMap<FileProvenanceFilter, OptionSpec<String>> includeFilterOpts;
     private final EnumMap<FileProvenanceFilter, OptionSpec<String>> excludeFilterOpts;
@@ -86,6 +88,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<Boolean> doLaneSplittingOpt;
     private final OptionSpec<Boolean> processSkippedLanesOpt;
     private final OptionSpec<Boolean> provisionUndeterminedOpt;
+    private final OptionSpec<String> noLaneSplitWorkflowTypesOpt;
+    private final OptionSpec<String> laneSplitWorkflowTypesOpt;
 
     public Bcl2fastqDeciderCli() {
         super();
@@ -148,9 +152,9 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
                 "The maximum number of jobs to launch at once.")
                 .withRequiredArg().ofType(Integer.class).defaultsTo(decider.getLaunchMax());
         doLaneSplittingOpt = parser.accepts("lane-splitting",
-                "Option to disable lane-splitting "
+                "Option to force lane-splitting or no-lane-splitting "
                 + "(Note: --lane-splitting=false requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples).")
-                .withOptionalArg().ofType(Boolean.class).defaultsTo(true);
+                .withRequiredArg().ofType(Boolean.class);
         processSkippedLanesOpt = parser.accepts("process-skipped-lanes",
                 "Process lanes that have been marked as skipped.")
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
@@ -190,9 +194,19 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
                 "Exclude lanes were sequenced with instrument (\"instrument_name\" sequencer run attribute).")
                 .withRequiredArg();
 
-        //pinery client options (required if doing runCompleteCheck)
-        pineryUrlOpt = parser.acceptsAll(Arrays.asList("pinery-url"), "URL to Pinery service.")
-                .requiredUnless(disableRunCompleteCheckOpt).withRequiredArg().ofType(String.class);
+        //Pinery client options (required if doing runCompleteCheck)
+        pineryUrlOpt = parser.acceptsAll(Arrays.asList("pinery-url"), "URL to Pinery service. Used for run status check. Required if \"--disable-run-complete-check\" is not specified.")
+                .requiredUnless(disableRunCompleteCheckOpt).withRequiredArg().ofType(String.class).withValuesSeparatedBy(",");
+
+        //RunScanner client options (required if doing automatic lane-splitting or no-lane-splitting)
+        runScannerUrlOpt = parser.acceptsAll(Arrays.asList("run-scanner-url"), "URL to RunScanner service. Use to determine lane-splitting or no-lane-splitting. Required if \"--lane-splitting\" is not specified.")
+                .requiredUnless(doLaneSplittingOpt).withRequiredArg().ofType(String.class).withValuesSeparatedBy(",");
+
+        //Map workflowType to lane-split or no-lane-split
+        laneSplitWorkflowTypesOpt = parser.accepts("lane-split-workflow-types", "workflowTypes to process with lane-splitting")
+                .withRequiredArg().ofType(String.class).defaultsTo(decider.getLaneSplitWorkflowTypes().stream().toArray(String[]::new));
+        noLaneSplitWorkflowTypesOpt = parser.accepts("no-lane-split-workflow-types", "workflowTypes to process with no-lane-splitting")
+                .withRequiredArg().ofType(String.class).defaultsTo(decider.getNoLaneSplitWorkflowTypes().stream().toArray(String[]::new));
 
         includeFilterOpts = new EnumMap<>(FileProvenanceFilter.class);
         excludeFilterOpts = new EnumMap<>(FileProvenanceFilter.class);
@@ -269,8 +283,18 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         }
 
         if (options.has(pineryUrlOpt)) {
-            PineryClient c = new PineryClient(options.valueOf(pineryUrlOpt));
-            decider.setPineryClient(c);
+            decider.setPineryClient(new PineryClient(options.valueOf(pineryUrlOpt)));
+        }
+
+        if (options.has(runScannerUrlOpt)) {
+            decider.setRunScannerClient(new RunScannerClient(options.valueOf(runScannerUrlOpt)));
+        }
+
+        if (options.has(laneSplitWorkflowTypesOpt)) {
+            decider.setLaneSplitWorkflowTypes(options.valuesOf(laneSplitWorkflowTypesOpt).stream().collect(Collectors.toSet()));
+        }
+        if (options.has(noLaneSplitWorkflowTypesOpt)) {
+            decider.setNoLaneSplitWorkflowTypes(options.valuesOf(noLaneSplitWorkflowTypesOpt).stream().collect(Collectors.toSet()));
         }
 
         Workflow workflow = metadata.getWorkflow(options.valueOf(wfSwidOpt));
@@ -301,7 +325,9 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         decider.setIgnorePreviousLimsKeysMode(getBooleanFlagOrArgValue(ignorePreviousLimsKeysOpt));
         decider.setDisableRunCompleteCheck(getBooleanFlagOrArgValue(disableRunCompleteCheckOpt));
         decider.setLaunchMax(options.valueOf(launchMaxOpt));
-        decider.setDoLaneSplitting(getBooleanFlagOrArgValue(doLaneSplittingOpt));
+        if (options.has(doLaneSplittingOpt)) {
+            decider.setDoLaneSplitting(options.valueOf(doLaneSplittingOpt));
+        }
         decider.setProcessSkippedLanes(getBooleanFlagOrArgValue(processSkippedLanesOpt));
         decider.setProvisionOutUndetermined(getBooleanFlagOrArgValue(provisionUndeterminedOpt));
 

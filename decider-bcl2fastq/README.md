@@ -69,6 +69,8 @@ Parameter | Type | Description \[default\]
 ----------|------|-------------------------
 provenance-settings | String (Path) | Path to provenance settings json
 wf-accession | Integer | Bcl2FastQ workflow accession
+pinery-url | String | URL to Pinery service. Used for run status check. Required if "--disable-run-complete-check" is not specified.
+run-scanner-url | String | URL to RunScanner service. Use to determine lane-splitting or no-lane-splitting. Required if "--lane-splitting" is not specified.
 
 **Optional**
 
@@ -105,7 +107,6 @@ demux-single-sample                      | Boolean | Enable demultiplexing if th
 lane-splitting                           | Boolean | Option to disable lane-splitting (Note: --lane-splitting=false requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples). [true]
 no-meta-db or no-metadata                | Boolean | Prevents metadata writeback (which is done by default) by the Decider and that is subsequently passed to the called workflow which can use it to determine if they should write metadata at runtime on the cluster [false]
 disable-run-complete-check               | Boolean | Disable checking that the run status is complete (see "--pinery-url") [false]
-pinery-url | String | Pinery service url to use for run status check (required if "--disable-run-complete-check is not specified)
 no-null-created-date                     | Boolean | Set the filter comparison date to "last modified" date if "created date" is null [false]
 force-run-all or ignore-previous-runs    | Boolean | (WARNING: use with caution) Forces the decider to run all matches regardless of whether they've been run before or not [false]
 ignore-previous-lims-keys                | Boolean | (WARNING: use with caution) Ignore all existing analysis (workflow runs and IUS skip) [false]
@@ -117,6 +118,8 @@ override-run-bases-mask                  | String        | Override the run base
 min-allowed-edit-distance                | Integer       | The "The minimum allowed barcode edit distance for sample barcodes within a lane [3]
 provision-out-undetermined               | Boolean | Provision out undetermined fastqs (supported by workflow versions 2.9.2+) [true]
 process-skipped-lanes                    | Boolean | Process lanes that have been marked as skipped [false]
+lane-split-workflow-types                | String  | workflowTypes to process with lane-splitting ["", NovaSeqXp]
+no-lane-split-workflow-types             | String  | workflowTypes to process with no-lane-splitting [NovaSeqStandard]
 
 **Note**
 
