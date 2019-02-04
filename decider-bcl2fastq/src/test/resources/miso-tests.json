@@ -99,7 +99,7 @@
             "workflowVersion": "2.9.1",
             "parameters": {
                 "--include-sequencer-run": "171128_NB551056_0036_AHVCJKBGX3",
-                "--no-lane-splitting": "true"
+                "--lane-splitting": "false"
             }
         },
         {
@@ -109,7 +109,7 @@
             "parameters": {
                 "--include-sequencer-run": "180713_A00469_0010_AH7CT5DSXX",
                 "--exclude-sample": "NOVA_0032_nn_U_PE_376_WG",
-                "--no-lane-splitting": "true"
+                "--lane-splitting": "false"
             }
         }, {
             "id": "10X filtering test",
@@ -140,6 +140,16 @@
             "parameters": {
                 "--include-lane": "110520_SN801_0050_AB09E1ABXX_lane_1",
                 "--disable-run-complete-check": ""
+            }
+        }, {
+            "id": "Do not provision out undetermined test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.9.2",
+            "parameters": {
+                "--include-lane": "170627_D00343_0178_ACB0F2ANXX_lane_8",
+                "--include-sample": "GCONT_0004_Li_C_PE_264_TS",
+                "--demux-single-sample": "",
+                "--provision-out-undetermined": "false"
             }
         }
     ]

@@ -83,8 +83,9 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<Integer> minAllowedEditDistanceOpt;
     private final NonOptionArgumentSpec<String> nonOptionSpec;
     private final Bcl2fastqDecider decider;
-    private final OptionSpec<Boolean> noLaneSplittingOpt;
-    private final OptionSpec<Boolean> ignoreLaneSkipOpt;
+    private final OptionSpec<Boolean> doLaneSplittingOpt;
+    private final OptionSpec<Boolean> processSkippedLanesOpt;
+    private final OptionSpec<Boolean> provisionUndeterminedOpt;
 
     public Bcl2fastqDeciderCli() {
         super();
@@ -146,13 +147,16 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         launchMaxOpt = parser.acceptsAll(Arrays.asList("launch-max"),
                 "The maximum number of jobs to launch at once.")
                 .withRequiredArg().ofType(Integer.class).defaultsTo(decider.getLaunchMax());
-        noLaneSplittingOpt = parser.accepts("no-lane-splitting",
-                "Schedule workflow runs using no-lane-splitting "
-                + "(Note: this mode requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples).")
+        doLaneSplittingOpt = parser.accepts("lane-splitting",
+                "Option to disable lane-splitting "
+                + "(Note: --lane-splitting=false requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples).")
+                .withOptionalArg().ofType(Boolean.class).defaultsTo(true);
+        processSkippedLanesOpt = parser.accepts("process-skipped-lanes",
+                "Process lanes that have been marked as skipped.")
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
-        ignoreLaneSkipOpt = parser.accepts("ignore-lane-skip",
-                "Ignore lane skip field and process lanes that are marked as skipped.")
-                .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
+        provisionUndeterminedOpt = parser.accepts("provision-out-undetermined",
+                "Provision out undetermined fastqs.")
+                .withOptionalArg().ofType(Boolean.class).defaultsTo(true);
 
         //output options
         outputPathOpt = parser.accepts("output-path",
@@ -297,8 +301,9 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         decider.setIgnorePreviousLimsKeysMode(getBooleanFlagOrArgValue(ignorePreviousLimsKeysOpt));
         decider.setDisableRunCompleteCheck(getBooleanFlagOrArgValue(disableRunCompleteCheckOpt));
         decider.setLaunchMax(options.valueOf(launchMaxOpt));
-        decider.setNoLaneSplittingMode(getBooleanFlagOrArgValue(noLaneSplittingOpt));
-        decider.setIgnoreLaneSkip(getBooleanFlagOrArgValue(ignoreLaneSkipOpt));
+        decider.setDoLaneSplitting(getBooleanFlagOrArgValue(doLaneSplittingOpt));
+        decider.setProcessSkippedLanes(getBooleanFlagOrArgValue(processSkippedLanesOpt));
+        decider.setProvisionOutUndetermined(getBooleanFlagOrArgValue(provisionUndeterminedOpt));
 
         decider.setOutputPath(options.valueOf(outputPathOpt).endsWith("/") ? options.valueOf(outputPathOpt) : options.valueOf(outputPathOpt) + "/");
         decider.setOutputFolder(options.valueOf(outputFolderOpt));

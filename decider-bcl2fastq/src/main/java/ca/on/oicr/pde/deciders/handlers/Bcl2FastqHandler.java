@@ -31,7 +31,9 @@ import net.sourceforge.seqware.common.metadata.Metadata;
  */
 public abstract class Bcl2FastqHandler implements Handler {
 
-    public abstract WorkflowRunV2 modifyWorkflowRun(Bcl2FastqData data, WorkflowRunV2 workflowRun);
+    public abstract void validate(Bcl2FastqData data, WorkflowRunV2 workflowRun);
+
+    public abstract void modifyWorkflowRun(Bcl2FastqData data, WorkflowRunV2 workflowRun);
 
     public WorkflowRunV2 getWorkflowRun(Metadata metadata, Bcl2FastqData data, boolean createLimsKeys, boolean enableDemultiplexSingleSample) {
         WorkflowRunV2 wr = new WorkflowRunV2(null, null, data);
@@ -124,8 +126,11 @@ public abstract class Bcl2FastqHandler implements Handler {
             wr.addError(dme.toString());
         }
 
-        //complete any additional workflow run construction
-        wr = modifyWorkflowRun(data, wr);
+        //complete any additional workflow run validation
+        validate(data, wr);
+
+        //complete any additional workflow run modification
+        modifyWorkflowRun(data, wr);
 
         //create IUS-LimsKeys and generate the workflow run "lanes" ini property
         if (wr.getErrors().isEmpty()) {
