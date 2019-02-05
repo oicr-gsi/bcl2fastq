@@ -997,12 +997,22 @@ public class Bcl2fastqDeciderTest {
         when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2));
         when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1));
 
-        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        bcl2fastqDecider.getValidWorkflowRuns().stream().forEach(wr -> {
+            assertTrue(wr.getIniFile().get("lanes").contains("AAAAAA"));
+            List<SampleProvenance> sps = ((WorkflowRunV2) wr).getBcl2FastqData().getSps();
+            assertEquals(sps.size(), 1);
+        });
 
         EnumMap<FileProvenanceFilter, Set<String>> filters = new EnumMap<>(FileProvenanceFilter.class);
         filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_0001_001"));
         bcl2fastqDecider.setExcludeFilters(filters);
+        bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+
+        bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
     }

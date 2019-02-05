@@ -54,7 +54,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -598,29 +597,6 @@ public class Bcl2fastqDecider {
             laneNameToLaneProvenance.keySet().removeAll(lanesToRemove);
         }
 
-        Predicate<SampleProvenance> is10x = (SampleProvenance sp) -> {
-            if (sp.getSampleAttributes().containsKey("geo_prep_kit")
-                    && sp.getSampleAttributes().get("geo_prep_kit").stream().anyMatch(s -> s.toLowerCase().contains("10x"))) {
-                return true;
-            }
-            if (sp.getIusTag() != null && sp.getIusTag().startsWith("SI-")) {
-                return true;
-            }
-            return false;
-        };
-
-        Function<SampleProvenance, String> getLaneName = (SampleProvenance s) -> s.getSequencerRunName() + "_lane_" + s.getLaneNumber();
-
-        //filter 10x lanes
-        List<String> lanes10x = laneNameToSampleProvenance.values().stream() //
-                .map(spp -> spp.getProvenance()) //
-                .filter(is10x) //
-                .map(getLaneName) //
-                .distinct() //
-                .collect(Collectors.toList());
-        lanes10x.stream().forEach(lane -> log.info("Lane = [{}] excluded because it has 10X samples", lane));
-        laneNameToLaneProvenance.keySet().removeAll(lanes10x);
-
         //get previous analysis
         Map<FileProvenanceFilter, Set<String>> analysisFilters = new HashMap<>();
         Set<String> workflowSwidsToCheck = new HashSet<>();
@@ -672,13 +648,24 @@ public class Bcl2fastqDecider {
             candidateLanesToAnalyze.addAll(unprocessedLanes);
         }
 
+        Predicate<SampleProvenance> is10x = (SampleProvenance sp) -> {
+            if (sp.getSampleAttributes().containsKey("geo_prep_kit")
+                    && sp.getSampleAttributes().get("geo_prep_kit").stream().anyMatch(s -> s.toLowerCase().contains("10x"))) {
+                return true;
+            }
+            if (sp.getIusTag() != null && sp.getIusTag().startsWith("SI-")) {
+                return true;
+            }
+            return false;
+        };
+
         //lane validation and filtering before scheduling workflow run
         Set<String> invalidLanes = new HashSet<>();
         Set<String> filteredLanes = new HashSet<>();
         for (String laneName : candidateLanesToAnalyze) {
             List<String> laneValidationErrors = new ArrayList<>();
 
-            //expect one and only one lane provenance per lane name
+            //expect one lane provenance object per lane
             List<ProvenanceWithProvider<LaneProvenance>> lps = laneNameToLaneProvenance.get(laneName);
             if (lps.size() != 1) {
                 reportInvalidLane(laneName, "Lane [%s] maps to multiple [%s] lane provenance records, one-to-one mapping is required.", laneName, Integer.toString(lps.size()));
@@ -686,6 +673,24 @@ public class Bcl2fastqDecider {
                 continue;
             }
             LaneProvenance lp = Iterables.getOnlyElement(laneNameToLaneProvenance.get(laneName)).getProvenance();
+
+            //expect one sample provenance provider per lane - or no samples in lane
+            List<ProvenanceWithProvider<SampleProvenance>> sps = laneNameToSampleProvenance.get(laneName);
+
+            if (sps.isEmpty()) {
+                laneValidationErrors.add(String.format("Sample provenance count = [%s], expected 1 or more.", sps.size()));
+            } else if (sps.stream().map(sp -> sp.getProvider()).distinct().collect(Collectors.toList()).size() > 1) {
+                reportInvalidLane(laneName, "Lane [%s] has samples that map to multiple sample provenance providers, one-to-one mapping is required.", laneName);
+                invalidLanes.add(laneName);
+                continue;
+            }
+
+            //filter lane if all samples are 10X
+            if (!sps.isEmpty() && sps.stream().map(sp -> sp.getProvenance()).allMatch(is10x)) {
+                log.debug("Excluding lane = [{}] because all samples are 10X", laneName);
+                filteredLanes.add(laneName);
+                continue;
+            }
 
             Optional<Boolean> doLaneSplitting = Optional.empty();
             try {
@@ -709,12 +714,6 @@ public class Bcl2fastqDecider {
                     invalidLanes.add(laneName);
                     continue;
                 }
-            }
-
-            //expect one or more sample provenance per lane name
-            List<ProvenanceWithProvider<SampleProvenance>> sps = laneNameToSampleProvenance.get(laneName);
-            if (sps.isEmpty()) {
-                laneValidationErrors.add(String.format("Sample provenance count = [%s], expected 1 or more.", sps.size()));
             }
 
             if (!disableRunCompleteCheck) {
@@ -758,6 +757,15 @@ public class Bcl2fastqDecider {
 
             //get samples in lane
             List<ProvenanceWithProvider<SampleProvenance>> samples = laneNameToSampleProvenance.get(laneName);
+
+            //more than one sample in the lane, demultiplexing must be done for all workflow runs scheduled for this lane
+            boolean doDemulitplexing = getIsDemultiplexSingleSampleMode();
+            if (samples.size() > 1) {
+                doDemulitplexing = true;
+            }
+
+            //filter out 10X samples
+            samples = samples.stream().filter(s -> !is10x.test(s.getProvenance())).collect(Collectors.toList());
 
             //use overrideBasesMask or runBasesMask to calculate the sequenced barcodes
             Optional<BasesMask> runBasesMask = Optional.empty();
@@ -809,12 +817,6 @@ public class Bcl2fastqDecider {
             if (collisions.size() > 0) {
                 reportInvalidLane(laneName, "Barcode collision(s):\n" + Joiner.on("\n").join(collisions));
                 continue;
-            }
-
-            //more than one sample in the lane, demultiplexing must be done for all workflow runs scheduled for this lane
-            boolean doDemulitplexing = getIsDemultiplexSingleSampleMode();
-            if (samples.size() > 1) {
-                doDemulitplexing = true;
             }
 
             //group lane samples by barcode length
