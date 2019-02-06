@@ -29,5 +29,32 @@
             <version>2.4</version>
         </dependency>
     </dependencies>
-    
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.pyx4j</groupId>
+                <artifactId>maven-junction-plugin</artifactId>
+                <version>1.0.3</version>
+                <executions>
+                    <execution>
+                        <phase>none</phase>
+                        <goals>
+                            <goal>link</goal>
+                        </goals>
+                        <configuration/>
+                    </execution>
+                    <execution>
+                        <id>unlink</id>
+                        <phase>none</phase>
+                        <goals>
+                            <goal>unlink</goal>
+                        </goals>
+                        <configuration/>
+                    </execution>
+                </executions>
+                <configuration/>
+            </plugin>
+        </plugins>
+    </build>
 </project>
