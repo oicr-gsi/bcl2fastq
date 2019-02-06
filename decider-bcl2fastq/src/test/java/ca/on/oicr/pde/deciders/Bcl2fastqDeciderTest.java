@@ -14,6 +14,7 @@ import ca.on.oicr.pde.client.SeqwareClient;
 import ca.on.oicr.pde.deciders.data.BasesMask;
 import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
 import ca.on.oicr.pde.deciders.utils.PineryClient;
+import ca.on.oicr.pde.deciders.utils.RunScannerClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
@@ -64,6 +65,7 @@ public class Bcl2fastqDeciderTest {
     private LaneProvenanceProvider lpp;
     private ProvenanceClient provenanceClient;
     private PineryClient pineryClient;
+    private RunScannerClient runScannerClient;
     private Bcl2fastqDecider bcl2fastqDecider;
     private Workflow bcl2fastqWorkflow;
     private ZonedDateTime expectedDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
@@ -101,6 +103,13 @@ public class Bcl2fastqDeciderTest {
         when(pineryClient.fetch(Mockito.any())).thenReturn(Optional.of(result));
         when(pineryClient.getRunStatus(Mockito.any())).thenCallRealMethod();
 
+        runScannerClient = Mockito.mock(RunScannerClient.class);
+        ObjectNode runScannerResult = (ObjectNode) mapper.readTree("{\n"
+                + "  \"workflowType\": null\n"
+                + "}");
+        when(runScannerClient.fetch(Mockito.any())).thenReturn(Optional.of(result));
+        when(runScannerClient.getRunWorkflowType(Mockito.any())).thenCallRealMethod();
+
         MultiThreadedDefaultProvenanceClient client = new MultiThreadedDefaultProvenanceClient();
         provenanceClient = client;
 
@@ -110,6 +119,7 @@ public class Bcl2fastqDeciderTest {
         client.registerSampleProvenanceProvider(provider, spp);
         bcl2fastqDecider.setProvenanceClient(client);
         bcl2fastqDecider.setPineryClient(pineryClient);
+        bcl2fastqDecider.setRunScannerClient(runScannerClient);
 
         seqwareClient = new MetadataBackedSeqwareClient(metadata, config);
         bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.7.1", "test workflow");
@@ -921,6 +931,10 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("no_lane_splitting")).allMatch(s -> "true".equals(s)));
+
+        //lane 1 is scheduled, lane 2 should be filtered
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
     }
 
     @Test

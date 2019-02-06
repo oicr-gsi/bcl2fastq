@@ -4,6 +4,7 @@
         "metricsResources": "/expected_output/development/",
         "parameters": {
             "--pinery-url": "${misoPineryUrl}",
+            "--run-scanner-url": "${runScannerUrl}",
             "--no-null-created-date": "",
             "--ignore-previous-lims-keys": "true"
         },
@@ -150,6 +151,14 @@
                 "--include-sample": "GCONT_0004_Li_C_PE_264_TS",
                 "--demux-single-sample": "",
                 "--provision-out-undetermined": "false"
+            }
+        }, {
+            "id": "Run scanner no lane splitting test",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.9.1",
+            "parameters": {
+                "--include-sequencer-run": "180713_A00469_0010_AH7CT5DSXX",
+                "--exclude-sample": "NOVA_0032_nn_U_PE_376_WG"
             }
         }
     ]
