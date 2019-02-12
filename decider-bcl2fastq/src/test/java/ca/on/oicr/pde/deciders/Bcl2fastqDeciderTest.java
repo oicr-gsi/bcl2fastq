@@ -107,7 +107,7 @@ public class Bcl2fastqDeciderTest {
         ObjectNode runScannerResult = (ObjectNode) mapper.readTree("{\n"
                 + "  \"workflowType\": null\n"
                 + "}");
-        when(runScannerClient.fetch(Mockito.any())).thenReturn(Optional.of(result));
+        when(runScannerClient.fetch(Mockito.any())).thenReturn(Optional.of(runScannerResult));
         when(runScannerClient.getRunWorkflowType(Mockito.any())).thenCallRealMethod();
 
         MultiThreadedDefaultProvenanceClient client = new MultiThreadedDefaultProvenanceClient();
@@ -184,8 +184,8 @@ public class Bcl2fastqDeciderTest {
                 .lastModified(expectedDate)
                 .build();
 
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sp1, sp2));
-        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lp1, lp2));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sp1, sp2));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lp1, lp2));
     }
 
     @AfterMethod
@@ -482,7 +482,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
 
-        Collection<FileProvenance> fps = getFpsForCurrentWorkflow();
+        Collection<? extends FileProvenance> fps = getFpsForCurrentWorkflow();
         assertEquals(fps.size(), 2);
         for (FileProvenance fp : getFpsForCurrentWorkflow()) {
             assertEquals(fp.getSequencerRunNames(), ImmutableSet.of("RUN_0001"));
@@ -533,7 +533,7 @@ public class Bcl2fastqDeciderTest {
                 .lastModified(expectedDate);
 
         List<SampleProvenance> currentList = Lists.newArrayList(spp.getSampleProvenance());
-        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
 
         assertEquals(bcl2fastqDecider.run().size(), 1);  //lane 2 is okay
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
@@ -543,7 +543,7 @@ public class Bcl2fastqDeciderTest {
 
         //correct the barcode and schedule
         sp.iusTag("TTTTTTTT");
-        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
@@ -569,7 +569,7 @@ public class Bcl2fastqDeciderTest {
                 .lastModified(expectedDate);
 
         List<SampleProvenance> currentList = Lists.newArrayList(spp.getSampleProvenance());
-        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
 
         EnumMap<FileProvenanceFilter, Set<String>> filters = new EnumMap<>(FileProvenanceFilter.class);
         filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
@@ -584,7 +584,7 @@ public class Bcl2fastqDeciderTest {
 
         //fix the barcode
         sp.iusTag("AAAAATTT-TTTTTTTT");
-        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp.build()))));
         assertEquals(bcl2fastqDecider.run().size(), 2);
         assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
         assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
@@ -625,7 +625,7 @@ public class Bcl2fastqDeciderTest {
                 .lastModified(expectedDate);
 
         List<SampleProvenance> currentList = Lists.newArrayList(spp.getSampleProvenance());
-        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp1.build(), sp2.build()))));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp1.build(), sp2.build()))));
 
         EnumMap<FileProvenanceFilter, Set<String>> filters = new EnumMap<>(FileProvenanceFilter.class);
         filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
@@ -638,7 +638,7 @@ public class Bcl2fastqDeciderTest {
 
         //correct collision (AAAAAAAA vs. AAAAAAAA-TTTTTTTT)
         sp2.iusTag("AAAAAGGG-TTTTTTTT");
-        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp1.build(), sp2.build()))));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp1.build(), sp2.build()))));
         filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_9999_001"));
         bcl2fastqDecider.setIncludeFilters(filters);
         bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
@@ -750,7 +750,7 @@ public class Bcl2fastqDeciderTest {
                 .lastModified(expectedDate);
 
         List<SampleProvenance> currentList = Lists.newArrayList(spp.getSampleProvenance());
-        when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp1.build(), sp2.build()))));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Lists.newArrayList(Iterables.concat(currentList, Arrays.asList(sp1.build(), sp2.build()))));
 
         EnumMap<FileProvenanceFilter, Set<String>> filters = new EnumMap<>(FileProvenanceFilter.class);
         filters.put(FileProvenanceFilter.lane, ImmutableSet.of("RUN_0001_lane_1"));
@@ -801,8 +801,8 @@ public class Bcl2fastqDeciderTest {
                 .version("1")
                 .lastModified(expectedDate)
                 .build();
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sp1));
-        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lp1));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sp1));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lp1));
 
         bcl2fastqDecider.setDisableRunCompleteCheck(true);
         assertEquals(bcl2fastqDecider.run().size(), 1);
@@ -826,7 +826,7 @@ public class Bcl2fastqDeciderTest {
                 .version("1")
                 .lastModified(expectedDate)
                 .build();
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sp1, sp2));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sp1, sp2));
 
         bcl2fastqDecider.setDisableRunCompleteCheck(true);
         bcl2fastqDecider.setIgnorePreviousAnalysisMode(true);
@@ -840,8 +840,8 @@ public class Bcl2fastqDeciderTest {
     @Test
     public void mixedSingleAndDualBarcodeRunTest() {
         Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> mockData = getMockData();
-        when(spp.getSampleProvenance()).thenReturn(mockData.getRight().values().stream().map(s -> s.build()).collect(Collectors.toList()));
-        when(lpp.getLaneProvenance()).thenReturn(mockData.getLeft().values().stream().map(l -> l.build()).collect(Collectors.toList()));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(mockData.getRight().values().stream().map(s -> s.build()).collect(Collectors.toList()));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(mockData.getLeft().values().stream().map(l -> l.build()).collect(Collectors.toList()));
 
         bcl2fastqDecider.setDisableRunCompleteCheck(true);
         bcl2fastqDecider.setIsDemultiplexSingleSampleMode(true);
@@ -857,8 +857,8 @@ public class Bcl2fastqDeciderTest {
     public void runBasesMaskTest() {
         Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> mockData = getMockData();
 
-        when(spp.getSampleProvenance()).thenReturn(mockData.getRight().values().stream().map(s -> s.build()).collect(Collectors.toList()));
-        when(lpp.getLaneProvenance()).thenReturn(mockData.getLeft().values().stream()
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(mockData.getRight().values().stream().map(s -> s.build()).collect(Collectors.toList()));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(mockData.getLeft().values().stream()
                 .map(l -> {
                     l.sequencerRunAttribute("run_bases_mask", ImmutableSortedSet.of("y126,I9,I8,y126"));
                     return l.build();
@@ -888,24 +888,24 @@ public class Bcl2fastqDeciderTest {
         LaneProvenance lane2 = getBaseLane().laneNumber("2").provenanceId("1_2").build();
         SampleProvenance lane2_sample3 = getBaseSample().laneNumber("2").sampleName("TEST_0001_003").iusTag("CCCC").provenanceId("1_2_3").build();
         SampleProvenance lane2_sample4 = getBaseSample().laneNumber("2").sampleName("TEST_0001_004").iusTag("GGGG").provenanceId("1_2_4").build();
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2, lane2_sample3, lane2_sample4));
-        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2, lane2_sample3, lane2_sample4));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
 
         //fix the samples in lane 2
         lane2_sample3 = getBaseSample().laneNumber("2").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_2_3").build();
         lane2_sample4 = getBaseSample().laneNumber("2").sampleName("TEST_0001_002").iusTag("TTTT").provenanceId("1_2_4").build();
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2, lane2_sample3, lane2_sample4));
-        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2, lane2_sample3, lane2_sample4));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("no_lane_splitting")).allMatch(s -> "true".equals(s)));
 
         //removing samples from lane 2 should also be valid
         bcl2fastqDecider.setIgnorePreviousAnalysisMode(true); //need to ignore the above scheduled workflow run
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2));
-        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("no_lane_splitting")).allMatch(s -> "true".equals(s)));
@@ -926,8 +926,8 @@ public class Bcl2fastqDeciderTest {
         LaneProvenance lane2 = getBaseLane().laneNumber("2").provenanceId("1_2").build();
         SampleProvenance lane2_sample3 = getBaseSample().laneNumber("2").sampleName("TEST_0001_002").iusTag("TTTT").provenanceId("1_2_3").build();
         SampleProvenance lane2_sample4 = getBaseSample().laneNumber("2").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_2_4").build();
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2, lane2_sample3, lane2_sample4));
-        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2, lane2_sample3, lane2_sample4));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("no_lane_splitting")).allMatch(s -> "true".equals(s)));
@@ -950,15 +950,15 @@ public class Bcl2fastqDeciderTest {
         LaneProvenance lane2 = getBaseLane().laneNumber("2").provenanceId("1_2").build();
         SampleProvenance sample1 = getBaseSample().laneNumber("2").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_2_1").build();
         SampleProvenance sample2 = getBaseSample().laneNumber("2").sampleName("TEST_0001_002").iusTag("TTTT").provenanceId("1_2_2").build();
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2));
-        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
         assertEquals(bcl2fastqDecider.run().size(), 0);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
 
         //move samples to lane 1
         sample1 = getBaseSample().laneNumber("1").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_1_1").build();
         sample2 = getBaseSample().laneNumber("1").sampleName("TEST_0001_002").iusTag("TTTT").provenanceId("1_1_2").build();
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("no_lane_splitting")).allMatch(s -> "true".equals(s)));
@@ -979,8 +979,8 @@ public class Bcl2fastqDeciderTest {
         attrs.put("geo_prep_kit", ImmutableSortedSet.of("A 10X kit"));
         SampleProvenance sample2 = getBaseSample().laneNumber("2").sampleName("TEST_0001_002").iusTag("AAAAAA").sampleAttributes(attrs).provenanceId("1_2_2").build();
         SampleProvenance sample3 = getBaseSample().laneNumber("3").sampleName("TEST_0001_003").iusTag("AAAAAA").provenanceId("1_3_3").build();
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2, sample3));
-        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2, lane3));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2, sample3));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2, lane3));
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
     }
@@ -994,8 +994,8 @@ public class Bcl2fastqDeciderTest {
         SampleProvenance sample1 = getBaseSample().laneNumber("1").sampleName("TEST_0001_001").iusTag("SI-GA").provenanceId("1_1_1").build();
         SampleProvenance sample2 = getBaseSample().laneNumber("1").sampleName("TEST_0001_002").iusTag("AAAAAA").provenanceId("1_2_2").build();
 
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2));
-        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(sample1, sample2));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1));
 
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
@@ -1024,8 +1024,8 @@ public class Bcl2fastqDeciderTest {
         SampleProvenance lane1_sample2 = getBaseSample().laneNumber("1").sampleName("TEST_0001_002").iusTag("TTTTTTTT").provenanceId("1_1_2").build();
         LaneProvenance lane2 = getBaseLane().laneNumber("2").provenanceId("1_2").sequencerRunAttribute("run_bases_mask", ImmutableSortedSet.of("y100,i8")).build();
         SampleProvenance lane2_sample4 = getBaseSample().laneNumber("2").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_2_3").build();
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2, lane2_sample4));
-        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane1_sample2, lane2_sample4));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
         assertEquals(bcl2fastqDecider.run().size(), 2);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("read_ends")).allMatch(s -> "1".equals(s)));
@@ -1047,8 +1047,8 @@ public class Bcl2fastqDeciderTest {
         LaneProvenance lane4 = getBaseLane().laneNumber("4").provenanceId("1_4").sequencerRunAttribute("run_bases_mask", ImmutableSortedSet.of("y*,i*")).build();
         SampleProvenance lane4_sample1 = getBaseSample().laneNumber("4").sampleName("TEST_0001_004").iusTag("NoIndex").provenanceId("1_4_1").build();
 
-        when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane2_sample1, lane3_sample1, lane3_sample2, lane4_sample1));
-        when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2, lane3, lane4));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1_sample1, lane2_sample1, lane3_sample1, lane3_sample2, lane4_sample1));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2, lane3, lane4));
         assertEquals(bcl2fastqDecider.run().size(), 3);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 1);
     }
@@ -1255,7 +1255,7 @@ public class Bcl2fastqDeciderTest {
                 .lastModified(expectedDate);
     }
 
-    private Collection<FileProvenance> getFpsForWorkflow(Workflow workflow) {
+    private Collection<? extends FileProvenance> getFpsForWorkflow(Workflow workflow) {
         return provenanceClient.getFileProvenance(
                 ImmutableMap.<FileProvenanceFilter, Set<String>>of(
                         FileProvenanceFilter.workflow,
@@ -1263,7 +1263,7 @@ public class Bcl2fastqDeciderTest {
                 ));
     }
 
-    private Collection<FileProvenance> getFpsForCurrentWorkflow() {
+    private Collection<? extends FileProvenance> getFpsForCurrentWorkflow() {
         return getFpsForWorkflow(bcl2fastqWorkflow);
     }
 

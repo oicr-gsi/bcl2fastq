@@ -615,7 +615,7 @@ public class Bcl2fastqDecider {
         if (ignorePreviousLimsKeysMode) {
             // ignorePreviousLimsKeysMode enabled, no need to download any analysis as all known lanes are candidate lanes for analysis
         } else {
-            Collection<FileProvenance> fps = provenanceClient.getFileProvenance(analysisFilters);
+            Collection<? extends FileProvenance> fps = provenanceClient.getFileProvenance(analysisFilters);
             for (FileProvenance fp : fps) {
                 if (fp.getWorkflowSWID() != null) { //analysis provenance for a worklow run
                     if (getWorkflowAccessionsToCheck().contains(fp.getWorkflowSWID().toString())
