@@ -3,6 +3,7 @@
 - [GP-1900](https://jira.oicr.on.ca/browse/GP-1900) - bcl2fastq option to not provision out undetermined fastqs
 - [GP-1914](https://jira.oicr.on.ca/browse/GP-1914) - Fix filtering of samples
 - [GP-1901](https://jira.oicr.on.ca/browse/GP-1901) - Use workflowType to determine lane splitting mode
+- [GP-1917](https://jira.oicr.on.ca/browse/GP-1917) - Filter 10X samples from mixed lanes
 ## 1.2.4 - 2018-12-04
 - [GP-1883](https://jira.oicr.on.ca/browse/GP-1883) - Only retrieve analysis records from "check-wf-accessions"
 ## 1.2.3 - 2018-11-20
