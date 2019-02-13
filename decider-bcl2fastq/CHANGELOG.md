@@ -1,4 +1,4 @@
-## 1.3 - 2019-01-??
+## 1.3 - 2019-02-13
 - [GP-1211](https://jira.oicr.on.ca/browse/GP-1121) - Support for single end sequencing
 - [GP-1900](https://jira.oicr.on.ca/browse/GP-1900) - bcl2fastq option to not provision out undetermined fastqs
 - [GP-1914](https://jira.oicr.on.ca/browse/GP-1914) - Fix filtering of samples
