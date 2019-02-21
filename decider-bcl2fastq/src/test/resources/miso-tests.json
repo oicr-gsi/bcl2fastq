@@ -132,7 +132,8 @@
             "workflowVersion": "2.7.1",
             "parameters": {
                 "--include-lane": "180627_D00355_0229_ACCHCEANXX_lane_1",
-                "--disable-run-complete-check": ""
+                "--disable-run-complete-check": "",
+                "--lane-splitting": "true"
             }
         }, {
             "id": "Single end run test",
@@ -140,7 +141,8 @@
             "workflowVersion": "2.7.1",
             "parameters": {
                 "--include-lane": "110520_SN801_0050_AB09E1ABXX_lane_1",
-                "--disable-run-complete-check": ""
+                "--disable-run-complete-check": "",
+                "--lane-splitting": "true"
             }
         }, {
             "id": "Do not provision out undetermined test",
