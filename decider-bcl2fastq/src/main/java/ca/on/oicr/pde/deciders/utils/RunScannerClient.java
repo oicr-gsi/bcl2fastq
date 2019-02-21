@@ -1,5 +1,7 @@
 package ca.on.oicr.pde.deciders.utils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.util.Optional;
 
@@ -14,7 +16,16 @@ public class RunScannerClient extends JsonClient {
     }
 
     public Optional<String> getRunWorkflowType(String runName) throws IOException {
-        return fetch(String.format("run/%s", runName)).map(run -> run.get("workflowType")).map(workflowType -> workflowType.textValue());
-    }
+        Optional<ObjectNode> runInfoNode = fetch(String.format("run/%s", runName));
+        if (!runInfoNode.isPresent()) {
+            throw new IOException("Unable to get run info for " + runName);
+        }
 
+        Optional<JsonNode> workflowTypeNode = runInfoNode.map(run -> run.get("workflowType"));
+        if (!workflowTypeNode.isPresent()) {
+            throw new IOException("workflowType is missing for run " + runName);
+        }
+
+        return workflowTypeNode.map(workflowType -> workflowType.textValue());
+    }
 }
