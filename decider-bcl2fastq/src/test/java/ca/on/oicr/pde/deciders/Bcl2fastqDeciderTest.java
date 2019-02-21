@@ -963,6 +963,24 @@ public class Bcl2fastqDeciderTest {
     }
 
     @Test
+    public void emptyLane() throws IOException {
+        LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").build();
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Collections.emptyList());
+
+        //lane split workflowType
+        String runScannerResult = "{\n"
+                + "  \"workflowType\": \"NovaSeqStandard\"\n"
+                + "}";
+        when(runScannerClient.httpGet(Mockito.any())).thenReturn(Optional.of(runScannerResult));
+        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+    }
+
+    @Test
     public void runScannerWorkflowTest() throws IOException {
         LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").build();
         SampleProvenance lane1Sample1 = getBaseSample().laneNumber("1").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_1_1").build();
