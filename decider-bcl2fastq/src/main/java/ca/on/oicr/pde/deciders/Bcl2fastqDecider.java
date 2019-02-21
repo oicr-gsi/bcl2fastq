@@ -445,41 +445,12 @@ public class Bcl2fastqDecider {
         Map<String, String> providerAndIdToLaneName = new HashMap<>();
 
         // get all lane provenance from providers specified in provenance settings
-        Map<String, Collection<LaneProvenance>> laneProvenanceByProvider = provenanceClient.getLaneProvenanceByProvider(Collections.EMPTY_MAP); //filters);
+        Map<String, Collection<LaneProvenance>> laneProvenanceByProvider = provenanceClient.getLaneProvenanceByProvider(Collections.EMPTY_MAP);
         for (Map.Entry<String, Collection<LaneProvenance>> e : laneProvenanceByProvider.entrySet()) {
             String provider = e.getKey();
             for (LaneProvenance lp : e.getValue()) {
                 String laneName = lp.getSequencerRunName() + "_lane_" + lp.getLaneNumber();
                 providerAndIdToLaneName.put(provider + lp.getProvenanceId(), laneName);
-
-                if (lp.getSkip()) {
-                    if (getProcessSkippedLanes()) {
-                        log.warn("Processing skipped lane = [{}]", laneName);
-                    } else {
-                        log.info("Lane = [{}] is skipped", laneName);
-                        continue;
-                    }
-                }
-
-                ZonedDateTime createdDate;
-                if (replaceNullCreatedDate && lp.getCreatedDate() == null) { //ignore created date it is null
-                    createdDate = lp.getLastModified();
-                } else {
-                    createdDate = lp.getCreatedDate();
-                }
-
-                if (createdDate == null) {
-                    log.warn("Lane = [{}] has a null created date - treating lane as incomplete", laneName);
-                    continue;
-                }
-
-                if (afterDateFilter != null && createdDate.isBefore(afterDateFilter)) {
-                    continue;
-                }
-
-                if (beforeDateFilter != null && createdDate.isAfter(beforeDateFilter)) {
-                    continue;
-                }
 
                 if (includeFilters.containsKey(FileProvenanceFilter.sequencer_run)
                         && !includeFilters.get(FileProvenanceFilter.sequencer_run).contains(lp.getSequencerRunName())) {
@@ -518,6 +489,35 @@ public class Bcl2fastqDecider {
 
                 if (excludeInstrumentNameFilter != null
                         && CollectionUtils.containsAny(excludeInstrumentNameFilter, lp.getSequencerRunAttributes().get("instrument_name"))) {
+                    continue;
+                }
+
+                if (lp.getSkip()) {
+                    if (getProcessSkippedLanes()) {
+                        log.warn("Processing skipped lane = [{}]", laneName);
+                    } else {
+                        log.info("Lane = [{}] is skipped", laneName);
+                        continue;
+                    }
+                }
+
+                ZonedDateTime createdDate;
+                if (replaceNullCreatedDate && lp.getCreatedDate() == null) { //ignore created date it is null
+                    createdDate = lp.getLastModified();
+                } else {
+                    createdDate = lp.getCreatedDate();
+                }
+
+                if (createdDate == null) {
+                    log.warn("Lane = [{}] has a null created date - treating lane as incomplete", laneName);
+                    continue;
+                }
+
+                if (afterDateFilter != null && createdDate.isBefore(afterDateFilter)) {
+                    continue;
+                }
+
+                if (beforeDateFilter != null && createdDate.isAfter(beforeDateFilter)) {
                     continue;
                 }
 
