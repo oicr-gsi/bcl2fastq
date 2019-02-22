@@ -492,15 +492,6 @@ public class Bcl2fastqDecider {
                     continue;
                 }
 
-                if (lp.getSkip()) {
-                    if (getProcessSkippedLanes()) {
-                        log.warn("Processing skipped lane = [{}]", laneName);
-                    } else {
-                        log.info("Lane = [{}] is skipped", laneName);
-                        continue;
-                    }
-                }
-
                 ZonedDateTime createdDate;
                 if (replaceNullCreatedDate && lp.getCreatedDate() == null) { //ignore created date it is null
                     createdDate = lp.getLastModified();
@@ -519,6 +510,15 @@ public class Bcl2fastqDecider {
 
                 if (beforeDateFilter != null && createdDate.isAfter(beforeDateFilter)) {
                     continue;
+                }
+
+                if (lp.getSkip()) {
+                    if (getProcessSkippedLanes()) {
+                        log.warn("Processing skipped lane = [{}]", laneName);
+                    } else {
+                        log.info("Lane = [{}] is skipped", laneName);
+                        continue;
+                    }
                 }
 
                 laneNameToLaneProvenance.put(laneName, new ProvenanceWithProvider<>(provider, lp));

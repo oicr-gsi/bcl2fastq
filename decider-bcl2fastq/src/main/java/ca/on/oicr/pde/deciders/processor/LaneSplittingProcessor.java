@@ -93,6 +93,11 @@ public class LaneSplittingProcessor {
                 .filter(s -> runName.equals(s.getSequencerRunName()))
                 .collect(Collectors.toList());
 
+        // check if no samples have been assigned to run (which is a valid state) - warnings for empty runs are handled upstream
+        if (runSamples.isEmpty()) {
+            return ValidationResult.valid();
+        }
+
         Map<String, List<String>> runSamplesGroupByLane = runSamples.stream().collect(
                 Collectors.groupingBy(s -> s.getLaneNumber(),
                         //map sample provenance object to string representation for the following verification step

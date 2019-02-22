@@ -15,8 +15,6 @@ import ca.on.oicr.pde.deciders.data.BasesMask;
 import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
 import ca.on.oicr.pde.deciders.utils.PineryClient;
 import ca.on.oicr.pde.deciders.utils.RunScannerClient;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -70,7 +68,6 @@ public class Bcl2fastqDeciderTest {
     private Workflow bcl2fastqWorkflow;
     private ZonedDateTime expectedDate = ZonedDateTime.parse("2016-01-01T00:00:00Z");
     private SeqwareClient seqwareClient;
-
     private SortedMap<String, SortedSet<String>> sp1Attrs = new TreeMap<>();
     private SortedMap<String, SortedSet<String>> sp2Attrs = new TreeMap<>();
 
@@ -90,8 +87,7 @@ public class Bcl2fastqDeciderTest {
         lpp = Mockito.mock(LaneProvenanceProvider.class);
 
         pineryClient = Mockito.mock(PineryClient.class);
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectNode result = (ObjectNode) mapper.readTree("{\n"
+        String pineryResult = "{\n"
                 + "  \"state\": \"Completed\",\n"
                 + "  \"name\": \"any\",\n"
                 + "  \"positions\": [\n"
@@ -99,22 +95,24 @@ public class Bcl2fastqDeciderTest {
                 + "      \"position\": 3,\n"
                 + "      \"pool_created_by_id\": 0\n"
                 + "    }]\n"
-                + "}");
-        when(pineryClient.fetch(Mockito.any())).thenReturn(Optional.of(result));
+                + "}";
+        when(pineryClient.httpGet(Mockito.any())).thenReturn(Optional.of(pineryResult));
+        when(pineryClient.fetch(Mockito.any())).thenCallRealMethod();
         when(pineryClient.getRunStatus(Mockito.any())).thenCallRealMethod();
 
         runScannerClient = Mockito.mock(RunScannerClient.class);
-        ObjectNode runScannerResult = (ObjectNode) mapper.readTree("{\n"
+        String runScannerResult = "{\n"
                 + "  \"workflowType\": null\n"
-                + "}");
-        when(runScannerClient.fetch(Mockito.any())).thenReturn(Optional.of(runScannerResult));
+                + "}";
+        when(runScannerClient.httpGet(Mockito.any())).thenReturn(Optional.of(runScannerResult));
+        when(runScannerClient.fetch(Mockito.any())).thenCallRealMethod();
         when(runScannerClient.getRunWorkflowType(Mockito.any())).thenCallRealMethod();
 
         MultiThreadedDefaultProvenanceClient client = new MultiThreadedDefaultProvenanceClient();
         provenanceClient = client;
 
-        SeqwareMetadataAnalysisProvenanceProvider appX = new SeqwareMetadataAnalysisProvenanceProvider(metadata);
-        client.registerAnalysisProvenanceProvider(provider, appX);
+        SeqwareMetadataAnalysisProvenanceProvider app = new SeqwareMetadataAnalysisProvenanceProvider(metadata);
+        client.registerAnalysisProvenanceProvider(provider, app);
         client.registerLaneProvenanceProvider(provider, lpp);
         client.registerSampleProvenanceProvider(provider, spp);
         bcl2fastqDecider.setProvenanceClient(client);
@@ -962,6 +960,97 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.run().size(), 1);
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         assertTrue(bcl2fastqDecider.getScheduledWorkflowRuns().stream().map(w -> w.getIniFile().get("no_lane_splitting")).allMatch(s -> "true".equals(s)));
+    }
+
+    @Test
+    public void emptyLane() throws IOException {
+        LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").build();
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1));
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Collections.emptyList());
+
+        //lane split workflowType
+        String runScannerResult = "{\n"
+                + "  \"workflowType\": \"NovaSeqStandard\"\n"
+                + "}";
+        when(runScannerClient.httpGet(Mockito.any())).thenReturn(Optional.of(runScannerResult));
+        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+    }
+
+    @Test
+    public void runScannerWorkflowTest() throws IOException {
+        LaneProvenance lane1 = getBaseLane().laneNumber("1").provenanceId("1_1").build();
+        SampleProvenance lane1Sample1 = getBaseSample().laneNumber("1").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_1_1").build();
+        SampleProvenance lane1Sample2 = getBaseSample().laneNumber("1").sampleName("TEST_0001_002").iusTag("TTTT").provenanceId("1_1_2").build();
+        LaneProvenance lane2 = getBaseLane().laneNumber("2").provenanceId("1_2").build();
+        SampleProvenance lane2Sample1 = getBaseSample().laneNumber("2").sampleName("TEST_0001_001").iusTag("AAAA").provenanceId("1_2_1").build();
+        SampleProvenance lane2Sample2 = getBaseSample().laneNumber("2").sampleName("TEST_0001_002").iusTag("TTTT").provenanceId("1_2_2").build();
+        Mockito.<Collection<? extends SampleProvenance>>when(spp.getSampleProvenance()).thenReturn(Arrays.asList(lane1Sample1, lane1Sample2, lane2Sample1, lane2Sample2));
+        Mockito.<Collection<? extends LaneProvenance>>when(lpp.getLaneProvenance()).thenReturn(Arrays.asList(lane1, lane2));
+
+        //lane split workflowType
+        String runScannerResult = "{\n"
+                + "  \"workflowType\": null\n"
+                + "}";
+        when(runScannerClient.httpGet(Mockito.any())).thenReturn(Optional.of(runScannerResult));
+        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+
+        //non-lane split workflowType
+        runScannerResult = "{\n"
+                + "  \"workflowType\": \"NovaSeqStandard\"\n"
+                + "}";
+        when(runScannerClient.httpGet(Mockito.any())).thenReturn(Optional.of(runScannerResult));
+        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+
+        //no workflowType
+        runScannerResult = "{\n"
+                + "  \"workflowTypeMissing\": \"missing\"\n"
+                + "}";
+        when(runScannerClient.httpGet(Mockito.any())).thenReturn(Optional.of(runScannerResult));
+        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 2);
+
+        //multiple workflowTypes
+        runScannerResult = "{\n"
+                + "  \"workflowType\": \"NovaSeqStandard\",\n"
+                + "  \"workflowType\": null\n"
+                + "}";
+        when(runScannerClient.httpGet(Mockito.any())).thenReturn(Optional.of(runScannerResult));
+        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 2);
+
+        //non-200 or no data
+        when(runScannerClient.httpGet(Mockito.any())).thenReturn(Optional.empty());
+        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 2);
+
+        //exception when getting data
+        when(runScannerClient.httpGet(Mockito.any())).thenThrow(new IOException());
+        bcl2fastqWorkflow = seqwareClient.createWorkflow("CASAVA", "2.9.1", "test workflow");
+        bcl2fastqDecider.setWorkflow(bcl2fastqWorkflow);
+        bcl2fastqDecider.setDisableRunCompleteCheck(true);
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 2);
     }
 
     @Test
