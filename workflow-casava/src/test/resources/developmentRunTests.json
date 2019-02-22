@@ -103,6 +103,21 @@
                 "threads": "1",
                 "memory": "16000"
             }
+        },
+        {
+            "id": "HiSeqTile1101_no_undetermined",
+            "description": "HiSeq 2500 v2 TruSeq Exome (9 replicates of NA12878) from Illumina BaseSpace",
+            "parameters": {
+                "run_folder": "/.mounts/labs/PDE/data/testdata/runs/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
+                "intensity_folder": "/.mounts/labs/PDE/data/testdata/runs/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX/Data/Intensities",
+                "called_bases": "/.mounts/labs/PDE/data/testdata/runs/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX/Data/Intensities/BaseCalls",
+                "flowcell": "150928_SN346_0594_AHCTWGBCXX",
+                "lanes": "1,0:CGATGT,0,NA12878_A002+TGACCA,0,NA12878_A004+ACAGTG,0,NA12878_A005+GCCAAT,0,NA12878_A006+CAGATC,0,NA12878_A007+CTTGTA,0,NA12878_A012+AGTCAA,0,NA12878_A013+AGTTCC,0,NA12878_A014+ATGTCA,0,NA12878_A015|2,0:CGATGT,0,NA12878_A002+TGACCA,0,NA12878_A004+ACAGTG,0,NA12878_A005+GCCAAT,0,NA12878_A006+CAGATC,0,NA12878_A007+CTTGTA,0,NA12878_A012+AGTCAA,0,NA12878_A013+AGTTCC,0,NA12878_A014+ATGTCA,0,NA12878_A015",
+                "tile": "1101",
+                "threads": "16",
+                "memory": "16000",
+                "provision_out_undetermined": "false"
+            }
         }
     ]
 }

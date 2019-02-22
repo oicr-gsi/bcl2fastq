@@ -1,10 +1,10 @@
 ## BCL2FastQ Decider
 
-Version 1.2.3
+Version 1.3
 
 ### Overview
 
-This decider launches the [BCL2FastQ (AKA Casava) Workflow](../workflow-casava) to demultiplex and convert BCL files from an Illumina sequencer run to FASTQ format. This decider assumes paired-end reads, so if this is not the case, the read-ends parameter must be used.
+This decider launches the [BCL2FastQ (AKA Casava) Workflow](../workflow-casava) to demultiplex and convert BCL files from an Illumina sequencer run to FASTQ format.
 
 The decider operates as follows:
 - retrieves all lanes that are available from the sample and lane provenance providers (specified in the provenance settings file)
@@ -69,6 +69,8 @@ Parameter | Type | Description \[default\]
 ----------|------|-------------------------
 provenance-settings | String (Path) | Path to provenance settings json
 wf-accession | Integer | Bcl2FastQ workflow accession
+pinery-url | String | URL to Pinery service. Used for run status check. Required if "--disable-run-complete-check" is not specified.
+run-scanner-url | String | URL to RunScanner service. Use to determine lane-splitting or no-lane-splitting. Required if "--lane-splitting" is not specified.
 
 **Optional**
 
@@ -102,10 +104,9 @@ verbose                                  | Boolean | Log verbose output
 host                                     | String  | Used only in combination with --schedule to schedule onto a specific host. If not provided, the default is the local host [local hostname]
 dry-run or test                          | Boolean | Dry-run/test mode. Prints the INI files to standard out and does not submit the workflow [false]
 demux-single-sample                      | Boolean | Enable demultiplexing if there is only a single sample in the workflow run (default behaviour is to run single samples with "NoIndex") [false]
-no-lane-splitting	| Boolean	| Schedule workflow runs using no-lane-splitting (Note: this mode requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples) [false]
+lane-splitting                           | Boolean | Option to disable lane-splitting (Note: --lane-splitting=false requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples). [true]
 no-meta-db or no-metadata                | Boolean | Prevents metadata writeback (which is done by default) by the Decider and that is subsequently passed to the called workflow which can use it to determine if they should write metadata at runtime on the cluster [false]
 disable-run-complete-check               | Boolean | Disable checking that the run status is complete (see "--pinery-url") [false]
-pinery-url | String | Pinery service url to use for run status check (required if "--disable-run-complete-check is not specified)
 no-null-created-date                     | Boolean | Set the filter comparison date to "last modified" date if "created date" is null [false]
 force-run-all or ignore-previous-runs    | Boolean | (WARNING: use with caution) Forces the decider to run all matches regardless of whether they've been run before or not [false]
 ignore-previous-lims-keys                | Boolean | (WARNING: use with caution) Ignore all existing analysis (workflow runs and IUS skip) [false]
@@ -114,8 +115,11 @@ study-to-output-path-csv                 | String (path) | The absolulte path to
 output-path                              | String (path) | Absolute path of directory to put the final files
 output-folder                            | String (path) | Path to put the final files, relative to output-path
 override-run-bases-mask                  | String        | Override the run bases-mask and truncate barcodes to the specified index length. (e.g. 'y\*,i6,y\*')
-min-allowed-edit-distance                | Integer       | The "The minimum allowed barcode edit distance for sample barcodes within a lane (Default: 3)
-
+min-allowed-edit-distance                | Integer       | The "The minimum allowed barcode edit distance for sample barcodes within a lane [3]
+provision-out-undetermined               | Boolean | Provision out undetermined fastqs (supported by workflow versions 2.9.2+) [true]
+process-skipped-lanes                    | Boolean | Process lanes that have been marked as skipped [false]
+lane-split-workflow-types                | String  | workflowTypes to process with lane-splitting ["", NovaSeqXp]
+no-lane-split-workflow-types             | String  | workflowTypes to process with no-lane-splitting [NovaSeqStandard]
 
 **Note**
 

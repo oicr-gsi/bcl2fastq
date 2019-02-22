@@ -1,6 +1,6 @@
 ## bcl2fastq workflow
 
-Version 2.9
+Version 2.9.2
 
 ### Overview
 
@@ -38,6 +38,7 @@ Required:
 
 Input/output:
 
+    provision_out_undetermined true|false Provision out undetermined fastqs [true]
     output_prefix             dir         The root output directory
     output_dir                string      The sub-directory of output_prefix where the output
                                           files will be moved

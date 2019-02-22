@@ -156,7 +156,7 @@ public class Bcl2fastqDeciderRegressionStudyIT {
         filters.put(FileProvenanceFilter.sample, ImmutableSet.of("TEST_0001_Ly_R_PE_500_WG"));
         filters.put(FileProvenanceFilter.sequencer_run, ImmutableSet.of("TEST_SEQUENCER_RUN_001"));
         filters.put(FileProvenanceFilter.lane, ImmutableSet.of("1"));
-        Collection<SampleProvenance> sps = provenanceClient.getSampleProvenance(filters);
+        Collection<? extends SampleProvenance> sps = provenanceClient.getSampleProvenance(filters);
         SampleProvenance sp = Iterables.getOnlyElement(sps);
 
         //add a lims key with no associated analysis - this IUS should be skipped by the decider

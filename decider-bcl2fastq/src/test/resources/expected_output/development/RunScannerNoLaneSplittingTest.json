@@ -1,0 +1,153 @@
+{
+  "workflowRunCount" : 8,
+  "studies" : [ "BTC", "DXRX", "GLCS", "PCSI" ],
+  "sequencerRuns" : [ "180713_A00469_0010_AH7CT5DSXX" ],
+  "lanes" : [ "180713_A00469_0010_AH7CT5DSXX_lane_1", "180713_A00469_0010_AH7CT5DSXX_lane_2", "180713_A00469_0010_AH7CT5DSXX_lane_3", "180713_A00469_0010_AH7CT5DSXX_lane_4" ],
+  "samples" : [ "BTC_9013_Lv_P_PE_532_WG", "BTC_9013_Lv_P_PE_564_WG", "DXRX_0004_Bm_P_PE_780_WG", "DXRX_0006_Bu_R_PE_504_WG", "DXRX_0014_Bu_R_PE_681_WG", "DXRX_0017_Bu_R_PE_497_WG", "DXRX_0033_Bu_R_PE_504_WG", "DXRX_0033_Pb_P_PE_596_WG", "DXRX_0037_Pb_P_PE_665_WG", "DXRX_0038_Pb_P_PE_645_WG", "GLCS_0003_Cf_R_PE_653_WG", "GLCS_0003_Cf_R_PE_655_WG", "GLCS_0003_Cf_R_PE_729_WG", "GLCS_0008_Cf_R_PE_347_WG", "PCSI_0730_Ly_R_PE_679_WG", "PCSI_0748_Lv_M_PE_553_WG", "PCSI_0757_Ly_R_PE_656_WG", "PCSI_0770_Lv_M_PE_477_WG", "PCSI_0771_Pa_P_PE_598_WG", "PCSI_0777_Lv_M_PE_694_WG", "PCSI_0778_Ly_R_PE_491_WG", "PCSI_0782_Om_M_PE_601_WG", "PCSI_0799_Lv_M_PE_574_WG" ],
+  "workflows" : [ ],
+  "processingAlgorithms" : [ ],
+  "fileMetaTypes" : [ ],
+  "maxInputFiles" : 0,
+  "minInputFiles" : 0,
+  "totalInputFiles" : 0,
+  "maxOutputFileProvenanceRecords" : 16,
+  "minOutputFileProvenanceRecords" : 9,
+  "totalOutputFileProvenanceRecords" : 100,
+  "workflowRuns" : [ {
+    "workflowIni" : {
+      "1_sort_order" : "1",
+      "called_bases" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "180713_A00469_0010_AH7CT5DSXX",
+      "intensity_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/",
+      "lanes" : "1,LANE_IUS_SWID:CGAGCGCCGTCC,SAMPLE_IUS_SWID,BTC_9013_Lv_P_PE_532_WG,1+CGCTCCTTCCTT,SAMPLE_IUS_SWID,BTC_9013_Lv_P_PE_564_WG,1+TTATCAGTCCTT,SAMPLE_IUS_SWID,DXRX_0004_Bm_P_PE_780_WG,2+CCACGTAGCCGG,SAMPLE_IUS_SWID,DXRX_0006_Bu_R_PE_504_WG,3+AGAATATCGTCC,SAMPLE_IUS_SWID,DXRX_0014_Bu_R_PE_681_WG,4+TGATGCAACCGG,SAMPLE_IUS_SWID,DXRX_0017_Bu_R_PE_497_WG,5+AAATCTCAGGCC,SAMPLE_IUS_SWID,DXRX_0033_Bu_R_PE_504_WG,6+ACTGCCGCGTCC,SAMPLE_IUS_SWID,DXRX_0033_Pb_P_PE_596_WG,7+TTTGGTTCCCGG,SAMPLE_IUS_SWID,DXRX_0037_Pb_P_PE_665_WG,8+TATCTCTTCCTT,SAMPLE_IUS_SWID,DXRX_0038_Pb_P_PE_645_WG,9+CGTCAGTTGTCC,SAMPLE_IUS_SWID,PCSI_0748_Lv_M_PE_553_WG,15+TGGTCCTAGTCC,SAMPLE_IUS_SWID,PCSI_0770_Lv_M_PE_477_WG,17+CGGAGGAAGGCC,SAMPLE_IUS_SWID,PCSI_0771_Pa_P_PE_598_WG,18+TCGAGAGTCCGG,SAMPLE_IUS_SWID,PCSI_0782_Om_M_PE_601_WG,21+CTTCCAACCCGG,SAMPLE_IUS_SWID,PCSI_0799_Lv_M_PE_574_WG,22",
+      "manual_output" : "false",
+      "memory" : "16384",
+      "metadata" : "metadata",
+      "output_dir" : "seqware-results",
+      "output_prefix" : "./",
+      "run_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/",
+      "use_bases_mask" : "y151,i12n*,n*,y151"
+    },
+    "files" : [ ],
+    "outputFileProvenanceRecords" : 16
+  }, {
+    "workflowIni" : {
+      "1_sort_order" : "2",
+      "called_bases" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "180713_A00469_0010_AH7CT5DSXX",
+      "intensity_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/",
+      "lanes" : "1,LANE_IUS_SWID:AAGTTATC-AATAGCAA,SAMPLE_IUS_SWID,GLCS_0003_Cf_R_PE_653_WG,10+AAGTTGGA-AATACAGG,SAMPLE_IUS_SWID,GLCS_0003_Cf_R_PE_655_WG,10+AAGTAAGT-AATAGTCC,SAMPLE_IUS_SWID,GLCS_0003_Cf_R_PE_729_WG,11+AAGACGAA-AATAGATT,SAMPLE_IUS_SWID,GLCS_0008_Cf_R_PE_347_WG,12+AAGATACA-AATATCTG,SAMPLE_IUS_SWID,PCSI_0730_Ly_R_PE_679_WG,14+AATCCGTT-AATATGCT,SAMPLE_IUS_SWID,PCSI_0757_Ly_R_PE_656_WG,16+AATCGTTA-AATAACGT,SAMPLE_IUS_SWID,PCSI_0777_Lv_M_PE_694_WG,19+AATCGGCG-AATATTGA,SAMPLE_IUS_SWID,PCSI_0778_Ly_R_PE_491_WG,20",
+      "manual_output" : "false",
+      "memory" : "16384",
+      "metadata" : "metadata",
+      "output_dir" : "seqware-results",
+      "output_prefix" : "./",
+      "run_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/",
+      "use_bases_mask" : "y151,i8n*,i8n*,y151"
+    },
+    "files" : [ ],
+    "outputFileProvenanceRecords" : 9
+  }, {
+    "workflowIni" : {
+      "1_sort_order" : "3",
+      "called_bases" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "180713_A00469_0010_AH7CT5DSXX",
+      "intensity_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/",
+      "lanes" : "2,LANE_IUS_SWID:CGAGCGCCGTCC,SAMPLE_IUS_SWID,BTC_9013_Lv_P_PE_532_WG,1+CGCTCCTTCCTT,SAMPLE_IUS_SWID,BTC_9013_Lv_P_PE_564_WG,1+TTATCAGTCCTT,SAMPLE_IUS_SWID,DXRX_0004_Bm_P_PE_780_WG,2+CCACGTAGCCGG,SAMPLE_IUS_SWID,DXRX_0006_Bu_R_PE_504_WG,3+AGAATATCGTCC,SAMPLE_IUS_SWID,DXRX_0014_Bu_R_PE_681_WG,4+TGATGCAACCGG,SAMPLE_IUS_SWID,DXRX_0017_Bu_R_PE_497_WG,5+AAATCTCAGGCC,SAMPLE_IUS_SWID,DXRX_0033_Bu_R_PE_504_WG,6+ACTGCCGCGTCC,SAMPLE_IUS_SWID,DXRX_0033_Pb_P_PE_596_WG,7+TTTGGTTCCCGG,SAMPLE_IUS_SWID,DXRX_0037_Pb_P_PE_665_WG,8+TATCTCTTCCTT,SAMPLE_IUS_SWID,DXRX_0038_Pb_P_PE_645_WG,9+CGTCAGTTGTCC,SAMPLE_IUS_SWID,PCSI_0748_Lv_M_PE_553_WG,15+TGGTCCTAGTCC,SAMPLE_IUS_SWID,PCSI_0770_Lv_M_PE_477_WG,17+CGGAGGAAGGCC,SAMPLE_IUS_SWID,PCSI_0771_Pa_P_PE_598_WG,18+TCGAGAGTCCGG,SAMPLE_IUS_SWID,PCSI_0782_Om_M_PE_601_WG,21+CTTCCAACCCGG,SAMPLE_IUS_SWID,PCSI_0799_Lv_M_PE_574_WG,22",
+      "manual_output" : "false",
+      "memory" : "16384",
+      "metadata" : "metadata",
+      "output_dir" : "seqware-results",
+      "output_prefix" : "./",
+      "run_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/",
+      "use_bases_mask" : "y151,i12n*,n*,y151"
+    },
+    "files" : [ ],
+    "outputFileProvenanceRecords" : 16
+  }, {
+    "workflowIni" : {
+      "1_sort_order" : "4",
+      "called_bases" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "180713_A00469_0010_AH7CT5DSXX",
+      "intensity_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/",
+      "lanes" : "2,LANE_IUS_SWID:AAGTTATC-AATAGCAA,SAMPLE_IUS_SWID,GLCS_0003_Cf_R_PE_653_WG,10+AAGTTGGA-AATACAGG,SAMPLE_IUS_SWID,GLCS_0003_Cf_R_PE_655_WG,10+AAGTAAGT-AATAGTCC,SAMPLE_IUS_SWID,GLCS_0003_Cf_R_PE_729_WG,11+AAGACGAA-AATAGATT,SAMPLE_IUS_SWID,GLCS_0008_Cf_R_PE_347_WG,12+AAGATACA-AATATCTG,SAMPLE_IUS_SWID,PCSI_0730_Ly_R_PE_679_WG,14+AATCCGTT-AATATGCT,SAMPLE_IUS_SWID,PCSI_0757_Ly_R_PE_656_WG,16+AATCGTTA-AATAACGT,SAMPLE_IUS_SWID,PCSI_0777_Lv_M_PE_694_WG,19+AATCGGCG-AATATTGA,SAMPLE_IUS_SWID,PCSI_0778_Ly_R_PE_491_WG,20",
+      "manual_output" : "false",
+      "memory" : "16384",
+      "metadata" : "metadata",
+      "output_dir" : "seqware-results",
+      "output_prefix" : "./",
+      "run_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/",
+      "use_bases_mask" : "y151,i8n*,i8n*,y151"
+    },
+    "files" : [ ],
+    "outputFileProvenanceRecords" : 9
+  }, {
+    "workflowIni" : {
+      "1_sort_order" : "5",
+      "called_bases" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "180713_A00469_0010_AH7CT5DSXX",
+      "intensity_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/",
+      "lanes" : "3,LANE_IUS_SWID:CGAGCGCCGTCC,SAMPLE_IUS_SWID,BTC_9013_Lv_P_PE_532_WG,1+CGCTCCTTCCTT,SAMPLE_IUS_SWID,BTC_9013_Lv_P_PE_564_WG,1+TTATCAGTCCTT,SAMPLE_IUS_SWID,DXRX_0004_Bm_P_PE_780_WG,2+CCACGTAGCCGG,SAMPLE_IUS_SWID,DXRX_0006_Bu_R_PE_504_WG,3+AGAATATCGTCC,SAMPLE_IUS_SWID,DXRX_0014_Bu_R_PE_681_WG,4+TGATGCAACCGG,SAMPLE_IUS_SWID,DXRX_0017_Bu_R_PE_497_WG,5+AAATCTCAGGCC,SAMPLE_IUS_SWID,DXRX_0033_Bu_R_PE_504_WG,6+ACTGCCGCGTCC,SAMPLE_IUS_SWID,DXRX_0033_Pb_P_PE_596_WG,7+TTTGGTTCCCGG,SAMPLE_IUS_SWID,DXRX_0037_Pb_P_PE_665_WG,8+TATCTCTTCCTT,SAMPLE_IUS_SWID,DXRX_0038_Pb_P_PE_645_WG,9+CGTCAGTTGTCC,SAMPLE_IUS_SWID,PCSI_0748_Lv_M_PE_553_WG,15+TGGTCCTAGTCC,SAMPLE_IUS_SWID,PCSI_0770_Lv_M_PE_477_WG,17+CGGAGGAAGGCC,SAMPLE_IUS_SWID,PCSI_0771_Pa_P_PE_598_WG,18+TCGAGAGTCCGG,SAMPLE_IUS_SWID,PCSI_0782_Om_M_PE_601_WG,21+CTTCCAACCCGG,SAMPLE_IUS_SWID,PCSI_0799_Lv_M_PE_574_WG,22",
+      "manual_output" : "false",
+      "memory" : "16384",
+      "metadata" : "metadata",
+      "output_dir" : "seqware-results",
+      "output_prefix" : "./",
+      "run_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/",
+      "use_bases_mask" : "y151,i12n*,n*,y151"
+    },
+    "files" : [ ],
+    "outputFileProvenanceRecords" : 16
+  }, {
+    "workflowIni" : {
+      "1_sort_order" : "6",
+      "called_bases" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "180713_A00469_0010_AH7CT5DSXX",
+      "intensity_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/",
+      "lanes" : "3,LANE_IUS_SWID:AAGTTATC-AATAGCAA,SAMPLE_IUS_SWID,GLCS_0003_Cf_R_PE_653_WG,10+AAGTTGGA-AATACAGG,SAMPLE_IUS_SWID,GLCS_0003_Cf_R_PE_655_WG,10+AAGTAAGT-AATAGTCC,SAMPLE_IUS_SWID,GLCS_0003_Cf_R_PE_729_WG,11+AAGACGAA-AATAGATT,SAMPLE_IUS_SWID,GLCS_0008_Cf_R_PE_347_WG,12+AAGATACA-AATATCTG,SAMPLE_IUS_SWID,PCSI_0730_Ly_R_PE_679_WG,14+AATCCGTT-AATATGCT,SAMPLE_IUS_SWID,PCSI_0757_Ly_R_PE_656_WG,16+AATCGTTA-AATAACGT,SAMPLE_IUS_SWID,PCSI_0777_Lv_M_PE_694_WG,19+AATCGGCG-AATATTGA,SAMPLE_IUS_SWID,PCSI_0778_Ly_R_PE_491_WG,20",
+      "manual_output" : "false",
+      "memory" : "16384",
+      "metadata" : "metadata",
+      "output_dir" : "seqware-results",
+      "output_prefix" : "./",
+      "run_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/",
+      "use_bases_mask" : "y151,i8n*,i8n*,y151"
+    },
+    "files" : [ ],
+    "outputFileProvenanceRecords" : 9
+  }, {
+    "workflowIni" : {
+      "1_sort_order" : "7",
+      "called_bases" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "180713_A00469_0010_AH7CT5DSXX",
+      "intensity_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/",
+      "lanes" : "4,LANE_IUS_SWID:CGAGCGCCGTCC,SAMPLE_IUS_SWID,BTC_9013_Lv_P_PE_532_WG,1+CGCTCCTTCCTT,SAMPLE_IUS_SWID,BTC_9013_Lv_P_PE_564_WG,1+TTATCAGTCCTT,SAMPLE_IUS_SWID,DXRX_0004_Bm_P_PE_780_WG,2+CCACGTAGCCGG,SAMPLE_IUS_SWID,DXRX_0006_Bu_R_PE_504_WG,3+AGAATATCGTCC,SAMPLE_IUS_SWID,DXRX_0014_Bu_R_PE_681_WG,4+TGATGCAACCGG,SAMPLE_IUS_SWID,DXRX_0017_Bu_R_PE_497_WG,5+AAATCTCAGGCC,SAMPLE_IUS_SWID,DXRX_0033_Bu_R_PE_504_WG,6+ACTGCCGCGTCC,SAMPLE_IUS_SWID,DXRX_0033_Pb_P_PE_596_WG,7+TTTGGTTCCCGG,SAMPLE_IUS_SWID,DXRX_0037_Pb_P_PE_665_WG,8+TATCTCTTCCTT,SAMPLE_IUS_SWID,DXRX_0038_Pb_P_PE_645_WG,9+CGTCAGTTGTCC,SAMPLE_IUS_SWID,PCSI_0748_Lv_M_PE_553_WG,15+TGGTCCTAGTCC,SAMPLE_IUS_SWID,PCSI_0770_Lv_M_PE_477_WG,17+CGGAGGAAGGCC,SAMPLE_IUS_SWID,PCSI_0771_Pa_P_PE_598_WG,18+TCGAGAGTCCGG,SAMPLE_IUS_SWID,PCSI_0782_Om_M_PE_601_WG,21+CTTCCAACCCGG,SAMPLE_IUS_SWID,PCSI_0799_Lv_M_PE_574_WG,22",
+      "manual_output" : "false",
+      "memory" : "16384",
+      "metadata" : "metadata",
+      "output_dir" : "seqware-results",
+      "output_prefix" : "./",
+      "run_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/",
+      "use_bases_mask" : "y151,i12n*,n*,y151"
+    },
+    "files" : [ ],
+    "outputFileProvenanceRecords" : 16
+  }, {
+    "workflowIni" : {
+      "1_sort_order" : "8",
+      "called_bases" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/BaseCalls/",
+      "flowcell" : "180713_A00469_0010_AH7CT5DSXX",
+      "intensity_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/Data/Intensities/",
+      "lanes" : "4,LANE_IUS_SWID:AAGTTATC-AATAGCAA,SAMPLE_IUS_SWID,GLCS_0003_Cf_R_PE_653_WG,10+AAGTTGGA-AATACAGG,SAMPLE_IUS_SWID,GLCS_0003_Cf_R_PE_655_WG,10+AAGTAAGT-AATAGTCC,SAMPLE_IUS_SWID,GLCS_0003_Cf_R_PE_729_WG,11+AAGACGAA-AATAGATT,SAMPLE_IUS_SWID,GLCS_0008_Cf_R_PE_347_WG,12+AAGATACA-AATATCTG,SAMPLE_IUS_SWID,PCSI_0730_Ly_R_PE_679_WG,14+AATCCGTT-AATATGCT,SAMPLE_IUS_SWID,PCSI_0757_Ly_R_PE_656_WG,16+AATCGTTA-AATAACGT,SAMPLE_IUS_SWID,PCSI_0777_Lv_M_PE_694_WG,19+AATCGGCG-AATATTGA,SAMPLE_IUS_SWID,PCSI_0778_Ly_R_PE_491_WG,20",
+      "manual_output" : "false",
+      "memory" : "16384",
+      "metadata" : "metadata",
+      "output_dir" : "seqware-results",
+      "output_prefix" : "./",
+      "run_folder" : "/.mounts/labs/prod/archive/A00469/180713_A00469_0010_AH7CT5DSXX/",
+      "use_bases_mask" : "y151,i8n*,i8n*,y151"
+    },
+    "files" : [ ],
+    "outputFileProvenanceRecords" : 9
+  } ]
+}

@@ -10,11 +10,15 @@ import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
 import ca.on.oicr.pde.deciders.data.BasesMask;
 import ca.on.oicr.pde.deciders.exceptions.InvalidBasesMaskException;
 import ca.on.oicr.pde.deciders.utils.PineryClient;
+import ca.on.oicr.pde.deciders.utils.RunScannerClient;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import io.seqware.pipeline.plugins.WorkflowScheduler;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -26,6 +30,9 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionException;
 import joptsimple.OptionParser;
@@ -66,6 +73,7 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<String> studyOutputPathOpt;
     private final OptionSpec<String> provenanceSettingsOpt;
     private final OptionSpec<String> pineryUrlOpt;
+    private final OptionSpec<String> runScannerUrlOpt;
     private final OptionSpec allOpt;
     private final EnumMap<FileProvenanceFilter, OptionSpec<String>> includeFilterOpts;
     private final EnumMap<FileProvenanceFilter, OptionSpec<String>> excludeFilterOpts;
@@ -77,7 +85,11 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
     private final OptionSpec<Integer> minAllowedEditDistanceOpt;
     private final NonOptionArgumentSpec<String> nonOptionSpec;
     private final Bcl2fastqDecider decider;
-    private final OptionSpec<Boolean> noLaneSplittingOpt;
+    private final OptionSpec<Boolean> doLaneSplittingOpt;
+    private final OptionSpec<Boolean> processSkippedLanesOpt;
+    private final OptionSpec<Boolean> provisionUndeterminedOpt;
+    private final OptionSpec<String> noLaneSplitWorkflowTypesOpt;
+    private final OptionSpec<String> laneSplitWorkflowTypesOpt;
 
     public Bcl2fastqDeciderCli() {
         super();
@@ -139,10 +151,16 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         launchMaxOpt = parser.acceptsAll(Arrays.asList("launch-max"),
                 "The maximum number of jobs to launch at once.")
                 .withRequiredArg().ofType(Integer.class).defaultsTo(decider.getLaunchMax());
-        noLaneSplittingOpt = parser.accepts("no-lane-splitting",
-                "Schedule workflow runs using no-lane-splitting "
-                + "(Note: this mode requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples).")
+        doLaneSplittingOpt = parser.accepts("lane-splitting",
+                "Option to force lane-splitting or no-lane-splitting "
+                + "(Note: --lane-splitting=false requires all lanes for a run be assigned the same samples or only lane 1 be assigned samples).")
+                .withRequiredArg().ofType(Boolean.class);
+        processSkippedLanesOpt = parser.accepts("process-skipped-lanes",
+                "Process lanes that have been marked as skipped.")
                 .withOptionalArg().ofType(Boolean.class).defaultsTo(false);
+        provisionUndeterminedOpt = parser.accepts("provision-out-undetermined",
+                "Provision out undetermined fastqs.")
+                .withOptionalArg().ofType(Boolean.class).defaultsTo(true);
 
         //output options
         outputPathOpt = parser.accepts("output-path",
@@ -176,9 +194,19 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
                 "Exclude lanes were sequenced with instrument (\"instrument_name\" sequencer run attribute).")
                 .withRequiredArg();
 
-        //pinery client options (required if doing runCompleteCheck)
-        pineryUrlOpt = parser.acceptsAll(Arrays.asList("pinery-url"), "URL to Pinery service.")
-                .requiredUnless(disableRunCompleteCheckOpt).withRequiredArg().ofType(String.class);
+        //Pinery client options (required if doing runCompleteCheck)
+        pineryUrlOpt = parser.acceptsAll(Arrays.asList("pinery-url"), "URL to Pinery service. Used for run status check. Required if \"--disable-run-complete-check\" is not specified.")
+                .requiredUnless(disableRunCompleteCheckOpt).withRequiredArg().ofType(String.class).withValuesSeparatedBy(",");
+
+        //RunScanner client options (required if doing automatic lane-splitting or no-lane-splitting)
+        runScannerUrlOpt = parser.acceptsAll(Arrays.asList("run-scanner-url"), "URL to RunScanner service. Use to determine lane-splitting or no-lane-splitting. Required if \"--lane-splitting\" is not specified.")
+                .requiredUnless(doLaneSplittingOpt).withRequiredArg().ofType(String.class).withValuesSeparatedBy(",");
+
+        //Map workflowType to lane-split or no-lane-split
+        laneSplitWorkflowTypesOpt = parser.accepts("lane-split-workflow-types", "workflowTypes to process with lane-splitting")
+                .withRequiredArg().ofType(String.class).defaultsTo(decider.getLaneSplitWorkflowTypes().stream().toArray(String[]::new));
+        noLaneSplitWorkflowTypesOpt = parser.accepts("no-lane-split-workflow-types", "workflowTypes to process with no-lane-splitting")
+                .withRequiredArg().ofType(String.class).defaultsTo(decider.getNoLaneSplitWorkflowTypes().stream().toArray(String[]::new));
 
         includeFilterOpts = new EnumMap<>(FileProvenanceFilter.class);
         excludeFilterOpts = new EnumMap<>(FileProvenanceFilter.class);
@@ -255,8 +283,18 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         }
 
         if (options.has(pineryUrlOpt)) {
-            PineryClient c = new PineryClient(options.valueOf(pineryUrlOpt));
-            decider.setPineryClient(c);
+            decider.setPineryClient(new PineryClient(options.valueOf(pineryUrlOpt)));
+        }
+
+        if (options.has(runScannerUrlOpt)) {
+            decider.setRunScannerClient(new RunScannerClient(options.valueOf(runScannerUrlOpt)));
+        }
+
+        if (options.has(laneSplitWorkflowTypesOpt)) {
+            decider.setLaneSplitWorkflowTypes(options.valuesOf(laneSplitWorkflowTypesOpt).stream().collect(Collectors.toSet()));
+        }
+        if (options.has(noLaneSplitWorkflowTypesOpt)) {
+            decider.setNoLaneSplitWorkflowTypes(options.valuesOf(noLaneSplitWorkflowTypesOpt).stream().collect(Collectors.toSet()));
         }
 
         Workflow workflow = metadata.getWorkflow(options.valueOf(wfSwidOpt));
@@ -287,7 +325,11 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         decider.setIgnorePreviousLimsKeysMode(getBooleanFlagOrArgValue(ignorePreviousLimsKeysOpt));
         decider.setDisableRunCompleteCheck(getBooleanFlagOrArgValue(disableRunCompleteCheckOpt));
         decider.setLaunchMax(options.valueOf(launchMaxOpt));
-        decider.setNoLaneSplittingMode(getBooleanFlagOrArgValue(noLaneSplittingOpt));
+        if (options.has(doLaneSplittingOpt)) {
+            decider.setDoLaneSplitting(options.valueOf(doLaneSplittingOpt));
+        }
+        decider.setProcessSkippedLanes(getBooleanFlagOrArgValue(processSkippedLanesOpt));
+        decider.setProvisionOutUndetermined(getBooleanFlagOrArgValue(provisionUndeterminedOpt));
 
         decider.setOutputPath(options.valueOf(outputPathOpt).endsWith("/") ? options.valueOf(outputPathOpt) : options.valueOf(outputPathOpt) + "/");
         decider.setOutputFolder(options.valueOf(outputFolderOpt));
@@ -306,10 +348,31 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
 
         decider.setReplaceNullCreatedDate(getBooleanFlagOrArgValue(noNullCreatedDateOpt));
 
+        Function<String, Set<String>> stringOrFileOfStrings = (String input) -> {
+            if (input.startsWith("file://") || input.startsWith("/")) {
+                Path filePath;
+                if (input.startsWith("file://")) {
+                    filePath = Paths.get(URI.create(input));
+                } else if (input.startsWith("/")) {
+                    filePath = Paths.get(input);
+                } else {
+                    throw new IllegalArgumentException("Unsupported input file path");
+                }
+                try (Stream<String> lines = Files.lines(filePath);) {
+                    return lines.filter(line -> !line.isEmpty()).collect(Collectors.toSet());
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            } else {
+                return Stream.of(input).collect(Collectors.toSet());
+            }
+        };
+
         EnumMap<FileProvenanceFilter, Set<String>> includeFilters = new EnumMap<>(FileProvenanceFilter.class);
         for (Entry<FileProvenanceFilter, OptionSpec<String>> e : includeFilterOpts.entrySet()) {
             if (options.has(e.getValue())) {
-                includeFilters.put(e.getKey(), ImmutableSet.copyOf(options.valuesOf(e.getValue())));
+                Set<String> vals = options.valuesOf(e.getValue()).stream().map(stringOrFileOfStrings).flatMap(m -> m.stream()).collect(Collectors.toSet());
+                includeFilters.put(e.getKey(), ImmutableSet.copyOf(vals));
             }
         }
         decider.setIncludeFilters(includeFilters);
@@ -317,7 +380,8 @@ public class Bcl2fastqDeciderCli extends Plugin implements DeciderInterface {
         EnumMap<FileProvenanceFilter, Set<String>> excludeFilters = new EnumMap<>(FileProvenanceFilter.class);
         for (Entry<FileProvenanceFilter, OptionSpec<String>> e : excludeFilterOpts.entrySet()) {
             if (options.has(e.getValue())) {
-                excludeFilters.put(e.getKey(), ImmutableSet.copyOf(options.valuesOf(e.getValue())));
+                Set<String> vals = options.valuesOf(e.getValue()).stream().map(stringOrFileOfStrings).flatMap(m -> m.stream()).collect(Collectors.toSet());
+                excludeFilters.put(e.getKey(), ImmutableSet.copyOf(vals));
             }
         }
         decider.setExcludeFilters(excludeFilters);

@@ -8,6 +8,7 @@ import ca.on.oicr.pde.client.SeqwareClient;
 import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,6 +63,8 @@ public class Bcl2fastqDeciderCliTest {
         args.add(provenanceSettings.getAbsolutePath());
         args.add("--all");
         args.add("--disable-run-complete-check");
+        args.add("--lane-splitting");
+        args.add("true");
 
         Bcl2fastqDecider decider = getDecider(args);
         assertTrue(decider.getIsDryRunMode());
@@ -82,6 +85,7 @@ public class Bcl2fastqDeciderCliTest {
         args.add("--all");
         args.add("--demux-single-sample");
         args.add("--disable-run-complete-check");
+        args.add("--lane-splitting=true");
 
         Bcl2fastqDecider decider = getDecider(args);
         assertTrue(decider.getIsDryRunMode());
@@ -103,6 +107,7 @@ public class Bcl2fastqDeciderCliTest {
         args.add("2017-01-01");
         args.add("--all");
         args.add("--disable-run-complete-check");
+        args.add("--lane-splitting=true");
 
         Bcl2fastqDecider decider = getDecider(args);
         assertTrue(decider.getIsDryRunMode());
@@ -126,6 +131,7 @@ public class Bcl2fastqDeciderCliTest {
         args.add("--exclude-study");
         args.add("1,2,3");
         args.add("--disable-run-complete-check");
+        args.add("--lane-splitting=true");
 
         Bcl2fastqDecider decider = getDecider(args);
         assertTrue(decider.getIsDryRunMode());
@@ -135,6 +141,31 @@ public class Bcl2fastqDeciderCliTest {
         assertFalse(decider.getIsDemultiplexSingleSampleMode());
         assertEquals(decider.getIncludeFilters().get(FileProvenanceFilter.study), ImmutableSet.of("1", "2", "3"));
         assertEquals(decider.getExcludeFilters().get(FileProvenanceFilter.study), ImmutableSet.of("1", "2", "3"));
+    }
+
+    @Test
+    public void skipLanesAndRunsFilesTest() throws IOException {
+        String filePath = Paths.get(getClass().getResource("/lanes_and_runs_to_skip").getFile()).toAbsolutePath().toString();
+
+        List<String> args = new ArrayList<>();
+        args.add("--dry-run");
+        args.add("--wf-accession");
+        args.add(bcl2fastqWorkflow.getSwAccession().toString());
+        args.add("--provenance-settings");
+        args.add(provenanceSettings.getAbsolutePath());
+        args.add("--exclude-sequencer-run");
+        args.add(filePath + ",RUN_3");
+        args.add("--exclude-sequencer-run");
+        args.add("RUN_2");
+        args.add("--exclude-lane");
+        args.add("file://" + filePath);
+        args.add("--disable-run-complete-check");
+        args.add("--lane-splitting=true");
+
+        Bcl2fastqDecider decider = getDecider(args);
+        assertTrue(decider.getIsDryRunMode());
+        assertEquals(decider.getExcludeFilters().get(FileProvenanceFilter.sequencer_run), ImmutableSet.of("RUN_1", "RUN_2", "RUN_3", "LANE_1"));
+        assertEquals(decider.getExcludeFilters().get(FileProvenanceFilter.lane), ImmutableSet.of("RUN_1", "LANE_1"));
     }
 
     private Bcl2fastqDecider getDecider(List<String> args) {
