@@ -950,7 +950,7 @@ public class Bcl2fastqDecider {
     }
 
     private void reportInvalidLane(String laneName, String message, String... args) {
-        reportInvalidLane(laneName, MessageFormat.format(message, (Object[]) args));
+        reportInvalidLane(laneName, String.format(message, (Object[]) args));
     }
 
     private List<WorkflowRunV2> generateWorkflowRunsForLane(
@@ -981,7 +981,7 @@ public class Bcl2fastqDecider {
                     })
                     .collect(Collectors.toList());
             if (!barcodeErrors.isEmpty()) {
-                errors.add(MessageFormat.format("Error while parsing barcodes for group = [{0}]:\n{1}", barcodeErrors.toString()));
+                errors.add(MessageFormat.format("Error while parsing barcodes for group = [{0}]:\n{1}", group, barcodeErrors.toString()));
                 continue;
             }
 
@@ -1006,7 +1006,7 @@ public class Bcl2fastqDecider {
                         basesMask = BarcodeAndBasesMask.calculateBasesMask(workflowRunBarcodes);
                     }
                 } catch (DataMismatchException ex) {
-                    errors.add(MessageFormat.format("Error while calculating bases mask for group = [{0}]:\n{1}", ex.toString()));
+                    errors.add(MessageFormat.format("Error while calculating bases mask for group = [{0}]:\n{1}", group, ex.toString()));
                     continue;
                 }
             }
