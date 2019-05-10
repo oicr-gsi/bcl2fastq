@@ -70,7 +70,7 @@ public class BarcodeAndBasesMask {
         if (barcodeOne != null && !barcodeOne.isEmpty() && (barcodeTwo == null || barcodeTwo.isEmpty())) {
             return new Barcode(barcodeOne);
         } else if ((barcodeOne == null || barcodeOne.isEmpty()) && barcodeTwo != null && !barcodeTwo.isEmpty()) {
-            return new Barcode(barcodeTwo);
+            return new Barcode(null, barcodeTwo);
         } else if (barcodeOne != null && !barcodeOne.isEmpty() && barcodeTwo != null && !barcodeTwo.isEmpty()) {
             return new Barcode(barcodeOne, barcodeTwo);
         } else {
@@ -85,8 +85,10 @@ public class BarcodeAndBasesMask {
 
         basesMaskBuilder.setReadOneIncludeLength(Integer.MAX_VALUE);
 
-        if (barcode.getBarcodeOne().length() > 0) {
+        if (barcode.getBarcodeOne() != null && barcode.getBarcodeOne().length() > 0) {
             basesMaskBuilder.setIndexOneIncludeLength(barcode.getBarcodeOne().length());
+            basesMaskBuilder.setIndexOneIgnoreLength(Integer.MAX_VALUE);
+        } else {
             basesMaskBuilder.setIndexOneIgnoreLength(Integer.MAX_VALUE);
         }
 
@@ -111,10 +113,7 @@ public class BarcodeAndBasesMask {
         basesMaskBuilder.setReadOneIgnoreLength(runBasesMask.getReadOneIgnoreLength());
 
         //index one
-        if (barcodeBasesMask.getIndexOneIncludeLength() == null) {
-            throw new DataMismatchException("Unexpected state, runBasesMask = [" + runBasesMask.toString() + "],"
-                    + " barcodeBasesMask = [" + barcodeBasesMask.toString() + "]");
-        } else {
+        if (barcodeBasesMask.getIndexOneIncludeLength() != null) {
             basesMaskBuilder.setIndexOneIncludeLength(barcodeBasesMask.getIndexOneIncludeLength());
             basesMaskBuilder.setIndexOneIgnoreLength(barcodeBasesMask.getIndexOneIgnoreLength());
         }

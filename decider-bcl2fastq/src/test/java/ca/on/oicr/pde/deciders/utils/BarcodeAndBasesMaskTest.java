@@ -91,14 +91,14 @@ public class BarcodeAndBasesMaskTest {
 
         assertEquals(BarcodeAndBasesMask.calculateBasesMask(Barcode.fromString("AAAAAAAA-AAAAAAAA"), BasesMask.fromStringUnchecked("y*,i6,y*")).toString(), "y*,i6n*,y*");
         assertEquals(BarcodeAndBasesMask.calculateBasesMask(Barcode.fromString("AAAAAAAA-AAAAAAAA"), BasesMask.fromStringUnchecked("y*,i6,n*,y*")).toString(), "y*,i6n*,n*,y*");
-        assertEquals(BarcodeAndBasesMask.calculateBasesMask(Barcode.fromString("AAAAAAAA-AAAAAAAA"), BasesMask.fromStringUnchecked("y*,n*,i6,y*")).toString(), "y*,i6n*,y*");
+        assertEquals(BarcodeAndBasesMask.calculateBasesMask(Barcode.fromString("AAAAAAAA-AAAAAAAA"), BasesMask.fromStringUnchecked("y*,n*,i6,y*")).toString(), "y*,n*,i6n*,y*");
         assertEquals(BarcodeAndBasesMask.calculateBasesMask(Barcode.fromString("AAAAAAAA-AAAAAAAA"), BasesMask.fromStringUnchecked("y*,i6,i6,y*")).toString(), "y*,i6n*,i6n*,y*");
 
         assertEquals(BarcodeAndBasesMask.calculateBasesMask(Barcode.fromString("AAAAAAAA-TTTTTTTT"), BasesMask.fromStringUnchecked("y*,i*,n*,y*")).toString(), "y*,i8n*,n*,y*");
         assertEquals(BarcodeAndBasesMask.calculateBasesMask(Barcode.fromString("AAAAAAAA-TTTTTTTT"), BasesMask.fromStringUnchecked("y*,i6,n*,y*")).toString(), "y*,i6n*,n*,y*");
 
-        assertEquals(BarcodeAndBasesMask.calculateBasesMask(Barcode.fromString("AAAAAAAA-TTTTTTTT"), BasesMask.fromStringUnchecked("y*,n*,i*,y*")).toString(), "y*,i8n*,y*");
-        assertEquals(BarcodeAndBasesMask.calculateBasesMask(Barcode.fromString("AAAAAAAA-TTTTTTTT"), BasesMask.fromStringUnchecked("y*,n*,i6,y*")).toString(), "y*,i6n*,y*");
+        assertEquals(BarcodeAndBasesMask.calculateBasesMask(Barcode.fromString("AAAAAAAA-TTTTTTTT"), BasesMask.fromStringUnchecked("y*,n*,i*,y*")).toString(), "y*,n*,i8n*,y*");
+        assertEquals(BarcodeAndBasesMask.calculateBasesMask(Barcode.fromString("AAAAAAAA-TTTTTTTT"), BasesMask.fromStringUnchecked("y*,n*,i6,y*")).toString(), "y*,n*,i6n*,y*");
     }
 
     @Test(expectedExceptions = DataMismatchException.class)
@@ -107,12 +107,24 @@ public class BarcodeAndBasesMaskTest {
     }
 
     @Test
-    public void dualBarcodeNeedsToBeTrimmedTest() throws DataMismatchException {
+    public void dualBarcodeIgnoreSecondBarcodeTest() throws DataMismatchException {
         Barcode barcode = Barcode.fromString("TAAGGCGA-TATCCTCT");
-        BasesMask overrideRunBasesMask = BasesMask.fromStringUnchecked("y*,i8n*,n*,y*");
+        BasesMask overrideRunBasesMask = BasesMask.fromStringUnchecked("y*,i*,n*,y*");
 
         Barcode expectedBarcode = Barcode.fromString("TAAGGCGA");
         BasesMask expectedBasesMask = BasesMask.fromStringUnchecked("y*,i8n*,n*,y*");
+
+        assertEquals(BarcodeAndBasesMask.applyBasesMask(barcode, overrideRunBasesMask), expectedBarcode);
+        assertEquals(BarcodeAndBasesMask.calculateBasesMask(barcode, overrideRunBasesMask), expectedBasesMask);
+    }
+
+    @Test
+    public void dualBarcodeIgnoreFirstBarcodeTest() throws DataMismatchException {
+        Barcode barcode = Barcode.fromString("TAAGGCGA-TATCCTCT");
+        BasesMask overrideRunBasesMask = BasesMask.fromStringUnchecked("y*,n*,i*,y*");
+
+        Barcode expectedBarcode = new Barcode(null, "TATCCTCT");
+        BasesMask expectedBasesMask = BasesMask.fromStringUnchecked("y*,n*,i8n*,y*");
 
         assertEquals(BarcodeAndBasesMask.applyBasesMask(barcode, overrideRunBasesMask), expectedBarcode);
         assertEquals(BarcodeAndBasesMask.calculateBasesMask(barcode, overrideRunBasesMask), expectedBasesMask);

@@ -27,9 +27,12 @@ public class Barcode {
     }
 
     public Barcode(String barcodeOne, String barcodeTwo) {
-        Preconditions.checkNotNull(barcodeOne);
         Preconditions.checkNotNull(barcodeTwo);
-        this.barcodeOne = barcodeOne.toUpperCase();
+        if (barcodeOne != null) {
+            this.barcodeOne = barcodeOne.toUpperCase();
+        } else {
+            this.barcodeOne = null;
+        }
         this.barcodeTwo = barcodeTwo.toUpperCase();
     }
 
@@ -46,6 +49,8 @@ public class Barcode {
             return "NoIndex";
         } else if (barcodeTwo == null) {
             return Integer.toString(barcodeOne.length());
+        } else if (barcodeOne == null) {
+            return Integer.toString(barcodeTwo.length());
         } else {
             return Integer.toString(barcodeOne.length()) + "x" + Integer.toString(barcodeTwo.length());
         }
@@ -55,6 +60,8 @@ public class Barcode {
     public String toString() {
         if (barcodeTwo == null) {
             return barcodeOne;
+        } else if (barcodeOne == null) {
+            return barcodeTwo;
         } else {
             return barcodeOne + "-" + barcodeTwo;
         }
