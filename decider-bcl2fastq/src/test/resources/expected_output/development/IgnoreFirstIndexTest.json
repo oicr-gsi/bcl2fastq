@@ -1,0 +1,32 @@
+{
+  "workflowRunCount" : 1,
+  "studies" : [ "CYT" ],
+  "sequencerRuns" : [ "190503_M00753_0117_000000000-D63F9" ],
+  "lanes" : [ "190503_M00753_0117_000000000-D63F9_lane_1" ],
+  "samples" : [ "CYT_1388_Es_U_PE_330_WG", "CYT_1388_Es_U_PE_334_WG", "CYT_1388_Es_U_PE_355_WG", "CYT_1388_Es_U_PE_365_WG", "CYT_1388_Es_U_PE_368_WG", "CYT_1388_Es_U_PE_371_WG" ],
+  "workflows" : [ ],
+  "processingAlgorithms" : [ ],
+  "fileMetaTypes" : [ ],
+  "maxInputFiles" : 0,
+  "minInputFiles" : 0,
+  "totalInputFiles" : 0,
+  "maxOutputFileProvenanceRecords" : 7,
+  "minOutputFileProvenanceRecords" : 7,
+  "totalOutputFileProvenanceRecords" : 7,
+  "workflowRuns" : [ {
+    "workflowIni" : {
+      "called_bases" : "/oicr/data/archive/m753/190503_M00753_0117_000000000-D63F9/Data/Intensities/BaseCalls/",
+      "flowcell" : "190503_M00753_0117_000000000-D63F9",
+      "intensity_folder" : "/oicr/data/archive/m753/190503_M00753_0117_000000000-D63F9/Data/Intensities/",
+      "lanes" : "1,LANE_IUS_SWID:GGCTCTGA,SAMPLE_IUS_SWID,CYT_1388_Es_U_PE_330_WG+CCTATCCT,SAMPLE_IUS_SWID,CYT_1388_Es_U_PE_334_WG+AGGCGAAG,SAMPLE_IUS_SWID,CYT_1388_Es_U_PE_355_WG+TATAGCCT,SAMPLE_IUS_SWID,CYT_1388_Es_U_PE_365_WG+TAATCTTA,SAMPLE_IUS_SWID,CYT_1388_Es_U_PE_368_WG+ATAGAGGC,SAMPLE_IUS_SWID,CYT_1388_Es_U_PE_371_WG",
+      "manual_output" : "false",
+      "memory" : "16384",
+      "metadata" : "metadata",
+      "output_dir" : "seqware-results",
+      "output_prefix" : "./",
+      "use_bases_mask" : "y*,n*,i8n*,y*"
+    },
+    "files" : [ ],
+    "outputFileProvenanceRecords" : 7
+  } ]
+}

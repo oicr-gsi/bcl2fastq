@@ -162,6 +162,15 @@
                 "--include-sequencer-run": "180713_A00469_0010_AH7CT5DSXX",
                 "--exclude-sample": "NOVA_0032_nn_U_PE_376_WG"
             }
+        }, {
+            "id": "Ignore first index test",
+            "description": "Test case for GP-1976",
+            "workflowName": "CASAVA",
+            "workflowVersion": "2.7.1",
+            "parameters": {
+                "--include-lane": "190503_M00753_0117_000000000-D63F9_lane_1",
+                "--override-run-bases-mask": "y*,n*,i*,y*"
+            }
         }
     ]
 }
