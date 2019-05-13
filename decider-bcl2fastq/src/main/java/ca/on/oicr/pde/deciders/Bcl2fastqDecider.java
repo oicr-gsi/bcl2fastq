@@ -1,32 +1,29 @@
 package ca.on.oicr.pde.deciders;
 
-import ca.on.oicr.pde.deciders.data.ValidationResult;
-import ca.on.oicr.pde.deciders.processor.LaneSplittingProcessor;
-import ca.on.oicr.pde.deciders.data.*;
-import ca.on.oicr.pde.deciders.exceptions.DataMismatchException;
 import ca.on.oicr.gsi.provenance.ExtendedProvenanceClient;
 import ca.on.oicr.gsi.provenance.FileProvenanceFilter;
 import ca.on.oicr.gsi.provenance.model.FileProvenance;
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
-import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq_2_7_1_Handler;
-import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq_2_9_1_Handler;
-import ca.on.oicr.pde.deciders.handlers.Bcl2FastqHandler;
-import ca.on.oicr.pde.deciders.handlers.Handler;
+import ca.on.oicr.pde.deciders.data.*;
 import ca.on.oicr.pde.deciders.exceptions.ConfigurationException;
+import ca.on.oicr.pde.deciders.exceptions.DataMismatchException;
 import ca.on.oicr.pde.deciders.exceptions.InvalidBasesMaskException;
 import ca.on.oicr.pde.deciders.exceptions.InvalidLaneException;
+import ca.on.oicr.pde.deciders.handlers.Bcl2FastqHandler;
+import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq_2_7_1_Handler;
+import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq_2_9_1_Handler;
 import ca.on.oicr.pde.deciders.handlers.Bcl2Fastq_2_9_2_Handler;
-import ca.on.oicr.pde.deciders.utils.BarcodeComparison;
+import ca.on.oicr.pde.deciders.handlers.Handler;
+import ca.on.oicr.pde.deciders.processor.LaneSplittingProcessor;
 import ca.on.oicr.pde.deciders.utils.BarcodeAndBasesMask;
+import ca.on.oicr.pde.deciders.utils.BarcodeComparison;
 import ca.on.oicr.pde.deciders.utils.PineryClient;
 import ca.on.oicr.pde.deciders.utils.RunScannerClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-
 import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
@@ -36,7 +33,6 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,7 +52,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import net.sourceforge.seqware.common.metadata.Metadata;
 import net.sourceforge.seqware.common.model.Workflow;
 import net.sourceforge.seqware.pipeline.runner.PluginRunner;
@@ -784,18 +779,19 @@ public class Bcl2fastqDecider {
                     continue;
                 }
             }
-            if (runBasesMask.isPresent()) {
-                try {
-                    samples = applyBasesMask(samples, runBasesMask.get());
-                } catch (DataMismatchException ex) {
-                    reportInvalidLane(laneName, ex.toString());
-                    continue;
-                }
+
+            List<ProvenanceWithProvider<BarcodedSampleProvenance>> barcodedSamples;
+            try {
+                // get samples with their barcode - if a run bases mask is available, it will be applied
+                barcodedSamples = getBarcodedSampleProvenance(samples, runBasesMask);
+            } catch (DataMismatchException ex) {
+                reportInvalidLane(laneName, ex.toString());
+                continue;
             }
 
             //get all barcodes in lane
             Set<String> unsupportedBarcodeStrings = new HashSet<>();
-            List<Barcode> laneBarcodes = samples.stream()
+            List<Barcode> laneBarcodes = barcodedSamples.stream()
                     .map(ProvenanceWithProvider::getProvenance)
                     .map(SampleProvenance::getIusTag)
                     .map(barcodeString -> {
@@ -820,7 +816,7 @@ public class Bcl2fastqDecider {
             }
 
             //group lane samples by barcode length
-            Map<String, List<ProvenanceWithProvider<SampleProvenance>>> samplesGroupedByBarcodeLength = samples.stream()
+            Map<String, List<ProvenanceWithProvider<BarcodedSampleProvenance>>> samplesGroupedByBarcodeLength = barcodedSamples.stream()
                     .collect(Collectors.groupingBy(s -> {
                         try {
                             return Barcode.fromString(s.getProvenance().getIusTag()).getLengthString();
@@ -933,13 +929,18 @@ public class Bcl2fastqDecider {
         }
     }
 
-    private List<ProvenanceWithProvider<SampleProvenance>> applyBasesMask(List<ProvenanceWithProvider<SampleProvenance>> samples, BasesMask basesMask) throws DataMismatchException {
-        List<ProvenanceWithProvider<SampleProvenance>> samplesWithCustomBarcodes = new ArrayList<>();
+    private List<ProvenanceWithProvider<BarcodedSampleProvenance>> getBarcodedSampleProvenance(List<ProvenanceWithProvider<SampleProvenance>> samples, Optional<BasesMask> basesMask) throws DataMismatchException {
+        List<ProvenanceWithProvider<BarcodedSampleProvenance>> samplesWithCustomBarcodes = new ArrayList<>();
         for (ProvenanceWithProvider<SampleProvenance> pwp : samples) {
             SampleProvenance sp = pwp.getProvenance();
-            Barcode newBarcode = BarcodeAndBasesMask.applyBasesMask(Barcode.fromString(sp.getIusTag()), basesMask);
-            SampleProvenanceWithCustomBarcode sampleProvenanceWithCustomBarcode = new SampleProvenanceWithCustomBarcode(sp, newBarcode.toString());
-            ProvenanceWithProvider<SampleProvenance> newPwp = new ProvenanceWithProvider(pwp.getProvider(), sampleProvenanceWithCustomBarcode);
+            Barcode barcode;
+            if (basesMask.isPresent()) {
+                barcode = BarcodeAndBasesMask.applyBasesMask(Barcode.fromString(sp.getIusTag()), basesMask.get());
+            } else {
+                barcode = Barcode.fromString(sp.getIusTag());
+            }
+            BarcodedSampleProvenance sampleProvenanceWithCustomBarcode = new BarcodedSampleProvenance(sp, barcode);
+            ProvenanceWithProvider<BarcodedSampleProvenance> newPwp = new ProvenanceWithProvider(pwp.getProvider(), sampleProvenanceWithCustomBarcode);
             samplesWithCustomBarcodes.add(newPwp);
         }
         return samplesWithCustomBarcodes;
@@ -955,35 +956,22 @@ public class Bcl2fastqDecider {
 
     private List<WorkflowRunV2> generateWorkflowRunsForLane(
             ProvenanceWithProvider<LaneProvenance> lp,
-            Map<String, List<ProvenanceWithProvider<SampleProvenance>>> groupedSamples,
+            Map<String, List<ProvenanceWithProvider<BarcodedSampleProvenance>>> groupedSamples,
             Bcl2FastqHandler handler,
             BasesMask runBasesMask,
             boolean doDemultiplexing) throws InvalidLaneException {
 
         List<String> errors = new ArrayList<>();
         List<WorkflowRunV2> workflowRuns = new ArrayList<>();
-        for (Entry<String, List<ProvenanceWithProvider<SampleProvenance>>> e : groupedSamples.entrySet()) {
+        for (Entry<String, List<ProvenanceWithProvider<BarcodedSampleProvenance>>> e : groupedSamples.entrySet()) {
             String group = e.getKey();
             log.info("Generating workflow run for group = {}", group);
 
-            List<ProvenanceWithProvider<SampleProvenance>> samplesForGroup = e.getValue();
+            List<ProvenanceWithProvider<BarcodedSampleProvenance>> samplesForGroup = e.getValue();
 
-            final List<String> barcodeErrors = new ArrayList<>();
             List<Barcode> workflowRunBarcodes = samplesForGroup.stream().map(ProvenanceWithProvider::getProvenance)
-                    .map(SampleProvenance::getIusTag)
-                    .map(barcodeString -> {
-                        try {
-                            return Barcode.fromString(barcodeString);
-                        } catch (DataMismatchException ex) {
-                            barcodeErrors.add(ex.toString());
-                            return null;
-                        }
-                    })
+                    .map(BarcodedSampleProvenance::getBarcode)
                     .collect(Collectors.toList());
-            if (!barcodeErrors.isEmpty()) {
-                errors.add(MessageFormat.format("Error while parsing barcodes for group = [{0}]:\n{1}", group, barcodeErrors.toString()));
-                continue;
-            }
 
             Bcl2FastqData data = new Bcl2FastqData(lp, samplesForGroup);
             data.setProperties(ImmutableMap.of("output_prefix", outputPath, "output_dir", outputFolder));

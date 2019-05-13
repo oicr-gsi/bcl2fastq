@@ -11,6 +11,7 @@ import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.client.MetadataBackedSeqwareClient;
 import ca.on.oicr.pde.client.SeqwareClient;
+import ca.on.oicr.pde.deciders.data.BarcodedSampleProvenance;
 import ca.on.oicr.pde.deciders.data.BasesMask;
 import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
 import ca.on.oicr.pde.deciders.utils.PineryClient;
@@ -1090,7 +1091,7 @@ public class Bcl2fastqDeciderTest {
         assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
         bcl2fastqDecider.getValidWorkflowRuns().stream().forEach(wr -> {
             assertTrue(wr.getIniFile().get("lanes").contains("AAAAAA"));
-            List<SampleProvenance> sps = ((WorkflowRunV2) wr).getBcl2FastqData().getSps();
+            List<BarcodedSampleProvenance> sps = ((WorkflowRunV2) wr).getBcl2FastqData().getSps();
             assertEquals(sps.size(), 1);
         });
 

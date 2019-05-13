@@ -4,10 +4,10 @@ import ca.on.oicr.pde.deciders.data.Bcl2FastqData;
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.LimsKey;
 import ca.on.oicr.gsi.provenance.model.LimsProvenance;
-import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.exceptions.DataMismatchException;
 import ca.on.oicr.pde.deciders.data.IusWithProvenance;
 import ca.on.oicr.pde.deciders.Lims;
+import ca.on.oicr.pde.deciders.data.BarcodedSampleProvenance;
 import ca.on.oicr.pde.deciders.data.ProvenanceWithProvider;
 import ca.on.oicr.pde.deciders.data.WorkflowRunV2;
 import com.google.common.base.Joiner;
@@ -40,7 +40,7 @@ public abstract class Bcl2FastqHandler implements Handler {
         wr.addProperty(data.getProperties());
 
         List<String> barcodes = new ArrayList<>();
-        for (SampleProvenance sp : data.getSps()) {
+        for (BarcodedSampleProvenance sp : data.getSps()) {
             barcodes.add(sp.getIusTag());
         }
 
@@ -94,7 +94,7 @@ public abstract class Bcl2FastqHandler implements Handler {
 
         if (data.getStudyToOutputPathConfig() != null) {
             Set<String> outputPaths = new HashSet<>();
-            for (SampleProvenance sp : data.getSps()) {
+            for (BarcodedSampleProvenance sp : data.getSps()) {
                 //Get the output path from the study to output path csv
                 String outputPath = data.getStudyToOutputPathConfig().getOutputPathForStudy(sp.getStudyTitle());
                 outputPaths.add(outputPath);
@@ -116,9 +116,9 @@ public abstract class Bcl2FastqHandler implements Handler {
         //dry-run creating the "lane string" before actually creating IUS-LimsKeys
         try {
             IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> linkedLane = createIusToProvenanceLink(metadata, data.getLane(), false);
-            List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> linkedSamples = new ArrayList<>();
-            for (ProvenanceWithProvider<SampleProvenance> provenanceWithProvider : data.getSamples()) {
-                IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> linkedSample = createIusToProvenanceLink(metadata, provenanceWithProvider, false);
+            List<IusWithProvenance<ProvenanceWithProvider<BarcodedSampleProvenance>>> linkedSamples = new ArrayList<>();
+            for (ProvenanceWithProvider<BarcodedSampleProvenance> provenanceWithProvider : data.getSamples()) {
+                IusWithProvenance<ProvenanceWithProvider<BarcodedSampleProvenance>> linkedSample = createIusToProvenanceLink(metadata, provenanceWithProvider, false);
                 linkedSamples.add(linkedSample);
             }
             generateLinkingString(linkedLane, linkedSamples, enableDemultiplexSingleSample);
@@ -142,9 +142,9 @@ public abstract class Bcl2FastqHandler implements Handler {
                 iusSwidsToLinkWorkflowRunTo.add(linkedLane.getIusSwid());
 
                 //create IUS-LimsKeys for the samples
-                List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> linkedSamples = new ArrayList<>();
-                for (ProvenanceWithProvider<SampleProvenance> provenanceWithProvider : data.getSamples()) {
-                    IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> linkedSample = createIusToProvenanceLink(metadata, provenanceWithProvider, createLimsKeys);
+                List<IusWithProvenance<ProvenanceWithProvider<BarcodedSampleProvenance>>> linkedSamples = new ArrayList<>();
+                for (ProvenanceWithProvider<BarcodedSampleProvenance> provenanceWithProvider : data.getSamples()) {
+                    IusWithProvenance<ProvenanceWithProvider<BarcodedSampleProvenance>> linkedSample = createIusToProvenanceLink(metadata, provenanceWithProvider, createLimsKeys);
                     linkedSamples.add(linkedSample);
                     iusSwidsToLinkWorkflowRunTo.add(linkedSample.getIusSwid());
                 }
@@ -163,11 +163,11 @@ public abstract class Bcl2FastqHandler implements Handler {
         return wr;
     }
 
-    private String generateLinkingString(IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> lane, List<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>> sps, boolean enableDemultiplexSingleSample) throws DataMismatchException {
+    private String generateLinkingString(IusWithProvenance<ProvenanceWithProvider<LaneProvenance>> lane, List<IusWithProvenance<ProvenanceWithProvider<BarcodedSampleProvenance>>> sps, boolean enableDemultiplexSingleSample) throws DataMismatchException {
         List<String> sampleStringEntries = new ArrayList<>();
-        Collections.sort(sps, new Comparator<IusWithProvenance<ProvenanceWithProvider<SampleProvenance>>>() {
+        Collections.sort(sps, new Comparator<IusWithProvenance<ProvenanceWithProvider<BarcodedSampleProvenance>>>() {
             @Override
-            public int compare(IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> o1, IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> o2) {
+            public int compare(IusWithProvenance<ProvenanceWithProvider<BarcodedSampleProvenance>> o1, IusWithProvenance<ProvenanceWithProvider<BarcodedSampleProvenance>> o2) {
                 return o1.getProvenanceWithProvider().getProvenance().getSampleName().compareTo(o2.getProvenanceWithProvider().getProvenance().getSampleName());
             }
         });
@@ -180,7 +180,7 @@ public abstract class Bcl2FastqHandler implements Handler {
                 sampleStringEntries.add(generateSampleString(Iterables.getOnlyElement(sps), "NoIndex"));
             }
         } else {
-            for (IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> s : sps) {
+            for (IusWithProvenance<ProvenanceWithProvider<BarcodedSampleProvenance>> s : sps) {
                 sampleStringEntries.add(generateSampleString(s, null));
             }
         }
@@ -206,8 +206,8 @@ public abstract class Bcl2FastqHandler implements Handler {
         return sampleString;
     }
 
-    private String generateSampleString(IusWithProvenance<ProvenanceWithProvider<SampleProvenance>> sample, String barcodeOverride) throws DataMismatchException {
-        SampleProvenance sp = sample.getProvenanceWithProvider().getProvenance();
+    private String generateSampleString(IusWithProvenance<ProvenanceWithProvider<BarcodedSampleProvenance>> sample, String barcodeOverride) throws DataMismatchException {
+        BarcodedSampleProvenance sp = sample.getProvenanceWithProvider().getProvenance();
 
         String barcode;
         if (barcodeOverride != null) {

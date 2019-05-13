@@ -1,7 +1,6 @@
 package ca.on.oicr.pde.deciders.data;
 
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
-import ca.on.oicr.gsi.provenance.model.SampleProvenance;
 import ca.on.oicr.pde.deciders.configuration.StudyToOutputPathConfig;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -16,7 +15,7 @@ public class Bcl2FastqData {
 
     private Map<String, String> properties;
     private final ProvenanceWithProvider<LaneProvenance> lane;
-    private final List<ProvenanceWithProvider<SampleProvenance>> samples;
+    private final List<ProvenanceWithProvider<BarcodedSampleProvenance>> samples;
     private Boolean metadataWriteback;
     private StudyToOutputPathConfig studyToOutputPathConfig;
     private BasesMask basesMask;
@@ -24,7 +23,7 @@ public class Bcl2FastqData {
     private String readEnds;
     private Boolean provisionOutUndetermined = true;
 
-    public Bcl2FastqData(ProvenanceWithProvider<LaneProvenance> lane, List<ProvenanceWithProvider<SampleProvenance>> samples) {
+    public Bcl2FastqData(ProvenanceWithProvider<LaneProvenance> lane, List<ProvenanceWithProvider<BarcodedSampleProvenance>> samples) {
         this.lane = lane;
         this.samples = samples;
     }
@@ -41,14 +40,14 @@ public class Bcl2FastqData {
         return lane;
     }
 
-    public List<ProvenanceWithProvider<SampleProvenance>> getSamples() {
+    public List<ProvenanceWithProvider<BarcodedSampleProvenance>> getSamples() {
         return samples;
     }
 
-    public List<SampleProvenance> getSps() {
-        return Lists.transform(samples, new Function<ProvenanceWithProvider<SampleProvenance>, SampleProvenance>() {
+    public List<BarcodedSampleProvenance> getSps() {
+        return Lists.transform(samples, new Function<ProvenanceWithProvider<BarcodedSampleProvenance>, BarcodedSampleProvenance>() {
             @Override
-            public SampleProvenance apply(ProvenanceWithProvider<SampleProvenance> input) {
+            public BarcodedSampleProvenance apply(ProvenanceWithProvider<BarcodedSampleProvenance> input) {
                 return input.getProvenance();
             }
         });

@@ -2,7 +2,6 @@ package ca.on.oicr.pde.deciders.processor;
 
 import ca.on.oicr.gsi.provenance.model.LaneProvenance;
 import ca.on.oicr.gsi.provenance.model.SampleProvenance;
-import ca.on.oicr.pde.deciders.Bcl2fastqDecider;
 import ca.on.oicr.pde.deciders.data.ValidationResult;
 import ca.on.oicr.pde.deciders.data.ProvenanceWithProvider;
 import ca.on.oicr.pde.deciders.exceptions.InvalidLaneException;
