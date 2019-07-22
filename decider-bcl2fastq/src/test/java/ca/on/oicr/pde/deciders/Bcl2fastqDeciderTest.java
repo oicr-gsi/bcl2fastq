@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.MoreCollectors;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.io.Files;
 import java.io.File;
@@ -42,6 +44,7 @@ import java.util.stream.Collectors;
 import net.sourceforge.seqware.common.metadata.Metadata;
 import net.sourceforge.seqware.common.metadata.MetadataInMemory;
 import net.sourceforge.seqware.common.model.Workflow;
+import net.sourceforge.seqware.common.model.WorkflowRunAttribute;
 import org.apache.commons.lang3.tuple.Pair;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
@@ -71,6 +74,7 @@ public class Bcl2fastqDeciderTest {
     private SeqwareClient seqwareClient;
     private SortedMap<String, SortedSet<String>> sp1Attrs = new TreeMap<>();
     private SortedMap<String, SortedSet<String>> sp2Attrs = new TreeMap<>();
+    private Metadata metadata;
 
     @BeforeMethod
     public void setup() throws IOException {
@@ -80,7 +84,7 @@ public class Bcl2fastqDeciderTest {
         config.put("SW_METADATA_METHOD", "inmemory");
         bcl2fastqDecider.setConfig(config);
 
-        Metadata metadata = new MetadataInMemory();
+        metadata = new MetadataInMemory();
         bcl2fastqDecider.setMetadata(metadata);
 
         String provider = "test";
@@ -1166,6 +1170,48 @@ public class Bcl2fastqDeciderTest {
         });
     }
 
+    @Test
+    public void skipAnalysisTest() throws IOException {
+        //run on all lanes
+        assertEquals(bcl2fastqDecider.run().size(), 2);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 2);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 4);
+
+        //all lanes have been scheduled - no new bcl2fastqWorkflow runs expected
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 4);
+
+        //skip analysis for RUN_0001
+        Integer workflowRunSwid = getFpsForCurrentWorkflow().stream().filter(fp -> fp.getSequencerRunNames().contains("RUN_0001"))
+                .map(fp -> fp.getWorkflowRunSWID())
+                .distinct()
+                .collect(MoreCollectors.onlyElement());
+        WorkflowRunAttribute wra = new WorkflowRunAttribute();
+        wra.setTag("skip");
+        wra.setValue("skip RUN_0001");
+        metadata.annotateWorkflowRun(workflowRunSwid, wra, null);
+        assertEquals(getFpsForCurrentWorkflow().size(), 2);
+
+        //rerun RUN_0001 because it is skipped
+        assertEquals(bcl2fastqDecider.run().size(), 1);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 1);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 4);
+
+        //all should be blocked again
+        assertEquals(bcl2fastqDecider.run().size(), 0);
+        assertEquals(bcl2fastqDecider.getScheduledWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getValidWorkflowRuns().size(), 0);
+        assertEquals(bcl2fastqDecider.getInvalidLanes().size(), 0);
+        assertEquals(getFpsForCurrentWorkflow().size(), 4);
+    }
+
     private Pair<Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder>, Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder>> getMockData() {
         Map<String, LaneProvenanceImpl.LaneProvenanceImplBuilder> lanes = new HashMap<>();
         Map<String, SampleProvenanceImpl.SampleProvenanceImplBuilder> samples = new HashMap();
@@ -1349,7 +1395,9 @@ public class Bcl2fastqDeciderTest {
         return provenanceClient.getFileProvenance(
                 ImmutableMap.<FileProvenanceFilter, Set<String>>of(
                         FileProvenanceFilter.workflow,
-                        ImmutableSet.of(workflow.getSwAccession().toString())
+                        ImmutableSet.of(workflow.getSwAccession().toString()),
+                        FileProvenanceFilter.skip,
+                        ImmutableSet.of("false")
                 ));
     }
 
