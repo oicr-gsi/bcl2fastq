@@ -1,6 +1,7 @@
-## 1.3.1 - 2019-05-10
+## 1.3.1 - 2019-?
 - [GP-1976](https://jira.oicr.on.ca/browse/GP-1976) - Fix handling ignoring first barcode
-- [GP-1951](https://jira.oicr.on.ca/browse/GP-1951) - Update to pipedev 2.5.1
+- [GP-1951](https://jira.oicr.on.ca/browse/GP-1951) - Update to pipedev 2.5.3
+- [GP-2029](https://jira.oicr.on.ca/browse/GP-2029) - Rerun lanes that have been skipped
 
 ## 1.3 - 2019-02-20
 - [GP-1211](https://jira.oicr.on.ca/browse/GP-1121) - Support for single end sequencing
@@ -46,4 +47,3 @@
 - Initial java implementation of the bcl2fastq/CASAVA decider
 - [GP-867](https://jira.oicr.on.ca/browse/GP-867) - Add support to create IUS-LimsKey, a SeqWare object that is used to link LIMS data from Pinery and SeqWare to SeqWare workflow runs
 - [GP-875](https://jira.oicr.on.ca/browse/GP-875) - Support for SeqWare 1.1.1-gsi
-

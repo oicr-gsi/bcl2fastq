@@ -600,6 +600,7 @@ public class Bcl2fastqDecider {
         workflowSwidsToCheck.add(workflow.getSwAccession().toString());
         workflowSwidsToCheck.addAll(getWorkflowAccessionsToCheck());
         analysisFilters.put(FileProvenanceFilter.workflow, workflowSwidsToCheck);
+        analysisFilters.put(FileProvenanceFilter.skip, Sets.newHashSet("false"));
 
         //the set of all lanes that have been analyzed using the current workflow or a workflow in the set of "check workflows"
         Set<String> analyzedLanes = new HashSet<>();
