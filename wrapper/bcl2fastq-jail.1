@@ -1,0 +1,10 @@
+.TH bcl2fastq-jail 1 "Apr 2020" "1.0" "USER COMMANDS"
+.SH NAME 
+bcl2fastq-jail \- Run Illumina's bcl2fastq in a way that GSI deems acceptable
+.SH SYNOPSIS
+.B bcl2fastq-jail -s samples.json -t /tmp/dir -- bcl2fastq ...
+.I directory
+.SH DESCRIPTION
+This program will run the provided bcl2fastq generating a sample sheet from the
+provided JSON data, preventing the undetermined files from being written to
+disk and collecting samples with multiple barcodes (\fIi.e.\fR, 10X barcodes).
