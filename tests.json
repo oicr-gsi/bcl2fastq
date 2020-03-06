@@ -1,0 +1,98 @@
+{
+  "defaults": {
+    "description": "CASAVA workflow test",
+    "metrics_calculate": "calculate.sh",
+    "metrics_compare": "compare.sh",
+    "output_metrics_dir": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/",
+    "parameters": {
+      "wdl_options": {
+        "read_from_cache": false,
+        "write_to_cache": false
+      }
+    }
+  },
+  "tests": [
+    {
+      "description": "HiSeq 2500 v2 TruSeq Exome (9 replicates of NA12878) from Illumina BaseSpace",
+      "id": "HiSeqTile1101",
+      "parameters": {
+        "wdl_inputs": {
+          "bcl2fastq.barcodes": [
+            "CGATGT"
+          ],
+          "bcl2fastq.lanes": [
+            1
+          ],
+          "bcl2fastq.mismatches": 1,
+          "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-helpers/dev jq/1.6",
+          "bcl2fastq.process.temporaryDirectory": "$TMP",
+          "bcl2fastq.runDirectory": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
+          "bcl2fastq.sampleName": "NA12878_A002"
+        }
+      }
+    },
+    {
+      "description": "NextSeq 500 V2: TruSight Tumor (Horizon Dx - 8plex) - H2GN7AFXX from Illumina BaseSpace",
+      "id": "NextSeqByLane",
+      "parameters": {
+        "wdl_inputs": {
+          "bcl2fastq.barcodes": [
+            "ATCACGAC-ACTTAGCA"
+          ],
+          "bcl2fastq.lanes": [
+            1
+          ],
+          "bcl2fastq.mismatches": 1,
+          "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-helpers/dev jq/1.6",
+          "bcl2fastq.runDirectory": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
+          "bcl2fastq.sampleName": "Horizon_PoolA_Rep1"
+        }
+      }
+    },
+    {
+      "description": "NextSeq 500 V2: TruSight Tumor (Horizon Dx - 8plex) - H2GN7AFXX from Illumina BaseSpace",
+      "id": "NextSeqNoLaneSplit",
+      "parameters": {
+        "wdl_inputs": {
+          "bcl2fastq.barcodes": [
+            "ATCACGAC-ACTTAGCA"
+          ],
+          "bcl2fastq.lanes": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "bcl2fastq.mismatches": 1,
+          "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-helpers/dev jq/1.6",
+          "bcl2fastq.runDirectory": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
+          "bcl2fastq.sampleName": "Horizon_PoolA_Rep1"
+        }
+      }
+    },
+    {
+      "description": "HiSeq small BCL test from 10X",
+      "id": "10X_tiny_hiseq_test",
+      "parameters": {
+        "wdl_inputs": {
+          "bcl2fastq.barcodes": [
+            "AGATCGGT",
+            "CATCGTCG",
+            "GTCATATA",
+            "TCGGACAC"
+          ],
+          "bcl2fastq.lanes": [
+            1
+          ],
+          "bcl2fastq.mismatches": 1,
+          "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-helpers/dev jq/1.6",
+          "bcl2fastq.process.ignoreMissingBcls": true,
+          "bcl2fastq.process.ignoreMissingFilter": true,
+          "bcl2fastq.process.ignoreMissingPositions": true,
+          "bcl2fastq.runDirectory": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/cellranger-tiny-bcl-1.2.0",
+          "bcl2fastq.sampleName": "test_sample"
+        }
+      }
+    }
+  ]
+}

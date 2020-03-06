@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+
+import argparse
+import json
+import shlex
+
+parser = argparse.ArgumentParser(description="Build an Illumina sample sheet")
+parser.add_argument(
+    "--barcodes",
+    nargs='+',
+    help="The barcodes associated with this sample")
+parser.add_argument(
+    "--lanes",
+    type=int,
+    nargs='+',
+    help="The lane number or 0 for no lane splitting")
+parser.add_argument(
+    "--post-processor",
+    dest="postprocessor",
+    help="The location to write the post processing shellscript")
+parser.add_argument("--sample", help="The sample name")
+parser.add_argument(
+    "--sample-sheet",
+    dest="samplesheet",
+    help="The location to write the generated samplesheet")
+
+args = parser.parse_args()
+
+wdl_output = {}
+with open(args.samplesheet, "w") as samplesheet:
+    # Generate a new format sample sheet
+    samplesheet.write("[Header]\n\n[Data]\n")
+    dual_barcoded = any("-" in barcode for barcode in args.barcodes)
+    headers = [
+        "Sample_ID",
+        "Sample_Name",
+        "Manifest",
+        "GenomeFolder",
+        "I7_Index_ID",
+        "Index"]
+    if dual_barcoded:
+        headers.extend(["I5_Index_ID", "Index2"])
+    samplesheet.write(",".join(headers) + "\n")
+    # If we have a multi-barcode situation, write a record for each barcode
+    if len(args.barcodes) > 1:
+        for i in range(0, len(args.barcodes)):
+            modified_name = "%s_%d" % (args.sample, i)
+            row = [
+                modified_name,
+                modified_name,
+                "A",  # manifest
+                "garbage",  # genome folder
+            ]
+            if dual_barcoded:
+                (i7, i5) = args.barcodes[i].split("-")
+                row.extend([i7, i7, i5, i5])
+            else:
+                row.extend([args.barcodes[i], args.barcodes[i]])
+            samplesheet.write(",".join(row) + "\n")
+    # Otherwise, a single record
+    else:
+        row = [
+            args.sample,
+            args.sample,
+            "A",  # manifest
+            "garbage",  # genome folder
+        ]
+        if dual_barcoded:
+            (i7, i5) = args.barcodes[0].split("-")
+            row.extend([i7, i7, i5, i5])
+        else:
+            row.extend([args.barcodes[0], args.barcodes[0]])
+        samplesheet.write(",".join(row) + "\n")
