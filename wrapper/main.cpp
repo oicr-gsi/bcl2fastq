@@ -79,13 +79,50 @@ public:
                Json::Value &output, std::vector<std::string> &fastqs) {
 
     std::cerr << "Starting for " << name << "..." << std::endl;
-    Json::Value files;
+
+    auto readCount = 0;
+    // For each of the input barcodes, pick up the matching read count
+    for (auto barcode = 0; barcode < barcodes; barcode++) {
+      std::stringstream targetName;
+      auto found = false;
+      targetName << "sample" << id << "_" << barcode;
+      for (Json::ArrayIndex i = 0;
+           !found && i < stats_json["ConversionResults"].size(); i++) {
+        auto &cr = stats_json["ConversionResults"][i];
+        for (Json::ArrayIndex j = 0; !found && j < cr["DemuxResults"].size();
+             j++) {
+          auto &dr = cr["DemuxResults"][j];
+          for (Json::ArrayIndex k = 0; k < dr.size(); k++) {
+            if (dr["SampleName"].asString() == targetName.str()) {
+              readCount += dr["NumberReads"].asInt();
+              found = true;
+            }
+          }
+        }
+      }
+    }
+
+    std::cerr << "Getting read count " << name << " from Stats/Stats.json."
+              << std::endl;
 
     for (auto &read : reads) {
       std::stringstream filename;
       filename << name << "_R" << read << ".fastq.gz";
 
-      files.append(filename.str());
+      // Make the output structure of the form {"left":"name_R1.fastq.gz",
+      // "right":{"read_count":9000, "read_number":1}}
+      std::cerr << "Got " << readCount << " reads for " << name << "."
+                << std::endl;
+      Json::Value record(Json::objectValue);
+      Json::Value pair(Json::objectValue);
+      Json::Value attributes(Json::objectValue);
+      attributes["read_count"] = readCount;
+      attributes["read_number"] = read;
+      pair["left"] = filename.str();
+      pair["right"] = std::move(attributes);
+      record["fastqs"] = std::move(pair);
+      record["name"] = name;
+      output.append(std::move(record));
 
       std::vector<std::string> inputFiles;
       // Rummage through the directory for what looks like all the fastqs
@@ -122,44 +159,6 @@ public:
         threads.push_back(std::move(copier));
       }
     }
-    std::cerr << "Getting read count " << name << " from Stats/Stats.json."
-              << std::endl;
-
-    auto readCount = 0;
-    // For each of the input barcodes, pick up the matching read count
-    for (auto barcode = 0; barcode < barcodes; barcode++) {
-      std::stringstream targetName;
-      auto found = false;
-      targetName << "sample" << id << "_" << barcode;
-      for (Json::ArrayIndex i = 0;
-           !found && i < stats_json["ConversionResults"].size(); i++) {
-        auto &cr = stats_json["ConversionResults"][i];
-        for (Json::ArrayIndex j = 0; !found && j < cr["DemuxResults"].size();
-             j++) {
-          auto &dr = cr["DemuxResults"][j];
-          for (Json::ArrayIndex k = 0; k < dr.size(); k++) {
-            if (dr["SampleName"].asString() == targetName.str()) {
-              readCount += dr["NumberReads"].asInt();
-              found = true;
-            }
-          }
-        }
-      }
-    }
-
-    // Make the output structure of the form {"left":["name_R1.fastq.gz", ...],
-    // "right":{"read_count":9000}}
-    std::cerr << "Got " << readCount << " reads for " << name << "."
-              << std::endl;
-    Json::Value record(Json::objectValue);
-    Json::Value pair(Json::objectValue);
-    Json::Value attributes(Json::objectValue);
-    attributes["read_count"] = readCount;
-    pair["left"] = std::move(files);
-    pair["right"] = std::move(attributes);
-    record["fastqs"] = std::move(pair);
-    record["name"] = name;
-    output.append(std::move(record));
   }
 
 private:
@@ -495,9 +494,9 @@ int main(int argc, char **argv) {
     }
   }
 
-	// Find all the FASTQs that bcl2fastq has produced in the temporary
-	// directory; the chosen ones will get copied out
-	std::vector<std::string> fastqs;
+  // Find all the FASTQs that bcl2fastq has produced in the temporary
+  // directory; the chosen ones will get copied out
+  std::vector<std::string> fastqs;
   {
     DIR *dir = nullptr;
     errno = 0;
