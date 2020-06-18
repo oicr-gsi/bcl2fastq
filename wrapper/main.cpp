@@ -8,8 +8,10 @@
 #include <fnmatch.h>
 #include <fstream>
 #include <gzstream.h>
+#include <initializer_list>
 #include <iostream>
 #include <json/json.h>
+#include <memory>
 #include <mutex>
 #include <set>
 #include <sstream>
@@ -64,11 +66,35 @@ static void concat_files(std::string outputFile,
             << outputFile << "." << std::endl;
 }
 
-// Store information about a sample in the input (might map to multiple rows in
-// the sample sheet if multiple barcodes)
 class Sample {
 public:
-  Sample(Json::ArrayIndex id_, const std::string &name_, int barcodes_)
+  virtual ~Sample() = default;
+  virtual void process(std::vector<std::thread> &threads, std::set<int> &reads,
+                       const std::string &outputDir, Json::Value &stats_json,
+                       Json::Value &output,
+                       std::vector<std::string> &fastqs) = 0;
+};
+
+Json::LargestInt findReadCount(const std::string &targetName,
+                               const Json::Value &stats_json) {
+  for (Json::ArrayIndex i = 0; i < stats_json["ConversionResults"].size();
+       i++) {
+    auto &cr = stats_json["ConversionResults"][i];
+    for (Json::ArrayIndex j = 0; j < cr["DemuxResults"].size(); j++) {
+      auto &dr = cr["DemuxResults"][j];
+      if (dr["SampleName"].asString() == targetName) {
+        return dr["NumberReads"].asLargestInt();
+      }
+    }
+  }
+  return 0;
+}
+
+// Store information about a sample in the input (might map to multiple rows in
+// the sample sheet if multiple barcodes)
+class SimpleSample : public Sample {
+public:
+  SimpleSample(Json::ArrayIndex id_, const std::string &name_, int barcodes_)
       : id(id_), barcodes(barcodes_), name(name_) {}
 
   // Find any matching files and spin up a concatenation thread for each one;
@@ -80,26 +106,13 @@ public:
 
     std::cerr << "Starting for " << name << "..." << std::endl;
 
-    auto readCount = 0;
+    Json::LargestInt readCount = 0;
     // For each of the input barcodes, pick up the matching read count
     for (auto barcode = 0; barcode < barcodes; barcode++) {
       std::stringstream targetName;
       auto found = false;
       targetName << "sample" << id << "_" << barcode;
-      for (Json::ArrayIndex i = 0;
-           !found && i < stats_json["ConversionResults"].size(); i++) {
-        auto &cr = stats_json["ConversionResults"][i];
-        for (Json::ArrayIndex j = 0; !found && j < cr["DemuxResults"].size();
-             j++) {
-          auto &dr = cr["DemuxResults"][j];
-          for (Json::ArrayIndex k = 0; k < dr.size(); k++) {
-            if (dr["SampleName"].asString() == targetName.str()) {
-              readCount += dr["NumberReads"].asInt();
-              found = true;
-            }
-          }
-        }
-      }
+      readCount += findReadCount(targetName.str(), stats_json);
     }
 
     std::cerr << "Getting read count " << name << " from Stats/Stats.json."
@@ -132,6 +145,9 @@ public:
                            << read << "_001.fastq.gz";
 
         for (auto &fastq : fastqs) {
+          // Match the found strings using the glob-like matching provided by
+          // fnmatch; do not allow * to cross directory boundaries
+          // (FNM_PATHNAME)
           switch (fnmatch(samplesheetpattern.str().c_str(), fastq.c_str(),
                           FNM_PATHNAME)) {
           case 0:
@@ -165,6 +181,259 @@ private:
   Json::ArrayIndex id;
   int barcodes;
   std::string name;
+};
+
+static void
+extract_umi(std::vector<std::string> commandLine,
+            std::vector<std::reference_wrapper<Json::Value>> readCountOutput,
+            std::string metrics) {
+  const auto pid = fork();
+  if (pid < 0) {
+    // Fork failed. Not much we can do
+    perror("fork");
+  } else if (pid == 0) {
+    // This is the child process; run barcodex
+    errno = 0;
+    char *child_args[commandLine.size() + 1];
+    std::cerr << "Going to excute:";
+    for (auto i = 0; i < commandLine.size(); i++) {
+      child_args[i] = strdup(commandLine[i].c_str());
+      std::cerr << " " << commandLine[i];
+    }
+    std::cerr << std::endl;
+    child_args[commandLine.size()] = nullptr;
+    execvp(child_args[0], child_args);
+    perror("execvp");
+    exit(1);
+  } else {
+    // Wait for the child to exit.
+    while (true) {
+      int status = 0;
+      errno = 0;
+      if (waitpid(pid, &status, 0) < 0) {
+        if (errno == EINTR) {
+          continue;
+        }
+        perror("waitpid");
+        return;
+      }
+      if (WIFEXITED(status)) {
+        std::cerr << "barcodex exited with " << WEXITSTATUS(status)
+                  << std::endl;
+        if (WEXITSTATUS(status) == 0) {
+          // Read the extraction metrics output and update the read counts
+          Json::Value stats_json;
+          std::ifstream stats_data(metrics);
+          stats_data >> stats_json;
+          for (Json::Value &value : readCountOutput) {
+            value["read_count"] =
+                stats_json["reads/pairs with matching pattern"];
+          }
+        }
+        return;
+      } else if (WIFSIGNALED(status)) {
+        std::cerr << "barcodex signalled " << strsignal(WTERMSIG(status))
+                  << std::endl;
+        return;
+      }
+    }
+  }
+}
+
+// Store information about a sample in the input (might map to multiple rows in
+// the sample sheet if multiple barcodes) and needs UMI extraction done on the
+// output
+class UmiSample : public Sample {
+public:
+  UmiSample(Json::ArrayIndex id_, const std::string &name_, int barcodes_,
+            bool is_inline_, const std::string &acceptableUmiList_,
+            const Json::Value &patterns_)
+      : id(id_), acceptableUmiList(acceptableUmiList_), barcodes(barcodes_),
+        is_inline(is_inline_), name(name_) {
+    // Each read is associated with a UMI pattern (regex) that is handed to us
+    // as a JSON object with the key as a string contianing a number and the
+    // regex as the value. This extracts those patterns into a map so we can
+    // generate command line argument for barcodex. Techincally, this entire
+    // dictionary can be null, so there's a guard. barcodex is likely to fail,
+    // but we're going to run it anyway.
+    if (patterns_.isObject()) {
+      auto memberNames = patterns_.getMemberNames();
+      for (auto i = 0; i < memberNames.size(); i++) {
+        patterns[atoi(memberNames[i].c_str())] =
+            patterns_[memberNames[i]].asString();
+      }
+    }
+  }
+
+  void process(std::vector<std::thread> &threads, std::set<int> &reads,
+               const std::string &outputDir, Json::Value &stats_json,
+               Json::Value &output, std::vector<std::string> &fastqs) {
+
+    // There are two modes for UMIs: inline where the barcode is included in the
+    // existing reads and where the barcode is the last read, so take the number
+    // of reads we've actually extracted and compute the number that we are
+    // going to output.
+    auto usefulMaxRead =
+        *std::max_element(reads.begin(), reads.end()) - (is_inline ? 0 : 1);
+
+    std::cerr << "Starting for " << name << " which will output "
+              << usefulMaxRead << " useful reads after extraction..."
+              << std::endl;
+
+    // We're going to get barcodex to do all the heavy lifting, so let's build
+    // up its command line
+    std::vector<std::string> commandLine{"barcodex",
+                                         "extract",
+                                         "--separator",
+                                         ":",
+                                         "--compressed",
+                                         "--keep_extracted",
+                                         "--keep_discarded",
+                                         "--prefix",
+                                         name,
+                                         "--umilist",
+                                         acceptableUmiList,
+                                         "--data",
+                                         usefulMaxRead == 2 ? "paired"
+                                                            : "single"
+
+    };
+    if (is_inline) {
+      commandLine.push_back("--inline");
+    }
+    // These patterns are provided by the input and tell barcodex what to
+    // extract from the reads
+    for (auto &entry : patterns) {
+      std::stringstream parameter;
+      parameter << "--pattern" << entry.first;
+      commandLine.push_back(parameter.str());
+      commandLine.push_back(entry.second);
+    }
+
+    // barcodex is going possibly throw away some reads, so the read count
+    // proided to us from bcl2fastq isn't going to be useful. We're going to
+    // create all the data structures Cromwell needs for the output files now,
+    // and store a list of ones that need to be updated with the barcodex read
+    // count once we're done.
+    std::vector<std::reference_wrapper<Json::Value>> readCountOutput;
+
+    // We need to provision out the metadata that's global for the sample
+    for (auto &suffix : {"_UMI_counts.json", "_extraction_metrics.json"}) {
+      std::stringstream filename;
+      filename << name << suffix;
+      Json::Value record(Json::objectValue);
+      Json::Value pair(Json::objectValue);
+      Json::Value attributes(Json::objectValue);
+      attributes["read_count"] = 0;
+      pair["left"] = filename.str();
+      pair["right"] = std::move(attributes);
+      record["fastqs"] = std::move(pair);
+      record["name"] = name;
+      output.append(std::move(record));
+      // We're going to need to update these later, so hold references to them
+      // that we can pass to the other thread.
+      readCountOutput.push_back((*--output.end())["fastqs"]["right"]);
+    }
+
+    // Now we need to handle every read
+    for (auto &read : reads) {
+      // In non-inline kits, the final read will be consumed and not provisioned
+      // out
+      if (read <= usefulMaxRead) {
+        // We're going to provision out 3 files: a base file, an extracted file,
+        // and a discarded file. We're going to set the read_number annotation
+        // on the extracted and discarded files to be negative so downstream
+        // proceses that are looking for reads don't choke.
+        std::stringstream parameter;
+        parameter << "--r" << read << "_out";
+        commandLine.push_back(parameter.str());
+        std::stringstream output_filename;
+        output_filename << name << "_R" << read << ".fastq.gz";
+        commandLine.push_back(output_filename.str());
+
+        for (auto suffix : {"extracted", "discarded"}) {
+          std::stringstream filename;
+          filename << name << "_R" << read << "." << suffix << ".R" << read
+                   << ".fastq.gz";
+
+          Json::Value record(Json::objectValue);
+          Json::Value pair(Json::objectValue);
+          Json::Value attributes(Json::objectValue);
+          attributes["read_count"] = 0;
+          attributes["read_number"] = -read;
+          attributes["umi_extraction"] = suffix;
+          pair["left"] = filename.str();
+          pair["right"] = std::move(attributes);
+          record["fastqs"] = std::move(pair);
+          record["name"] = name;
+          output.append(std::move(record));
+          // We're going to need to update these later, so hold references to
+          // them that we can pass to the other thread.
+          readCountOutput.push_back((*--output.end())["fastqs"]["right"]);
+        }
+
+        // Prepare the output information for the main generated FASTQ
+        Json::Value record(Json::objectValue);
+        Json::Value pair(Json::objectValue);
+        Json::Value attributes(Json::objectValue);
+        attributes["read_count"] = 0;
+        attributes["read_number"] = read;
+        attributes["umi_extraction"] = "output";
+        pair["left"] = output_filename.str();
+        pair["right"] = std::move(attributes);
+        record["fastqs"] = std::move(pair);
+        record["name"] = name;
+        output.append(std::move(record));
+        // We're going to need to update these later, so hold references to
+        // them that we can pass to the other thread.
+        readCountOutput.push_back((*--output.end())["fastqs"]["right"]);
+      }
+
+      for (auto barcode = 0; barcode < barcodes; barcode++) {
+        // Rummage through the directory for what looks like all the fastqs
+        // Even if we aren't provisiong out a matching extract, we still need to
+        // tell barcodex about them
+        std::stringstream samplesheetpattern;
+        samplesheetpattern << "sample" << id << "_" << barcode << "_S*_R"
+                           << read << "_001.fastq.gz";
+        std::stringstream parameter;
+        parameter << "--r" << read << "_in";
+
+        for (auto &fastq : fastqs) {
+          // Match the found strings using the glob-like matching provided by
+          // fnmatch; do not allow * to cross directory boundaries
+          // (FNM_PATHNAME)
+          switch (fnmatch(samplesheetpattern.str().c_str(), fastq.c_str(),
+                          FNM_PATHNAME)) {
+          case 0:
+            commandLine.push_back(parameter.str());
+            commandLine.push_back(outputDir + "/" + fastq);
+            break;
+          case FNM_NOMATCH:
+            break;
+          default:
+            std::cerr << "Failed to perform fnmatch on " << fastq << " for "
+                      << samplesheetpattern.str() << "." << std::endl;
+          }
+        }
+      }
+    }
+
+    // Create a new thread for doing the extraction.
+    std::cerr << "Starting thread for " << name << " UMI extraction."
+              << std::endl;
+    std::thread copier(extract_umi, commandLine, readCountOutput,
+                       name + "_extraction_metrics.json");
+    threads.push_back(std::move(copier));
+  }
+
+private:
+  Json::ArrayIndex id;
+  std::string acceptableUmiList;
+  int barcodes;
+  bool is_inline;
+  std::string name;
+  std::map<int, std::string> patterns;
 };
 
 // Possibly overwrite a file name before doing a system call
@@ -347,7 +616,7 @@ int main(int argc, char **argv) {
   // Convert the sample information into a sample sheet and a record for
   // post-processing the output
   auto samplesheet = std::string(temporary_directory) + "/samplesheet.csv";
-  std::vector<Sample> sampleinfo;
+  std::vector<std::unique_ptr<Sample>> sampleinfo;
   std::cerr << "Building sample sheet..." << std::endl;
   {
     // This is in a block to close all these files at the point we call
@@ -388,9 +657,18 @@ int main(int argc, char **argv) {
     samplesheet_data << "\n";
 
     for (Json::ArrayIndex i = 0; i < samples_json["samples"].size(); i++) {
-      auto &barcodes = samples_json["samples"][i]["barcodes"];
-      sampleinfo.emplace_back(i, samples_json["samples"][i]["name"].asString(),
-                              barcodes.size());
+      auto info = samples_json["samples"][i];
+      auto &barcodes = info["barcodes"];
+      if (info.isMember("acceptableUmiList") &&
+          !info["acceptableUmiList"].isNull()) {
+        sampleinfo.emplace_back(new UmiSample(
+            i, info["name"].asString(), barcodes.size(),
+            info["inlineUmi"].asBool(), info["acceptableUmiList"].asString(),
+            info["patterns"]));
+      } else {
+        sampleinfo.emplace_back(
+            new SimpleSample(i, info["name"].asString(), barcodes.size()));
+      }
 
       for (Json::ArrayIndex b = 0; b < barcodes.size(); b++) {
         samplesheet_data << "sample" << i << "_" << b << ","
@@ -522,8 +800,8 @@ int main(int argc, char **argv) {
   std::string outputDirectory(temporary_directory);
   std::vector<std::thread> running_threads;
   for (auto &sample : sampleinfo) {
-    sample.process(running_threads, reads, outputDirectory, stats_json, output,
-                   fastqs);
+    sample->process(running_threads, reads, outputDirectory, stats_json, output,
+                    fastqs);
   }
 
   std::cerr << "Waiting on " << running_threads.size()

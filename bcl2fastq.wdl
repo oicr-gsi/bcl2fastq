@@ -3,6 +3,9 @@ version 1.0
 struct Sample {
     Array[String]+ barcodes
     String name
+    Boolean inlineUmi
+    String? acceptableUmiList
+    Map[String,String]? patterns
 }
 
 struct SampleList {

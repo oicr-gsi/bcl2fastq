@@ -17,12 +17,12 @@ bcl2fastq_jail_SOURCES = \
 	$(NULL)
 # These are the compiler arguments for building
 # We want (in order):
-# - C++11
+# - C++14
 # - debugging symbols to be included
 # - optimisation level 2
 # - whatever junk jsoncpp wants
 bcl2fastq_jail_CPPFLAGS = \
-	-std=c++11 -g -O2 \
+	-std=c++14 -g -O2 \
 	$(JSON_CFLAGS) \
 	$(PTHREAD_CFLAGS) \
 	$(ZLIB_CFLAGS) \
