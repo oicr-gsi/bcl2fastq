@@ -42,7 +42,7 @@ Parameter|Value|Default|Description
 `process.bcl2fastqJail`|String|"bcl2fastq-jail"|The name ro path of the BCL2FASTQ wrapper script executable.
 `process.extraOptions`|String|""|Any other options that will be passed directly to bcl2fastq.
 `process.ignoreMissingBcls`|Boolean|false|Flag passed to bcl2fastq, allows missing bcl files.
-`process.ignoreMissingFilter`|Boolean|false|Flag passed to bcl2fastq, allows missing or corrupt filter filesa.
+`process.ignoreMissingFilter`|Boolean|false|Flag passed to bcl2fastq, allows missing or corrupt filter files.
 `process.ignoreMissingPositions`|Boolean|false|Flag passed to bcl2fastq, allows missing or corrupt positions files.
 `process.memory`|Int|32|The memory for the BCL2FASTQ process in GB.
 `process.temporaryDirectory`|String|"."|A directory where bcl2fastq can dump massive amounts of garbage while running.
