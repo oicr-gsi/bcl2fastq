@@ -119,6 +119,7 @@ task process {
       --processing-threads ~{threads} \
       --runfolder-dir "~{runDirectory}" \
       --tiles "^(s_)?[~{sep="" lanes}]_" \
+      --interop-dir "~{temporaryDirectory}" \
       ~{if ignoreMissingBcls then "--ignore-missing-bcls" else ""} \
       ~{if ignoreMissingFilter then "--ignore-missing-filter" else ""} \
       ~{if ignoreMissingPositions then "--ignore-missing-positions" else ""} \
