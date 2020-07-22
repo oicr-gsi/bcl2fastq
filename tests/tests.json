@@ -320,6 +320,45 @@
           ]
         }
       }
+    },
+    {
+      "description": "UMI extraction test with no output",
+      "id": "umiex_empty",
+      "parameters": {
+        "wdl_inputs": {
+          "bcl2fastq.lanes": [
+            1
+          ],
+          "bcl2fastq.mismatches": 1,
+          "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev barcodex/1.0.7",
+          "bcl2fastq.process.temporaryDirectory": "$TMP",
+          "bcl2fastq.runDirectory": "/.mounts/labs/prod/archive/m146/191210_M00146_0137_000000000-D7KWF",
+          "bcl2fastq.samples": [
+            {
+              "acceptableUmiList": "/u/gsidev/git/interval-files/allowedUMIs/IDT_true_barcodes.txt",
+              "barcodes": [
+                "NNNNNNNN"
+              ],
+              "inlineUmi": true,
+              "name": "MATS0058",
+              "patterns": {
+                "1": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)",
+                "2": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)"
+              }
+            }
+          ]
+        },
+        "wdl_outputs": {
+          "bcl2fastq.fastqs": [
+            {
+              "annotations": {},
+              "key": {
+                "name": "MATS0058"
+              }
+            }
+          ]
+        }
+      }
     }
   ]
 }
