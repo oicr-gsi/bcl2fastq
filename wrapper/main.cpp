@@ -298,6 +298,7 @@ public:
                                                             : "single"
 
     };
+    std::vector<std::string> outputFastqs;
     if (is_inline) {
       commandLine.push_back("--inline");
     }
@@ -338,6 +339,7 @@ public:
     }
 
     // Now we need to handle every read
+    auto hasInput = false;
     for (auto &read : reads) {
       // In non-inline kits, the final read will be consumed and not provisioned
       // out
@@ -352,6 +354,7 @@ public:
         std::stringstream output_filename;
         output_filename << name << "_R" << read << ".fastq.gz";
         commandLine.push_back(output_filename.str());
+        outputFastqs.push_back(output_filename.str());
 
         for (auto suffix : {"extracted", "discarded"}) {
           std::stringstream filename;
@@ -372,6 +375,7 @@ public:
           // We're going to need to update these later, so hold references to
           // them that we can pass to the other thread.
           readCountOutput.push_back((*--output.end())["fastqs"]["right"]);
+          outputFastqs.push_back(filename.str());
         }
 
         // Prepare the output information for the main generated FASTQ
@@ -410,6 +414,7 @@ public:
           case 0:
             commandLine.push_back(parameter.str());
             commandLine.push_back(outputDir + "/" + fastq);
+            hasInput = true;
             break;
           case FNM_NOMATCH:
             break;
@@ -420,13 +425,48 @@ public:
         }
       }
     }
+    if (hasInput) {
+      // Create a new thread for doing the extraction.
+      std::cerr << "Starting thread for " << name << " UMI extraction."
+                << std::endl;
+      std::thread copier(extract_umi, commandLine, readCountOutput,
+                         name + "_extraction_metrics.json");
+      threads.push_back(std::move(copier));
+    } else {
+      // Whelp, nothing to extract. Set everything to have zero reads
+      for (Json::Value &value : readCountOutput) {
+        value["read_count"] = 0;
+      }
+      // Write empty FASTQs
+      for (auto &fastq : outputFastqs) {
+        ogzstream(fastq.c_str());
+      }
 
-    // Create a new thread for doing the extraction.
-    std::cerr << "Starting thread for " << name << " UMI extraction."
-              << std::endl;
-    std::thread copier(extract_umi, commandLine, readCountOutput,
-                       name + "_extraction_metrics.json");
-    threads.push_back(std::move(copier));
+      // For the UMI counts, we write a JSON file with an empty object in it
+      std::stringstream counts_filename;
+      counts_filename << name << "_UMI_counts.json";
+      Json::Value output_counts_obj(Json::objectValue);
+      std::ofstream output_counts_data(counts_filename.str());
+      output_counts_data << output_counts_obj;
+
+      // Then we write out some sad stats
+      std::stringstream metrics_filename;
+      metrics_filename << name << "_extraction_metrics.json";
+      Json::Value output_metrics_obj(Json::objectValue);
+      output_metrics_obj["total reads/pairs"] = 0;
+      output_metrics_obj["reads/pairs with matching pattern"] = 0;
+      output_metrics_obj["discarded reads/pairs"] = 0;
+      output_metrics_obj["umi-list file"] = acceptableUmiList;
+
+      for (auto &entry : patterns) {
+        std::stringstream key;
+        key << "pattern" << entry.first;
+        output_metrics_obj[key.str()] = entry.second;
+      }
+
+      std::ofstream output_metrics_data(metrics_filename.str());
+      output_metrics_data << output_metrics_obj;
+    }
   }
 
 private:
