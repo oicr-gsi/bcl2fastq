@@ -304,10 +304,12 @@ public:
     // These patterns are provided by the input and tell barcodex what to
     // extract from the reads
     for (auto &entry : patterns) {
-      std::stringstream parameter;
-      parameter << "--pattern" << entry.first;
-      commandLine.push_back(parameter.str());
-      commandLine.push_back(entry.second);
+      if (entry.first <= usefulMaxRead) {
+        std::stringstream parameter;
+        parameter << "--pattern" << entry.first;
+        commandLine.push_back(parameter.str());
+        commandLine.push_back(entry.second);
+      }
     }
 
     // barcodex is going possibly throw away some reads, so the read count
