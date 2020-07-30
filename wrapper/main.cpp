@@ -282,34 +282,25 @@ public:
 
     // We're going to get barcodex to do all the heavy lifting, so let's build
     // up its command line
-    std::vector<std::string> commandLine{"barcodex",
-                                         "extract",
+    std::vector<std::string> commandLine{"barcodex-rs",
                                          "--separator",
                                          ":",
-                                         "--compressed",
-                                         "--keep_extracted",
-                                         "--keep_discarded",
                                          "--prefix",
                                          name,
                                          "--umilist",
                                          acceptableUmiList,
-                                         "--data",
-                                         usefulMaxRead == 2 ? "paired"
-                                                            : "single"
-
-    };
+                                         is_inline ? "inline" : "separate"};
     std::vector<std::string> outputFastqs;
-    if (is_inline) {
-      commandLine.push_back("--inline");
-    }
     // These patterns are provided by the input and tell barcodex what to
     // extract from the reads
-    for (auto &entry : patterns) {
-      if (entry.first <= usefulMaxRead) {
-        std::stringstream parameter;
-        parameter << "--pattern" << entry.first;
-        commandLine.push_back(parameter.str());
-        commandLine.push_back(entry.second);
+    if (is_inline) {
+      for (auto &entry : patterns) {
+        if (entry.first <= usefulMaxRead) {
+          std::stringstream parameter;
+          parameter << "--pattern" << entry.first;
+          commandLine.push_back(parameter.str());
+          commandLine.push_back(entry.second);
+        }
       }
     }
 
@@ -341,6 +332,27 @@ public:
     // Now we need to handle every read
     auto hasInput = false;
     for (auto &read : reads) {
+
+      for (auto suffix : {"extracted", "discarded"}) {
+        std::stringstream filename;
+        filename << name << "_R" << read << "." << suffix << ".fastq.gz";
+
+        Json::Value record(Json::objectValue);
+        Json::Value pair(Json::objectValue);
+        Json::Value attributes(Json::objectValue);
+        attributes["read_count"] = 0;
+        attributes["read_number"] = -read;
+        attributes["umi_extraction"] = suffix;
+        pair["left"] = filename.str();
+        pair["right"] = std::move(attributes);
+        record["fastqs"] = std::move(pair);
+        record["name"] = name;
+        output.append(std::move(record));
+        // We're going to need to update these later, so hold references to
+        // them that we can pass to the other thread.
+        readCountOutput.push_back((*--output.end())["fastqs"]["right"]);
+        outputFastqs.push_back(filename.str());
+      }
       // In non-inline kits, the final read will be consumed and not provisioned
       // out
       if (read <= usefulMaxRead) {
@@ -348,35 +360,9 @@ public:
         // and a discarded file. We're going to set the read_number annotation
         // on the extracted and discarded files to be negative so downstream
         // proceses that are looking for reads don't choke.
-        std::stringstream parameter;
-        parameter << "--r" << read << "_out";
-        commandLine.push_back(parameter.str());
         std::stringstream output_filename;
         output_filename << name << "_R" << read << ".fastq.gz";
-        commandLine.push_back(output_filename.str());
         outputFastqs.push_back(output_filename.str());
-
-        for (auto suffix : {"extracted", "discarded"}) {
-          std::stringstream filename;
-          filename << name << "_R" << read << "." << suffix << ".R" << read
-                   << ".fastq.gz";
-
-          Json::Value record(Json::objectValue);
-          Json::Value pair(Json::objectValue);
-          Json::Value attributes(Json::objectValue);
-          attributes["read_count"] = 0;
-          attributes["read_number"] = -read;
-          attributes["umi_extraction"] = suffix;
-          pair["left"] = filename.str();
-          pair["right"] = std::move(attributes);
-          record["fastqs"] = std::move(pair);
-          record["name"] = name;
-          output.append(std::move(record));
-          // We're going to need to update these later, so hold references to
-          // them that we can pass to the other thread.
-          readCountOutput.push_back((*--output.end())["fastqs"]["right"]);
-          outputFastqs.push_back(filename.str());
-        }
 
         // Prepare the output information for the main generated FASTQ
         Json::Value record(Json::objectValue);
@@ -403,7 +389,13 @@ public:
         samplesheetpattern << "sample" << id << "_" << barcode << "_S*_R"
                            << read << "_001.fastq.gz";
         std::stringstream parameter;
-        parameter << "--r" << read << "_in";
+        parameter << "--r";
+        if (is_inline || read <= usefulMaxRead) {
+          parameter << read;
+        } else {
+          parameter << "u";
+        }
+        parameter << "-in";
 
         for (auto &fastq : fastqs) {
           // Match the found strings using the glob-like matching provided by
@@ -456,6 +448,7 @@ public:
       output_metrics_obj["total reads/pairs"] = 0;
       output_metrics_obj["reads/pairs with matching pattern"] = 0;
       output_metrics_obj["discarded reads/pairs"] = 0;
+      output_metrics_obj["discarded reads/pairs due to unknown UMI"] = 0;
       output_metrics_obj["umi-list file"] = acceptableUmiList;
 
       for (auto &entry : patterns) {

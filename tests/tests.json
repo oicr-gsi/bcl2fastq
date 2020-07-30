@@ -291,7 +291,7 @@
             1
           ],
           "bcl2fastq.mismatches": 1,
-          "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev barcodex/1.0.7",
+          "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev barcodex-rs/dev",
           "bcl2fastq.process.temporaryDirectory": "$TMP",
           "bcl2fastq.runDirectory": "/.mounts/labs/prod/archive/m146/191210_M00146_0137_000000000-D7KWF",
           "bcl2fastq.samples": [
@@ -330,7 +330,7 @@
             1
           ],
           "bcl2fastq.mismatches": 1,
-          "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev barcodex/1.0.7",
+          "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev barcodex-rs/dev",
           "bcl2fastq.process.temporaryDirectory": "$TMP",
           "bcl2fastq.runDirectory": "/.mounts/labs/prod/archive/m146/191210_M00146_0137_000000000-D7KWF",
           "bcl2fastq.samples": [
