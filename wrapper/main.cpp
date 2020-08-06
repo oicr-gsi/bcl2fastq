@@ -509,7 +509,6 @@ static void conditional_rewrite(pid_t child, int filename_register,
     // the search string we've seen
     for (auto i = 0; i < sizeof(long); i++) {
       if (value.c[i] == '\0') {
-        std::cerr << "Meh. It's some other file." << std::endl;
         return;
       }
       if (value.c[i] == *current_search_filename) {
@@ -573,12 +572,10 @@ static bool run_process(pid_t child) {
         static_assert(
             sizeof(devnull) % sizeof(long) == 0,
             "undetermined replacement path is not a multiple of long");
-        std::cerr << "Investigating open() system call" << std::endl;
         conditional_rewrite(child, RDI, "Undetermined", devnull,
                             sizeof(devnull));
         break;
       case 257: // openat()
-        std::cerr << "Investigating openat() system call" << std::endl;
         conditional_rewrite(child, RSI, "Undetermined", devnull,
                             sizeof(devnull));
         break;
@@ -592,7 +589,6 @@ static bool run_process(pid_t child) {
       case 6: // lstat()
         static_assert(sizeof(binls) % sizeof(long) == 0,
                       "stat replacement path is not a multiple of long");
-        std::cerr << "Investigating stat()/lstat() system call" << std::endl;
         conditional_rewrite(child, RDI, "/dev/null", binls, sizeof(binls));
         break;
       }
