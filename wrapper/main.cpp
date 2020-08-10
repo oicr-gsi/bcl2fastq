@@ -546,10 +546,11 @@ const char binls[] = {'/', 'b', 'i', 'n', '/', 'l', 's', 0};
 // Based on:
 // https://www.alfonsobeato.net/c/modifying-system-call-arguments-with-ptrace/
 static bool run_process(pid_t child) {
+  int data = 0;
   while (true) {
     int status = 0;
     errno = 0;
-    if (ptrace(PTRACE_SYSCALL, child, 0, 0) < 0) {
+    if (ptrace(PTRACE_SYSCALL, child, 0, data) < 0) {
       if (errno == EINTR) {
         continue;
       }
@@ -564,6 +565,7 @@ static bool run_process(pid_t child) {
       perror("waitpid");
       return false;
     }
+    data = 0;
     /* Is it a syscall we care about? */
     if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80) {
       switch (ptrace(PTRACE_PEEKUSER, child, sizeof(long) * ORIG_RAX, 0)) {
@@ -606,8 +608,11 @@ static bool run_process(pid_t child) {
       errno = 0;
       std::cerr << "Child needs to handle some " << strsignal(WSTOPSIG(status))
                 << " signal." << std::endl;
-      // Our process may be dead, so do a wait, then try the ptrace(SYSCALL) if
-      // it lived
+      // Okay, so ptrace lets to decide whether or not we want to deliver this
+      // signal, and we do, because I have no desire to deal with it, so tell
+      // our ptrace call we want it to signal, unless it's the trap signal we
+      // used to kick off the tracing.
+      data = WSTOPSIG(status) == SIGTRAP ? 0 : WSTOPSIG(status);
     } else {
       std::cerr << "Unknown wait status for bcl2fastq." << std::endl;
       return false;
