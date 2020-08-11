@@ -796,14 +796,13 @@ int main(int argc, char **argv) {
   stats_data >> stats_json;
 
   std::set<int> reads;
-  for (Json::ArrayIndex i = 0; i < stats_json["ConversionResults"].size();
+  for (Json::ArrayIndex i = 0; i < stats_json["ReadInfosForLanes"].size();
        i++) {
-    auto &cr = stats_json["ConversionResults"][i];
-    for (Json::ArrayIndex j = 0; j < cr["Undetermined"]["ReadMetrics"].size();
-         j++) {
-      auto &rm = cr["Undetermined"]["ReadMetrics"][j];
-      for (Json::ArrayIndex k = 0; k < rm.size(); k++) {
-        reads.insert(rm["ReadNumber"].asInt());
+    auto &ril = stats_json["ReadInfosForLanes"][i];
+    for (Json::ArrayIndex j = 0; j < ril["ReadInfos"].size(); j++) {
+      auto &ri = ril["ReadInfos"][j];
+      for (Json::ArrayIndex k = 0; k < ri.size(); k++) {
+        reads.insert(ri["Number"].asInt());
       }
     }
   }
