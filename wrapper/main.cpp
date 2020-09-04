@@ -802,7 +802,9 @@ int main(int argc, char **argv) {
     for (Json::ArrayIndex j = 0; j < ril["ReadInfos"].size(); j++) {
       auto &ri = ril["ReadInfos"][j];
       for (Json::ArrayIndex k = 0; k < ri.size(); k++) {
-        reads.insert(ri["Number"].asInt());
+        if (!ri["IsIndexedRead"].asBool()) {
+          reads.insert(ri["Number"].asInt());
+        }
       }
     }
   }
