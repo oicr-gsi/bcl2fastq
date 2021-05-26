@@ -36,7 +36,10 @@ workflow bcl2fastq {
     lanes: "The lane numbers to process from this run"
     mismatches: "Number of mismatches to allow in the barcodes (usually, 1)"
     modules: "The modules to load when running the workflow. This should include bcl2fastq and the helper scripts."
-    runDirectory: "The path to the instrument's output directory."
+    runDirectory: {
+      description: "The path to the instrument's output directory.",
+      vidarr_type: "directory"
+    }
     samples: "The information about the samples. Tname of the sample which will determine the output file prefix. The list of barcodes in the format i7-i5 for this sample. If multiple barcodes are provided, they will be merged into a single output."
     timeout: "The maximum number of hours this workflow can run for."
   }
