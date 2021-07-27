@@ -25,7 +25,7 @@ Parameter|Value|Description
 `mismatches`|Int|Number of mismatches to allow in the barcodes (usually, 1)
 `modules`|String|The modules to load when running the workflow. This should include bcl2fastq and the helper scripts.
 `samples`|Array[Sample]+|The information about the samples. Tname of the sample which will determine the output file prefix. The list of barcodes in the format i7-i5 for this sample. If multiple barcodes are provided, they will be merged into a single output.
-`runDirectory`|String|The path to the instrument's output directory.
+`runDirectory`|String|{'description': "The path to the instrument's output directory.", 'vidarr_type': 'directory'}
 
 
 #### Optional workflow parameters:
@@ -56,32 +56,40 @@ Output | Type | Description
 `fastqs`|Array[Output]+|A list of FASTQs generated and annotations that should be applied to them.
 
 
-## Niassa + Cromwell
+## Commands
 
-This WDL workflow is wrapped in a Niassa workflow (https://github.com/oicr-gsi/pipedev/tree/master/pipedev-niassa-cromwell-workflow) so that it can used with the Niassa metadata tracking system (https://github.com/oicr-gsi/niassa).
+This section lists command(s) run by bcl2fastq workflow
 
-* Building
-```
-mvn clean install
-```
+* Running bcl2fastq
 
-* Testing
+bcl2fastq file converts base calls to fastq format
+
 ```
-mvn clean verify \
--Djava_opts="-Xmx1g -XX:+UseG1GC -XX:+UseStringDeduplication" \
--DrunTestThreads=2 \
--DskipITs=false \
--DskipRunITs=false \
--DworkingDirectory=/path/to/tmp/ \
--DschedulingHost=niassa_oozie_host \
--DwebserviceUrl=http://niassa-url:8080 \
--DwebserviceUser=niassa_user \
--DwebservicePassword=niassa_user_password \
--Dcromwell-host=http://cromwell-url:8000
+    BCL2FASTQ_JAIL \
+      -t TMP_DIR \
+      -s SAMPLES_JSON \
+      -- BCL2FASTQ \
+      --barcode-mismatches MISMATCHES \
+      --input-dir INPUT_DIR \
+      --intensities-dir RUN_DIR/Data/Intensities" \
+      --no-lane-splitting \
+      --processing-threads THREADS \
+      --runfolder-dir RUN_DIR \
+      --tiles TITLES \
+      --interop-dir TMP_DIR \
+      
+      Optional Parameters:
+
+      --ignore-missing-bcls" else ""} \
+      --ignore-missing-filter" else ""} \
+      --ignore-missing-positions" else ""} \
+      --use-bases-mask CUSTOM_BASE_MASK \
+        EXTRA_OPTIONS
+
 ```
 
 ## Support
 
 For support, please file an issue on the [Github project](https://github.com/oicr-gsi) or send an email to gsi@oicr.on.ca .
 
-_Generated with wdl_doc_gen (https://github.com/oicr-gsi/wdl_doc_gen/)_
+_Generated with generate-markdown-readme (https://github.com/oicr-gsi/gsi-wdl-tools/)_
