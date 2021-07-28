@@ -57,38 +57,36 @@ Output | Type | Description
 
 
 ## Commands
-
-This section lists command(s) run by bcl2fastq workflow
-
-* Running bcl2fastq
-
-bcl2fastq file converts base calls to fastq format
-
-```
-    BCL2FASTQ_JAIL \
-      -t TMP_DIR \
-      -s SAMPLES_JSON \
-      -- BCL2FASTQ \
-      --barcode-mismatches MISMATCHES \
-      --input-dir INPUT_DIR \
-      --intensities-dir RUN_DIR/Data/Intensities" \
-      --no-lane-splitting \
-      --processing-threads THREADS \
-      --runfolder-dir RUN_DIR \
-      --tiles TITLES \
-      --interop-dir TMP_DIR \
-      
-      Optional Parameters:
-
-      --ignore-missing-bcls" else ""} \
-      --ignore-missing-filter" else ""} \
-      --ignore-missing-positions" else ""} \
-      --use-bases-mask CUSTOM_BASE_MASK \
-        EXTRA_OPTIONS
-
-```
-
-## Support
+ 
+ This section lists command(s) run by bcl2fastq workflow
+ 
+ * Running bcl2fastq
+ 
+ Convert basecalls to fastq
+ 
+ ```
+     BCL2FASTQ_JAIL 
+       -t TMP_DIR 
+       -s SAMPLES_JSON 
+       -- BCL2FASTQ 
+       --barcode-mismatches MISMATCHES 
+       --input-dir INPUT_DIR 
+       --intensities-dir RUN_DIR/Data/Intensities 
+       --no-lane-splitting 
+       --processing-threads THREADS 
+       --runfolder-dir RUN_DIR 
+       --tiles TITLES 
+       --interop-dir TMP_DIR 
+       
+       Optional Parameters:
+ 
+       --ignore-missing-bcls 
+       --ignore-missing-filter 
+       --ignore-missing-positions
+       --use-bases-mask CUSTOM_BASE_MASK 
+         EXTRA_OPTIONS
+ ```
+ ## Support
 
 For support, please file an issue on the [Github project](https://github.com/oicr-gsi) or send an email to gsi@oicr.on.ca .
 
