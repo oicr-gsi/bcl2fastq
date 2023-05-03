@@ -3,9 +3,6 @@ version 1.0
 struct Sample {
     Array[String]+ barcodes
     String name
-    Boolean inlineUmi
-    String? acceptableUmiList
-    Map[String,String]? patterns
 }
 
 struct SampleList {
@@ -14,7 +11,7 @@ struct SampleList {
 
 struct Output {
     String name
-    Pair[File,Map[String,String]] fastqs
+    Pair[Array[File]+,Map[String,String]] fastqs
 }
 
 struct Outputs {
@@ -30,21 +27,20 @@ workflow bcl2fastq {
     Array[Sample]+ samples
     String runDirectory
     Int timeout = 40
+    Int maxReads = 1000
   }
   parameter_meta {
     basesMask: "An Illumina bases mask string to use. If absent, the one written by the instrument will be used."
     lanes: "The lane numbers to process from this run"
     mismatches: "Number of mismatches to allow in the barcodes (usually, 1)"
     modules: "The modules to load when running the workflow. This should include bcl2fastq and the helper scripts."
-    runDirectory: {
-      description: "The path to the instrument's output directory.",
-      vidarr_type: "directory"
-    }
+    runDirectory: "The path to the instrument's output directory."
     samples: "The information about the samples. Tname of the sample which will determine the output file prefix. The list of barcodes in the format i7-i5 for this sample. If multiple barcodes are provided, they will be merged into a single output."
     timeout: "The maximum number of hours this workflow can run for."
+    maxReads: "The maximum number of reads allowed.  If this is exceeded, then the fastq files will be downsampled"
   }
   meta {
-    author: "Andre Masella"
+    author: "Andre Masella, Lawrence Heisler"
     description: "Workflow to produce FASTQ files from an Illumina instrument's run directory"
     dependencies: [{
       name: "bcl2fastq",
@@ -64,9 +60,63 @@ workflow bcl2fastq {
       samples = object { samples: samples },
       timeout = timeout
   }
-  output {
-    Array[Output]+ fastqs = process.out.outputs
+  
+  scatter(fastq in process.fastq) {
+    call reduce {
+      input:
+       json = process.jsonout,
+       fq = fastq
+    }
   }
+  #Array[File]? reducedFastq = reduce.reducedfq
+  
+  
+  output {
+    #Array[Output]+ fastqs = process.out.outputs
+    File jsonout = process.jsonout
+   # Array[File] fastq = select.first(reduce.completefq,process.fastq)
+    Array[File?] reducedFastq = reduce.reducedfq
+  }
+}
+
+
+task reduce {
+  input {
+    File json
+    File fq
+    Int maxReads = 20000
+    Int memory = 2
+    String modules = "seqtk/1.3"
+    Int timeout = 40
+  }
+  command <<<
+    cat ~{json} | grep read_count | grep -oP "\d+" > readcounts.txt
+    readcount=`cat readcounts.txt | head -n 1`
+    fn=`basename ~{fq} .fastq.gz`
+    if [ $readcount > ~{maxReads} ]
+    then
+      ln -s ~{fq} $fn.complete.fastq.gz  
+      zcat ~{fq} | head | gzip -c > $fn.fastq.gz
+      echo "$fn.complete.fastq.gz" > complete.txt
+      echo "$fn.fastq.gz" > reduced.txt 
+    fi
+	
+
+  >>>
+
+  output {
+    File? reducedfq = read_lines("reduced.txt")[0]
+    File? completefq = read_lines("reduced.txt")[0]
+
+  }
+  runtime {
+    memory: "~{memory}G"
+    modules: "~{modules}"
+    timeout: "~{timeout}"
+  }
+
+
+
 }
 
 
@@ -125,19 +175,27 @@ task process {
       --processing-threads ~{threads} \
       --runfolder-dir "~{runDirectory}" \
       --tiles "^(s_)?[~{sep="" lanes}]_" \
-      --interop-dir "~{temporaryDirectory}" \
       ~{if ignoreMissingBcls then "--ignore-missing-bcls" else ""} \
       ~{if ignoreMissingFilter then "--ignore-missing-filter" else ""} \
       ~{if ignoreMissingPositions then "--ignore-missing-positions" else ""} \
       ~{if defined(basesMask) then "--use-bases-mask ~{basesMask}" else ""} \
       ~{extraOptions}
+
+      ls *fastq.gz > files.txt
   >>>
   output {
-    Outputs out = read_json("outputs.json")
+    #Outputs out = read_json("outputs.json")
+    File jsonout = "outputs.json"
+    Array[File] fastq = read_lines("files.txt")
   }
   runtime {
     memory: "~{memory}G"
     modules: "~{modules}"
     timeout: "~{timeout}"
   }
+  
+  
+  
+  
+  
 }
