@@ -1,606 +1,606 @@
 [
-    {
-        "arguments": {
-            "bcl2fastq.basesMask": null,
-            "bcl2fastq.lanes": [
-                1
-            ],
-            "bcl2fastq.mismatches": 1,
-            "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev",
-            "bcl2fastq.process.bcl2fastq": null,
-            "bcl2fastq.process.bcl2fastqJail": null,
-            "bcl2fastq.process.extraOptions": null,
-            "bcl2fastq.process.ignoreMissingBcls": null,
-            "bcl2fastq.process.ignoreMissingFilter": null,
-            "bcl2fastq.process.ignoreMissingPositions": null,
-            "bcl2fastq.process.memory": null,
-            "bcl2fastq.process.temporaryDirectory": "$TMP",
-            "bcl2fastq.process.threads": null,
-            "bcl2fastq.runDirectory": {
-                "contents": {
-                    "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
-                    "externalIds": [
-                        {
-                            "id": "TEST",
-                            "provider": "TEST"
-                        }
-                    ]
-                },
-                "type": "EXTERNAL"
-            },
-            "bcl2fastq.samples": [
-                {
-                    "acceptableUmiList": null,
-                    "barcodes": [
-                        "CGATGT"
-                    ],
-                    "inlineUmi": false,
-                    "name": "NA12878_A002",
-                    "patterns": null
-                },
-                {
-                    "acceptableUmiList": null,
-                    "barcodes": [
-                        "TGACCA"
-                    ],
-                    "inlineUmi": false,
-                    "name": "NA12878_A004",
-                    "patterns": null
-                },
-                {
-                    "acceptableUmiList": null,
-                    "barcodes": [
-                        "ACAGTG"
-                    ],
-                    "inlineUmi": false,
-                    "name": "NA12878_A005",
-                    "patterns": null
-                },
-                {
-                    "acceptableUmiList": null,
-                    "barcodes": [
-                        "GCCAAT"
-                    ],
-                    "inlineUmi": false,
-                    "name": "NA12878_A006",
-                    "patterns": null
-                },
-                {
-                    "acceptableUmiList": null,
-                    "barcodes": [
-                        "CAGATC"
-                    ],
-                    "inlineUmi": false,
-                    "name": "NA12878_A007",
-                    "patterns": null
-                },
-                {
-                    "acceptableUmiList": null,
-                    "barcodes": [
-                        "CTTGTA"
-                    ],
-                    "inlineUmi": false,
-                    "name": "NA12878_A012",
-                    "patterns": null
-                },
-                {
-                    "acceptableUmiList": null,
-                    "barcodes": [
-                        "AGTCAA"
-                    ],
-                    "inlineUmi": false,
-                    "name": "NA12878_A013",
-                    "patterns": null
-                },
-                {
-                    "acceptableUmiList": null,
-                    "barcodes": [
-                        "AGTTCC"
-                    ],
-                    "inlineUmi": false,
-                    "name": "NA12878_A014",
-                    "patterns": null
-                },
-                {
-                    "acceptableUmiList": null,
-                    "barcodes": [
-                        "ATGTCA"
-                    ],
-                    "inlineUmi": false,
-                    "name": "NA12878_A015",
-                    "patterns": null
-                }
-            ],
-            "bcl2fastq.timeout": null
-        },
-        "description": "HiSeq 2500 v2 TruSeq Exome (9 replicates of NA12878) from Illumina BaseSpace",
-        "engineArguments": {
-           "write_to_cache": false,
-           "read_from_cache": false
-        },
-        "id": "HiSeqTile1101",
-        "metadata": {
-            "bcl2fastq.fastqs": [
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "NA12878_A002"
-                },
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "NA12878_A004"
-                },
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "NA12878_A005"
-                },
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "NA12878_A006"
-                },
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "NA12878_A007"
-                },
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "NA12878_A012"
-                },
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "NA12878_A013"
-                },
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "NA12878_A014"
-                },
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "NA12878_A015"
-                }
-            ]
-        },
-        "validators": [
+  {
+    "arguments": {
+      "bcl2fastq.basesMask": null,
+      "bcl2fastq.lanes": [
+        1
+      ],
+      "bcl2fastq.mismatches": 1,
+      "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev",
+      "bcl2fastq.process.bcl2fastq": null,
+      "bcl2fastq.process.bcl2fastqJail": null,
+      "bcl2fastq.process.extraOptions": null,
+      "bcl2fastq.process.ignoreMissingBcls": null,
+      "bcl2fastq.process.ignoreMissingFilter": null,
+      "bcl2fastq.process.ignoreMissingPositions": null,
+      "bcl2fastq.process.memory": null,
+      "bcl2fastq.process.temporaryDirectory": "$TMP",
+      "bcl2fastq.process.threads": null,
+      "bcl2fastq.runDirectory": {
+        "contents": {
+          "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
+          "externalIds": [
             {
-                "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
-                "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/HiSeqTile1101.metrics",
-                "type": "script"
+              "id": "TEST",
+              "provider": "TEST"
             }
-        ]
+          ]
+        },
+        "type": "EXTERNAL"
+      },
+      "bcl2fastq.samples": [
+        {
+          "acceptableUmiList": null,
+          "barcodes": [
+            "CGATGT"
+          ],
+          "inlineUmi": false,
+          "name": "NA12878_A002",
+          "patterns": null
+        },
+        {
+          "acceptableUmiList": null,
+          "barcodes": [
+            "TGACCA"
+          ],
+          "inlineUmi": false,
+          "name": "NA12878_A004",
+          "patterns": null
+        },
+        {
+          "acceptableUmiList": null,
+          "barcodes": [
+            "ACAGTG"
+          ],
+          "inlineUmi": false,
+          "name": "NA12878_A005",
+          "patterns": null
+        },
+        {
+          "acceptableUmiList": null,
+          "barcodes": [
+            "GCCAAT"
+          ],
+          "inlineUmi": false,
+          "name": "NA12878_A006",
+          "patterns": null
+        },
+        {
+          "acceptableUmiList": null,
+          "barcodes": [
+            "CAGATC"
+          ],
+          "inlineUmi": false,
+          "name": "NA12878_A007",
+          "patterns": null
+        },
+        {
+          "acceptableUmiList": null,
+          "barcodes": [
+            "CTTGTA"
+          ],
+          "inlineUmi": false,
+          "name": "NA12878_A012",
+          "patterns": null
+        },
+        {
+          "acceptableUmiList": null,
+          "barcodes": [
+            "AGTCAA"
+          ],
+          "inlineUmi": false,
+          "name": "NA12878_A013",
+          "patterns": null
+        },
+        {
+          "acceptableUmiList": null,
+          "barcodes": [
+            "AGTTCC"
+          ],
+          "inlineUmi": false,
+          "name": "NA12878_A014",
+          "patterns": null
+        },
+        {
+          "acceptableUmiList": null,
+          "barcodes": [
+            "ATGTCA"
+          ],
+          "inlineUmi": false,
+          "name": "NA12878_A015",
+          "patterns": null
+        }
+      ],
+      "bcl2fastq.timeout": null
     },
-    {
-        "arguments": {
-            "bcl2fastq.basesMask": null,
-            "bcl2fastq.lanes": [
-                1
-            ],
-            "bcl2fastq.mismatches": 1,
-            "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev",
-            "bcl2fastq.process.bcl2fastq": null,
-            "bcl2fastq.process.bcl2fastqJail": null,
-            "bcl2fastq.process.extraOptions": null,
-            "bcl2fastq.process.ignoreMissingBcls": null,
-            "bcl2fastq.process.ignoreMissingFilter": null,
-            "bcl2fastq.process.ignoreMissingPositions": null,
-            "bcl2fastq.process.memory": null,
-            "bcl2fastq.process.temporaryDirectory": null,
-            "bcl2fastq.process.threads": null,
-            "bcl2fastq.runDirectory": {
-                "contents": {
-                    "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
-                    "externalIds": [
-                        {
-                            "id": "TEST",
-                            "provider": "TEST"
-                        }
-                    ]
-                },
-                "type": "EXTERNAL"
-            },
-            "bcl2fastq.samples": [
-                {
-                    "acceptableUmiList": null,
-                    "barcodes": [
-                        "ATCACGAC-ACTTAGCA"
-                    ],
-                    "inlineUmi": false,
-                    "name": "Horizon_PoolA_Rep1",
-                    "patterns": null
-                }
-            ],
-            "bcl2fastq.timeout": null
-        },
-        "description": "NextSeq 500 V2: TruSight Tumor (Horizon Dx - 8plex) - H2GN7AFXX from Illumina BaseSpace",
-        "engineArguments": {
-           "write_to_cache": false,
-           "read_from_cache": false
-        },
-        "id": "NextSeqByLane",
-        "metadata": {
-            "bcl2fastq.fastqs": [
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_NextSeqByLane_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "Horizon_PoolA_Rep1"
-                }
-            ]
-        },
-        "validators": [
-            {
-                "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
-                "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/NextSeqByLane.metrics",
-                "type": "script"
-            }
-        ]
+    "description": "HiSeq 2500 v2 TruSeq Exome (9 replicates of NA12878) from Illumina BaseSpace",
+    "engineArguments": {
+      "read_from_cache": false,
+      "write_to_cache": false
     },
-    {
-        "arguments": {
-            "bcl2fastq.basesMask": null,
-            "bcl2fastq.lanes": [
-                1,
-                2,
-                3,
-                4
+    "id": "HiSeqTile1101",
+    "metadata": {
+      "bcl2fastq.fastqs": [
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
+              }
             ],
-            "bcl2fastq.mismatches": 1,
-            "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev",
-            "bcl2fastq.process.bcl2fastq": null,
-            "bcl2fastq.process.bcl2fastqJail": null,
-            "bcl2fastq.process.extraOptions": null,
-            "bcl2fastq.process.ignoreMissingBcls": null,
-            "bcl2fastq.process.ignoreMissingFilter": null,
-            "bcl2fastq.process.ignoreMissingPositions": null,
-            "bcl2fastq.process.memory": null,
-            "bcl2fastq.process.temporaryDirectory": null,
-            "bcl2fastq.process.threads": null,
-            "bcl2fastq.runDirectory": {
-                "contents": {
-                    "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
-                    "externalIds": [
-                        {
-                            "id": "TEST",
-                            "provider": "TEST"
-                        }
-                    ]
-                },
-                "type": "EXTERNAL"
-            },
-            "bcl2fastq.samples": [
-                {
-                    "acceptableUmiList": null,
-                    "barcodes": [
-                        "ATCACGAC-ACTTAGCA"
-                    ],
-                    "inlineUmi": false,
-                    "name": "Horizon_PoolA_Rep1",
-                    "patterns": null
-                }
+            "type": "ALL"
+          },
+          "name": "NA12878_A002"
+        },
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
+              }
             ],
-            "bcl2fastq.timeout": null
+            "type": "ALL"
+          },
+          "name": "NA12878_A004"
         },
-        "description": "NextSeq 500 V2: TruSight Tumor (Horizon Dx - 8plex) - H2GN7AFXX from Illumina BaseSpace",
-        "engineArguments": {
-           "write_to_cache": false,
-           "read_from_cache": false
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
+              }
+            ],
+            "type": "ALL"
+          },
+          "name": "NA12878_A005"
         },
-        "id": "NextSeqNoLaneSplit",
-        "metadata": {
-            "bcl2fastq.fastqs": [
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_NextSeqNoLaneSplit_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "Horizon_PoolA_Rep1"
-                }
-            ]
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
+              }
+            ],
+            "type": "ALL"
+          },
+          "name": "NA12878_A006"
         },
-        "validators": [
-            {
-                "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
-                "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/NextSeqNoLaneSplit.metrics",
-                "type": "script"
-            }
-        ]
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
+              }
+            ],
+            "type": "ALL"
+          },
+          "name": "NA12878_A007"
+        },
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
+              }
+            ],
+            "type": "ALL"
+          },
+          "name": "NA12878_A012"
+        },
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
+              }
+            ],
+            "type": "ALL"
+          },
+          "name": "NA12878_A013"
+        },
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
+              }
+            ],
+            "type": "ALL"
+          },
+          "name": "NA12878_A014"
+        },
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_HiSeqTile1101_@JENKINSID@"
+              }
+            ],
+            "type": "ALL"
+          },
+          "name": "NA12878_A015"
+        }
+      ]
     },
-    {
-        "arguments": {
-            "bcl2fastq.basesMask": null,
-            "bcl2fastq.lanes": [
-                1
-            ],
-            "bcl2fastq.mismatches": 1,
-            "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev",
-            "bcl2fastq.process.bcl2fastq": null,
-            "bcl2fastq.process.bcl2fastqJail": null,
-            "bcl2fastq.process.extraOptions": null,
-            "bcl2fastq.process.ignoreMissingBcls": true,
-            "bcl2fastq.process.ignoreMissingFilter": true,
-            "bcl2fastq.process.ignoreMissingPositions": true,
-            "bcl2fastq.process.memory": null,
-            "bcl2fastq.process.temporaryDirectory": null,
-            "bcl2fastq.process.threads": null,
-            "bcl2fastq.runDirectory": {
-                "contents": {
-                    "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/cellranger-tiny-bcl-1.2.0",
-                    "externalIds": [
-                        {
-                            "id": "TEST",
-                            "provider": "TEST"
-                        }
-                    ]
-                },
-                "type": "EXTERNAL"
-            },
-            "bcl2fastq.samples": [
-                {
-                    "acceptableUmiList": null,
-                    "barcodes": [
-                        "AGATCGGT",
-                        "CATCGTCG",
-                        "GTCATATA",
-                        "TCGGACAC"
-                    ],
-                    "inlineUmi": false,
-                    "name": "test_sample",
-                    "patterns": null
-                }
-            ],
-            "bcl2fastq.timeout": null
-        },
-        "description": "HiSeq small BCL test from 10X",
-        "engineArguments": {
-           "write_to_cache": false,
-           "read_from_cache": false
-        },
-        "id": "10X_tiny_hiseq_test",
-        "metadata": {
-            "bcl2fastq.fastqs": [
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_10X_tiny_hiseq_test_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "test_sample"
-                }
-            ]
-        },
-        "validators": [
+    "validators": [
+      {
+        "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
+        "metrics_compare": "@CHECKOUT@/tests/compare.sh",
+        "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/HiSeqTile1101.metrics",
+        "type": "script"
+      }
+    ]
+  },
+  {
+    "arguments": {
+      "bcl2fastq.basesMask": null,
+      "bcl2fastq.lanes": [
+        1
+      ],
+      "bcl2fastq.mismatches": 1,
+      "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev",
+      "bcl2fastq.process.bcl2fastq": null,
+      "bcl2fastq.process.bcl2fastqJail": null,
+      "bcl2fastq.process.extraOptions": null,
+      "bcl2fastq.process.ignoreMissingBcls": null,
+      "bcl2fastq.process.ignoreMissingFilter": null,
+      "bcl2fastq.process.ignoreMissingPositions": null,
+      "bcl2fastq.process.memory": null,
+      "bcl2fastq.process.temporaryDirectory": null,
+      "bcl2fastq.process.threads": null,
+      "bcl2fastq.runDirectory": {
+        "contents": {
+          "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
+          "externalIds": [
             {
-                "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
-                "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/10X_tiny_hiseq_test.metrics",
-                "type": "script"
+              "id": "TEST",
+              "provider": "TEST"
             }
-        ]
+          ]
+        },
+        "type": "EXTERNAL"
+      },
+      "bcl2fastq.samples": [
+        {
+          "acceptableUmiList": null,
+          "barcodes": [
+            "ATCACGAC-ACTTAGCA"
+          ],
+          "inlineUmi": false,
+          "name": "Horizon_PoolA_Rep1",
+          "patterns": null
+        }
+      ],
+      "bcl2fastq.timeout": null
     },
-    {
-        "arguments": {
-            "bcl2fastq.basesMask": null,
-            "bcl2fastq.lanes": [
-                1
-            ],
-            "bcl2fastq.mismatches": 1,
-            "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev barcodex-rs/dev",
-            "bcl2fastq.process.bcl2fastq": null,
-            "bcl2fastq.process.bcl2fastqJail": null,
-            "bcl2fastq.process.extraOptions": null,
-            "bcl2fastq.process.ignoreMissingBcls": null,
-            "bcl2fastq.process.ignoreMissingFilter": null,
-            "bcl2fastq.process.ignoreMissingPositions": null,
-            "bcl2fastq.process.memory": null,
-            "bcl2fastq.process.temporaryDirectory": "$TMP",
-            "bcl2fastq.process.threads": null,
-            "bcl2fastq.runDirectory": {
-                "contents": {
-                    "configuration": "/.mounts/labs/prod/archive/m146/191210_M00146_0137_000000000-D7KWF",
-                    "externalIds": [
-                        {
-                            "id": "TEST",
-                            "provider": "TEST"
-                        }
-                    ]
-                },
-                "type": "EXTERNAL"
-            },
-            "bcl2fastq.samples": [
-                {
-                    "acceptableUmiList": "/u/gsidev/git/interval-files/allowedUMIs/IDT_true_barcodes.txt",
-                    "barcodes": [
-                        "GTTCTCGT"
-                    ],
-                    "inlineUmi": true,
-                    "name": "MATS0058",
-                    "patterns": {
-                        "1": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)",
-                        "2": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)"
-                    }
-                }
-            ],
-            "bcl2fastq.timeout": null
-        },
-        "description": "UMI extraction test",
-        "engineArguments": {
-           "write_to_cache": false,
-           "read_from_cache": false
-        },
-        "id": "umiex",
-        "metadata": {
-            "bcl2fastq.fastqs": [
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_umiex_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "MATS0058"
-                }
-            ]
-        },
-        "validators": [
-            {
-                "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
-                "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/umiex.metrics",
-                "type": "script"
-            }
-        ]
+    "description": "NextSeq 500 V2: TruSight Tumor (Horizon Dx - 8plex) - H2GN7AFXX from Illumina BaseSpace",
+    "engineArguments": {
+      "read_from_cache": false,
+      "write_to_cache": false
     },
-    {
-        "arguments": {
-            "bcl2fastq.basesMask": null,
-            "bcl2fastq.lanes": [
-                1
+    "id": "NextSeqByLane",
+    "metadata": {
+      "bcl2fastq.fastqs": [
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_NextSeqByLane_@JENKINSID@"
+              }
             ],
-            "bcl2fastq.mismatches": 1,
-            "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev barcodex-rs/dev",
-            "bcl2fastq.process.bcl2fastq": null,
-            "bcl2fastq.process.bcl2fastqJail": null,
-            "bcl2fastq.process.extraOptions": null,
-            "bcl2fastq.process.ignoreMissingBcls": null,
-            "bcl2fastq.process.ignoreMissingFilter": null,
-            "bcl2fastq.process.ignoreMissingPositions": null,
-            "bcl2fastq.process.memory": null,
-            "bcl2fastq.process.temporaryDirectory": "$TMP",
-            "bcl2fastq.process.threads": null,
-            "bcl2fastq.runDirectory": {
-                "contents": {
-                    "configuration": "/.mounts/labs/prod/archive/m146/191210_M00146_0137_000000000-D7KWF",
-                    "externalIds": [
-                        {
-                            "id": "TEST",
-                            "provider": "TEST"
-                        }
-                    ]
-                },
-                "type": "EXTERNAL"
-            },
-            "bcl2fastq.samples": [
-                {
-                    "acceptableUmiList": "/u/gsidev/git/interval-files/allowedUMIs/IDT_true_barcodes.txt",
-                    "barcodes": [
-                        "NNNNNNNN"
-                    ],
-                    "inlineUmi": true,
-                    "name": "MATS0058",
-                    "patterns": {
-                        "1": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)",
-                        "2": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)"
-                    }
-                }
-            ],
-            "bcl2fastq.timeout": null
-        },
-        "description": "UMI extraction test with no output",
-        "engineArguments": {
-           "write_to_cache": false,
-           "read_from_cache": false
-        },
-        "id": "umiex_empty",
-        "metadata": {
-            "bcl2fastq.fastqs": [
-                {
-                    "fastqs": {
-                        "contents": [
-                            {
-                                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_umiex_empty_@JENKINSID@"
-                            }
-                        ],
-                        "type": "ALL"
-                    },
-                    "name": "MATS0058"
-                }
-            ]
-        },
-        "validators": [
+            "type": "ALL"
+          },
+          "name": "Horizon_PoolA_Rep1"
+        }
+      ]
+    },
+    "validators": [
+      {
+        "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
+        "metrics_compare": "@CHECKOUT@/tests/compare.sh",
+        "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/NextSeqByLane.metrics",
+        "type": "script"
+      }
+    ]
+  },
+  {
+    "arguments": {
+      "bcl2fastq.basesMask": null,
+      "bcl2fastq.lanes": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "bcl2fastq.mismatches": 1,
+      "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev",
+      "bcl2fastq.process.bcl2fastq": null,
+      "bcl2fastq.process.bcl2fastqJail": null,
+      "bcl2fastq.process.extraOptions": null,
+      "bcl2fastq.process.ignoreMissingBcls": null,
+      "bcl2fastq.process.ignoreMissingFilter": null,
+      "bcl2fastq.process.ignoreMissingPositions": null,
+      "bcl2fastq.process.memory": null,
+      "bcl2fastq.process.temporaryDirectory": null,
+      "bcl2fastq.process.threads": null,
+      "bcl2fastq.runDirectory": {
+        "contents": {
+          "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
+          "externalIds": [
             {
-                "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
-                "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/umiex_empty.metrics",
-                "type": "script"
+              "id": "TEST",
+              "provider": "TEST"
             }
-        ]
-    }
+          ]
+        },
+        "type": "EXTERNAL"
+      },
+      "bcl2fastq.samples": [
+        {
+          "acceptableUmiList": null,
+          "barcodes": [
+            "ATCACGAC-ACTTAGCA"
+          ],
+          "inlineUmi": false,
+          "name": "Horizon_PoolA_Rep1",
+          "patterns": null
+        }
+      ],
+      "bcl2fastq.timeout": null
+    },
+    "description": "NextSeq 500 V2: TruSight Tumor (Horizon Dx - 8plex) - H2GN7AFXX from Illumina BaseSpace",
+    "engineArguments": {
+      "read_from_cache": false,
+      "write_to_cache": false
+    },
+    "id": "NextSeqNoLaneSplit",
+    "metadata": {
+      "bcl2fastq.fastqs": [
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_NextSeqNoLaneSplit_@JENKINSID@"
+              }
+            ],
+            "type": "ALL"
+          },
+          "name": "Horizon_PoolA_Rep1"
+        }
+      ]
+    },
+    "validators": [
+      {
+        "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
+        "metrics_compare": "@CHECKOUT@/tests/compare.sh",
+        "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/NextSeqNoLaneSplit.metrics",
+        "type": "script"
+      }
+    ]
+  },
+  {
+    "arguments": {
+      "bcl2fastq.basesMask": null,
+      "bcl2fastq.lanes": [
+        1
+      ],
+      "bcl2fastq.mismatches": 1,
+      "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev",
+      "bcl2fastq.process.bcl2fastq": null,
+      "bcl2fastq.process.bcl2fastqJail": null,
+      "bcl2fastq.process.extraOptions": null,
+      "bcl2fastq.process.ignoreMissingBcls": true,
+      "bcl2fastq.process.ignoreMissingFilter": true,
+      "bcl2fastq.process.ignoreMissingPositions": true,
+      "bcl2fastq.process.memory": null,
+      "bcl2fastq.process.temporaryDirectory": null,
+      "bcl2fastq.process.threads": null,
+      "bcl2fastq.runDirectory": {
+        "contents": {
+          "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/cellranger-tiny-bcl-1.2.0",
+          "externalIds": [
+            {
+              "id": "TEST",
+              "provider": "TEST"
+            }
+          ]
+        },
+        "type": "EXTERNAL"
+      },
+      "bcl2fastq.samples": [
+        {
+          "acceptableUmiList": null,
+          "barcodes": [
+            "AGATCGGT",
+            "CATCGTCG",
+            "GTCATATA",
+            "TCGGACAC"
+          ],
+          "inlineUmi": false,
+          "name": "test_sample",
+          "patterns": null
+        }
+      ],
+      "bcl2fastq.timeout": null
+    },
+    "description": "HiSeq small BCL test from 10X",
+    "engineArguments": {
+      "read_from_cache": false,
+      "write_to_cache": false
+    },
+    "id": "10X_tiny_hiseq_test",
+    "metadata": {
+      "bcl2fastq.fastqs": [
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_10X_tiny_hiseq_test_@JENKINSID@"
+              }
+            ],
+            "type": "ALL"
+          },
+          "name": "test_sample"
+        }
+      ]
+    },
+    "validators": [
+      {
+        "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
+        "metrics_compare": "@CHECKOUT@/tests/compare.sh",
+        "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/10X_tiny_hiseq_test.metrics",
+        "type": "script"
+      }
+    ]
+  },
+  {
+    "arguments": {
+      "bcl2fastq.basesMask": null,
+      "bcl2fastq.lanes": [
+        1
+      ],
+      "bcl2fastq.mismatches": 1,
+      "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev barcodex-rs/dev",
+      "bcl2fastq.process.bcl2fastq": null,
+      "bcl2fastq.process.bcl2fastqJail": null,
+      "bcl2fastq.process.extraOptions": null,
+      "bcl2fastq.process.ignoreMissingBcls": null,
+      "bcl2fastq.process.ignoreMissingFilter": null,
+      "bcl2fastq.process.ignoreMissingPositions": null,
+      "bcl2fastq.process.memory": null,
+      "bcl2fastq.process.temporaryDirectory": "$TMP",
+      "bcl2fastq.process.threads": null,
+      "bcl2fastq.runDirectory": {
+        "contents": {
+          "configuration": "/.mounts/labs/prod/archive/m146/191210_M00146_0137_000000000-D7KWF",
+          "externalIds": [
+            {
+              "id": "TEST",
+              "provider": "TEST"
+            }
+          ]
+        },
+        "type": "EXTERNAL"
+      },
+      "bcl2fastq.samples": [
+        {
+          "acceptableUmiList": "/u/gsidev/git/interval-files/allowedUMIs/IDT_true_barcodes.txt",
+          "barcodes": [
+            "GTTCTCGT"
+          ],
+          "inlineUmi": true,
+          "name": "MATS0058",
+          "patterns": {
+            "1": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)",
+            "2": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)"
+          }
+        }
+      ],
+      "bcl2fastq.timeout": null
+    },
+    "description": "UMI extraction test",
+    "engineArguments": {
+      "read_from_cache": false,
+      "write_to_cache": false
+    },
+    "id": "umiex",
+    "metadata": {
+      "bcl2fastq.fastqs": [
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_umiex_@JENKINSID@"
+              }
+            ],
+            "type": "ALL"
+          },
+          "name": "MATS0058"
+        }
+      ]
+    },
+    "validators": [
+      {
+        "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
+        "metrics_compare": "@CHECKOUT@/tests/compare.sh",
+        "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/umiex.metrics",
+        "type": "script"
+      }
+    ]
+  },
+  {
+    "arguments": {
+      "bcl2fastq.basesMask": null,
+      "bcl2fastq.lanes": [
+        1
+      ],
+      "bcl2fastq.mismatches": 1,
+      "bcl2fastq.modules": "bcl2fastq/2.20.0.422 bcl2fastq-jail/dev barcodex-rs/dev",
+      "bcl2fastq.process.bcl2fastq": null,
+      "bcl2fastq.process.bcl2fastqJail": null,
+      "bcl2fastq.process.extraOptions": null,
+      "bcl2fastq.process.ignoreMissingBcls": null,
+      "bcl2fastq.process.ignoreMissingFilter": null,
+      "bcl2fastq.process.ignoreMissingPositions": null,
+      "bcl2fastq.process.memory": null,
+      "bcl2fastq.process.temporaryDirectory": "$TMP",
+      "bcl2fastq.process.threads": null,
+      "bcl2fastq.runDirectory": {
+        "contents": {
+          "configuration": "/.mounts/labs/prod/archive/m146/191210_M00146_0137_000000000-D7KWF",
+          "externalIds": [
+            {
+              "id": "TEST",
+              "provider": "TEST"
+            }
+          ]
+        },
+        "type": "EXTERNAL"
+      },
+      "bcl2fastq.samples": [
+        {
+          "acceptableUmiList": "/u/gsidev/git/interval-files/allowedUMIs/IDT_true_barcodes.txt",
+          "barcodes": [
+            "NNNNNNNN"
+          ],
+          "inlineUmi": true,
+          "name": "MATS0058",
+          "patterns": {
+            "1": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)",
+            "2": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)"
+          }
+        }
+      ],
+      "bcl2fastq.timeout": null
+    },
+    "description": "UMI extraction test with no output",
+    "engineArguments": {
+      "read_from_cache": false,
+      "write_to_cache": false
+    },
+    "id": "umiex_empty",
+    "metadata": {
+      "bcl2fastq.fastqs": [
+        {
+          "fastqs": {
+            "contents": [
+              {
+                "outputDirectory": "@SCRATCH@/@DATE@_Workflow_bcl2fastq_umiex_empty_@JENKINSID@"
+              }
+            ],
+            "type": "ALL"
+          },
+          "name": "MATS0058"
+        }
+      ]
+    },
+    "validators": [
+      {
+        "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
+        "metrics_compare": "@CHECKOUT@/tests/compare.sh",
+        "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/umiex_empty.metrics",
+        "type": "script"
+      }
+    ]
+  }
 ]
