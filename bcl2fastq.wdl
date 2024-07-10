@@ -51,11 +51,8 @@ workflow bcl2fastq {
       url: "https://emea.support.illumina.com/sequencing/sequencing_software/bcl2fastq-conversion-software.html"
     }]
     output_meta: {
-    fastqs: {
-        description: "A list of FASTQs generated and annotations that should be applied to them.",
-        vidarr_label: "fastqs"
+      fastqs: "A list of FASTQs generated and annotations that should be applied to them.",
     }
-}
   }
   call process {
     input:
@@ -112,7 +109,7 @@ task process {
   }
   meta {
     output_meta: {
-      fastqs: "A list of FASTQs generated and annotations that should be applied to them."
+      out: "The FASTQ files and read counts for the samples"
     }
   }
 

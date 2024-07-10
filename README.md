@@ -51,9 +51,9 @@ Parameter|Value|Default|Description
 
 ### Outputs
 
-Output | Type | Description | Labels
+Output | Type | Description 
 ---|---|---|---
-`fastqs`|Array[Output]+|A list of FASTQs generated and annotations that should be applied to them.|vidarr_label: fastqs
+`fastqs`|Array[Output]+|A list of FASTQs generated and annotations that should be applied to them.
 
 
 ## Commands
