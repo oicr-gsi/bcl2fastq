@@ -112,11 +112,8 @@ task process {
   }
   meta {
     output_meta: {
-    fastqs: {
-        description: "A list of FASTQs generated and annotations that should be applied to them.",
-        vidarr_label: "fastqs"
+      fastqs: "A list of FASTQs generated and annotations that should be applied to them."
     }
-}
   }
 
   command <<<
