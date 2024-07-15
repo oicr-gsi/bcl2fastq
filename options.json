@@ -1,0 +1,6 @@
+{
+  "default_runtime_attributes": {
+    "docker": "g3chen/bcl2fastq@sha256:c7c2c719ef9e7809f162a33e6d830914c2b92d5abf3661661af409ae5bb85e83",
+    "docker_volume": "/home/ubuntu/Downloads/sample_data:/data"
+  }
+}
