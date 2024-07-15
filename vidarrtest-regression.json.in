@@ -114,7 +114,10 @@
             "bcl2fastq.timeout": null
         },
         "description": "HiSeq 2500 v2 TruSeq Exome (9 replicates of NA12878) from Illumina BaseSpace",
-        "engineArguments": {},
+        "engineArguments": {
+           "write_to_cache": false,
+           "read_from_cache": false
+        },
         "id": "HiSeqTile1101",
         "metadata": {
             "bcl2fastq.fastqs": [
@@ -271,7 +274,10 @@
             "bcl2fastq.timeout": null
         },
         "description": "NextSeq 500 V2: TruSight Tumor (Horizon Dx - 8plex) - H2GN7AFXX from Illumina BaseSpace",
-        "engineArguments": {},
+        "engineArguments": {
+           "write_to_cache": false,
+           "read_from_cache": false
+        },
         "id": "NextSeqByLane",
         "metadata": {
             "bcl2fastq.fastqs": [
@@ -343,7 +349,10 @@
             "bcl2fastq.timeout": null
         },
         "description": "NextSeq 500 V2: TruSight Tumor (Horizon Dx - 8plex) - H2GN7AFXX from Illumina BaseSpace",
-        "engineArguments": {},
+        "engineArguments": {
+           "write_to_cache": false,
+           "read_from_cache": false
+        },
         "id": "NextSeqNoLaneSplit",
         "metadata": {
             "bcl2fastq.fastqs": [
@@ -415,7 +424,10 @@
             "bcl2fastq.timeout": null
         },
         "description": "HiSeq small BCL test from 10X",
-        "engineArguments": {},
+        "engineArguments": {
+           "write_to_cache": false,
+           "read_from_cache": false
+        },
         "id": "10X_tiny_hiseq_test",
         "metadata": {
             "bcl2fastq.fastqs": [
@@ -487,7 +499,10 @@
             "bcl2fastq.timeout": null
         },
         "description": "UMI extraction test",
-        "engineArguments": {},
+        "engineArguments": {
+           "write_to_cache": false,
+           "read_from_cache": false
+        },
         "id": "umiex",
         "metadata": {
             "bcl2fastq.fastqs": [
@@ -559,7 +574,10 @@
             "bcl2fastq.timeout": null
         },
         "description": "UMI extraction test with no output",
-        "engineArguments": {},
+        "engineArguments": {
+           "write_to_cache": false,
+           "read_from_cache": false
+        },
         "id": "umiex_empty",
         "metadata": {
             "bcl2fastq.fastqs": [
