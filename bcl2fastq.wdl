@@ -45,7 +45,7 @@ workflow bcl2fastq {
   }
   meta {
     author: "Andre Masella"
-    description: "Workflow to produce FASTQ files from an Illumina instrument's run directory"
+    description: "The workflow wraps around Illumina's bcl2fastq software which demultiplexes sequencing data and converts base call (BCL) files into FASTQ files. For every cycle of a sequencing run, the Real-Time Analysis software generates a BCL file containing base calls and associated quality scores (Q-scores). This is the root workflow as the most NGS applications require FASTQ inputs."
     dependencies: [{
       name: "bcl2fastq",
       url: "https://emea.support.illumina.com/sequencing/sequencing_software/bcl2fastq-conversion-software.html"
