@@ -18,7 +18,7 @@
             "bcl2fastq.process.threads": null,
             "bcl2fastq.runDirectory": {
                 "contents": {
-                    "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/basespace/HiSeq/150928_SN346_0594_AHCTWGBCXX",
+                    "configuration": "/.mounts/labs/gsi/testdata/bcl2barcode/test_inputs/Test01",
                     "externalIds": [
                         {
                             "id": "TEST",
@@ -35,7 +35,7 @@
                         "CGATGT"
                     ],
                     "inlineUmi": false,
-                    "name": "NA12878_A002",
+                    "name": "Test01",
                     "patterns": null
                 },
                 {
@@ -44,7 +44,7 @@
                         "TGACCA"
                     ],
                     "inlineUmi": false,
-                    "name": "NA12878_A004",
+                    "name": "Test01",
                     "patterns": null
                 },
                 {
@@ -53,7 +53,7 @@
                         "ACAGTG"
                     ],
                     "inlineUmi": false,
-                    "name": "NA12878_A005",
+                    "name": "Test01",
                     "patterns": null
                 },
                 {
@@ -62,7 +62,7 @@
                         "GCCAAT"
                     ],
                     "inlineUmi": false,
-                    "name": "NA12878_A006",
+                    "name": "Test01",
                     "patterns": null
                 },
                 {
@@ -71,7 +71,7 @@
                         "CAGATC"
                     ],
                     "inlineUmi": false,
-                    "name": "NA12878_A007",
+                    "name": "Test01",
                     "patterns": null
                 },
                 {
@@ -80,7 +80,7 @@
                         "CTTGTA"
                     ],
                     "inlineUmi": false,
-                    "name": "NA12878_A012",
+                    "name": "Test01",
                     "patterns": null
                 },
                 {
@@ -89,7 +89,7 @@
                         "AGTCAA"
                     ],
                     "inlineUmi": false,
-                    "name": "NA12878_A013",
+                    "name": "Test01",
                     "patterns": null
                 },
                 {
@@ -98,7 +98,7 @@
                         "AGTTCC"
                     ],
                     "inlineUmi": false,
-                    "name": "NA12878_A014",
+                    "name": "Test01",
                     "patterns": null
                 },
                 {
@@ -107,13 +107,13 @@
                         "ATGTCA"
                     ],
                     "inlineUmi": false,
-                    "name": "NA12878_A015",
+                    "name": "Test01",
                     "patterns": null
                 }
             ],
             "bcl2fastq.timeout": null
         },
-        "description": "HiSeq 2500 v2 TruSeq Exome (9 replicates of NA12878) from Illumina BaseSpace",
+        "description": "HiSeq 2500 v2 TruSeq Exome from Illumina BaseSpace",
         "engineArguments": {
            "write_to_cache": false,
            "read_from_cache": false
@@ -130,7 +130,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "NA12878_A002"
+                    "name": "Test01"
                 },
                 {
                     "fastqs": {
@@ -141,7 +141,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "NA12878_A004"
+                    "name": "Test01"
                 },
                 {
                     "fastqs": {
@@ -152,7 +152,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "NA12878_A005"
+                    "name": "Test01"
                 },
                 {
                     "fastqs": {
@@ -163,7 +163,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "NA12878_A006"
+                    "name": "Test01"
                 },
                 {
                     "fastqs": {
@@ -174,7 +174,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "NA12878_A007"
+                    "name": "Test01"
                 },
                 {
                     "fastqs": {
@@ -185,7 +185,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "NA12878_A012"
+                    "name": "Test01"
                 },
                 {
                     "fastqs": {
@@ -196,7 +196,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "NA12878_A013"
+                    "name": "Test01"
                 },
                 {
                     "fastqs": {
@@ -207,7 +207,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "NA12878_A014"
+                    "name": "Test01"
                 },
                 {
                     "fastqs": {
@@ -218,7 +218,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "NA12878_A015"
+                    "name": "Test01"
                 }
             ]
         },
@@ -226,7 +226,7 @@
             {
                 "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
                 "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/HiSeqTile1101.metrics",
+                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/workflow_test_01.metrics",
                 "type": "script"
             }
         ]
@@ -250,7 +250,7 @@
             "bcl2fastq.process.threads": null,
             "bcl2fastq.runDirectory": {
                 "contents": {
-                    "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
+                    "configuration": "/.mounts/labs/gsi/testdata/bcl2barcode/test_inputs/Test02",
                     "externalIds": [
                         {
                             "id": "TEST",
@@ -267,13 +267,13 @@
                         "ATCACGAC-ACTTAGCA"
                     ],
                     "inlineUmi": false,
-                    "name": "Horizon_PoolA_Rep1",
+                    "name": "Test02",
                     "patterns": null
                 }
             ],
             "bcl2fastq.timeout": null
         },
-        "description": "NextSeq 500 V2: TruSight Tumor (Horizon Dx - 8plex) - H2GN7AFXX from Illumina BaseSpace",
+        "description": "NextSeq 500 V2: TruSight Tumor from Illumina BaseSpace",
         "engineArguments": {
            "write_to_cache": false,
            "read_from_cache": false
@@ -290,7 +290,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "Horizon_PoolA_Rep1"
+                    "name": "Test02"
                 }
             ]
         },
@@ -298,7 +298,7 @@
             {
                 "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
                 "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/NextSeqByLane.metrics",
+                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/workflow_test_02.metrics",
                 "type": "script"
             }
         ]
@@ -325,7 +325,7 @@
             "bcl2fastq.process.threads": null,
             "bcl2fastq.runDirectory": {
                 "contents": {
-                    "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/basespace/NextSeq/150114_NS500141_0187_AH2GN7AFXX",
+                    "configuration": "/.mounts/labs/gsi/testdata/bcl2barcode/test_inputs/Test02",
                     "externalIds": [
                         {
                             "id": "TEST",
@@ -342,13 +342,13 @@
                         "ATCACGAC-ACTTAGCA"
                     ],
                     "inlineUmi": false,
-                    "name": "Horizon_PoolA_Rep1",
+                    "name": "Test03",
                     "patterns": null
                 }
             ],
             "bcl2fastq.timeout": null
         },
-        "description": "NextSeq 500 V2: TruSight Tumor (Horizon Dx - 8plex) - H2GN7AFXX from Illumina BaseSpace",
+        "description": "NextSeq 500 V2: TruSight Tumor from Illumina BaseSpace",
         "engineArguments": {
            "write_to_cache": false,
            "read_from_cache": false
@@ -365,7 +365,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "Horizon_PoolA_Rep1"
+                    "name": "Test03"
                 }
             ]
         },
@@ -373,7 +373,7 @@
             {
                 "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
                 "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/NextSeqNoLaneSplit.metrics",
+                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/workflow_test_03.metrics",
                 "type": "script"
             }
         ]
@@ -397,7 +397,7 @@
             "bcl2fastq.process.threads": null,
             "bcl2fastq.runDirectory": {
                 "contents": {
-                    "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/runs/cellranger-tiny-bcl-1.2.0",
+                    "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/test_inputs/Test03",
                     "externalIds": [
                         {
                             "id": "TEST",
@@ -417,7 +417,7 @@
                         "TCGGACAC"
                     ],
                     "inlineUmi": false,
-                    "name": "test_sample",
+                    "name": "Test04",
                     "patterns": null
                 }
             ],
@@ -440,7 +440,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "test_sample"
+                    "name": "Test04"
                 }
             ]
         },
@@ -448,7 +448,7 @@
             {
                 "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
                 "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/10X_tiny_hiseq_test.metrics",
+                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/workflow_test_04.metrics",
                 "type": "script"
             }
         ]
@@ -472,7 +472,7 @@
             "bcl2fastq.process.threads": null,
             "bcl2fastq.runDirectory": {
                 "contents": {
-                    "configuration": "/.mounts/labs/prod/archive/m146/191210_M00146_0137_000000000-D7KWF",
+                    "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/test_inputs/Test04",
                     "externalIds": [
                         {
                             "id": "TEST",
@@ -489,7 +489,7 @@
                         "GTTCTCGT"
                     ],
                     "inlineUmi": true,
-                    "name": "MATS0058",
+                    "name": "Test05",
                     "patterns": {
                         "1": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)",
                         "2": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)"
@@ -515,7 +515,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "MATS0058"
+                    "name": "Test05"
                 }
             ]
         },
@@ -523,7 +523,7 @@
             {
                 "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
                 "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/umiex.metrics",
+                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/workflow_test_05.metrics",
                 "type": "script"
             }
         ]
@@ -547,7 +547,7 @@
             "bcl2fastq.process.threads": null,
             "bcl2fastq.runDirectory": {
                 "contents": {
-                    "configuration": "/.mounts/labs/prod/archive/m146/191210_M00146_0137_000000000-D7KWF",
+                    "configuration": "/.mounts/labs/gsi/testdata/bcl2fastq/test_inputs/Test04",
                     "externalIds": [
                         {
                             "id": "TEST",
@@ -564,7 +564,7 @@
                         "NNNNNNNN"
                     ],
                     "inlineUmi": true,
-                    "name": "MATS0058",
+                    "name": "Test06",
                     "patterns": {
                         "1": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)",
                         "2": "(?P<umi_1>^[ACGT]{3}[ACG])(?P<discard_1>T)|(?P<umi_2>^[ACGT]{3})(?P<discard_2>T)"
@@ -590,7 +590,7 @@
                         ],
                         "type": "ALL"
                     },
-                    "name": "MATS0058"
+                    "name": "Test06"
                 }
             ]
         },
@@ -598,7 +598,7 @@
             {
                 "metrics_calculate": "@CHECKOUT@/tests/calculate.sh",
                 "metrics_compare": "@CHECKOUT@/tests/compare.sh",
-                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/umiex_empty.metrics",
+                "output_metrics": "/.mounts/labs/gsi/testdata/bcl2fastq/output_metrics/workflow_test_06.metrics",
                 "type": "script"
             }
         ]
