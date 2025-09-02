@@ -14,8 +14,7 @@ struct SampleList {
 
 struct Output {
     String name
-    File fastq
-    Map[String,String] annotations
+    Array[Pair[File,Map[String,String]]] fastqs
 }
 
 struct Outputs {
